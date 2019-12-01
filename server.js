@@ -96,6 +96,10 @@ async function initSingle () {
 
   global.wo = {} // wo 代表 world或‘我’，是当前的命名空间，把各种类都放在这里，防止和其他库的冲突。
   wo.Config = Config
+  // wo.Tool=new (require('so.base/Egg.js'))()
+  //   .extendMe(require('so.base/Messenger.js'))
+  //   .extendMe(require('so.base/Webtoken.js'))
+  //   .extendMe(require('so.base/User.js'))
 
   mylog.info('Initializing database......')
   wo.DataStore = await require('so.data')(wo.Config.dbType)._init(wo.Config.dbName)
@@ -104,6 +108,8 @@ async function initSingle () {
   mylog.info('Loading classes and Creating tables......')
   wo.Ling = require('so.ling')
 
+  wo.User = await require('./ling/User.js')._init(wo.DataStore)
+
   return wo
 }
 
@@ -111,6 +117,7 @@ function runServer () { // 配置并启动 Web 服务
   mylog.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
+  const webToken = require('so.base/Webtoken')
 
   const greenlock = wo.Config.sslType==='greenlock' ? require('greenlock-express').create({
     version: 'draft-11',
@@ -140,20 +147,22 @@ function runServer () { // 配置并启动 Web 服务
 
   /** * 路由中间件 ***/
 
-  server.all('/:_api/:_who/:_act', async function (ask, reply) {
-    // http://address:port/api/Block/getBlockList
+  server.all('/:_api/:_who/:_act', async function (ask, reply) { // API 格式：http://address:port/api/Block/getBlockList
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
     var option = {}
     for (let key in ask.query) { // GET 方法传来的参数
-      option[key] = ask.query[key]
+      option[key] = wo.Ling.json2obj(ask.query[key])
     }
     for (let key in ask.body) { // POST 方法传来的参数
-      option[key] = ask.body[key] 
+      option[key] = ask.headers["content-type"]==='application/json' ? ask.body[key] : wo.Ling.json2obj(ask.body[key])
     }
-    /// //////// authentication ///////////////////
     option._req = ask
+
+    /// //////// authentication ///////////////////
+    let passtoken = webToken.verifyToken(ask.headers.passtoken, wo.Config.tokenKey) || {}
+
 
     reply.setHeader('charset', 'utf-8')
     // reply.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
