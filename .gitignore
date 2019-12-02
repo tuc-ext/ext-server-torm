@@ -4,7 +4,6 @@ data.log/*log*
 data.sqlite/*.sqlite*
 .sass-cache
 package-lock.json
-.vscode
 .svn
 ~*
 .gitattributes
