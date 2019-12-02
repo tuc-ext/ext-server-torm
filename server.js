@@ -160,7 +160,7 @@ function runServer () { // 配置并启动 Web 服务
     }
 
     /// //////// authentication ///////////////////
-    option._passtokenSource = webToken.verifyToken(ask.headers.passtoken, wo.Config.tokenKey) || {}
+    option._passtokenSource = webToken.verifyToken(ask.headers._passtoken, wo.Config.tokenKey) || {}
 
     reply.setHeader('charset', 'utf-8')
     // reply.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
