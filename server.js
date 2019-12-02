@@ -151,18 +151,16 @@ function runServer () { // 配置并启动 Web 服务
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    var option = {}
+    var option = { data: {}, _req: ask, _res: reply }
     for (let key in ask.query) { // GET 方法传来的参数
       option[key] = wo.Ling.json2obj(ask.query[key])
     }
     for (let key in ask.body) { // POST 方法传来的参数
       option[key] = ask.headers["content-type"]==='application/json' ? ask.body[key] : wo.Ling.json2obj(ask.body[key])
     }
-    option._req = ask
 
     /// //////// authentication ///////////////////
-    let passtoken = webToken.verifyToken(ask.headers.passtoken, wo.Config.tokenKey) || {}
-
+    option._passtokenSource = webToken.verifyToken(ask.headers.passtoken, wo.Config.tokenKey) || {}
 
     reply.setHeader('charset', 'utf-8')
     // reply.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
