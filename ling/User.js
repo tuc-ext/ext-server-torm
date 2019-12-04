@@ -1,7 +1,9 @@
 'use strict'
 const Ling = require('so.ling')
-const uuid = require('uuid')
+const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
+const Messenger = require('so.base/Messenger.js')
+const Webtoken = require('so.base/Webtoken.js')
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function User (prop) { // 构建类
@@ -29,48 +31,69 @@ const my={}
 /****************** 类方法 (class methods) ******************/
 
 /****************** API方法 ******************/
-DAD.api={}
+DAD.api=DAD.api1={}
 
-DAD.api.identify = DAD.api.v1.identify = function(option){
-  if (option.User && /^$/.test(option.User.phone)) {
-    let user = await DAD.getOne({User:{phone:option.User.phone}})
-    let passtokenSource
+DAD.api.identify = DAD.api1.identify = async function(option){
+  let identifyState, uuid
+  if (option.User && /^(\+\d{1,3}-)(\d{7,11})$/.test(option.User.phone)) {
+    let user = await DAD.getOne({User: {phone:option.User.phone}})
     if (user) {
-      passtokenSource = {
-        phone: option.User.phone,
-        status: 'REGGED',
-        uuid: user.uuid,
-        timestamp: new Date()
-      }
+      uuid = user.uuid
+      identifyState = 'OLD_USER'
     } else {
-      passtokenSource = {
-        phone:option.User.phone,
-        status: 'NEWUSER',
-        uuid: uuid.v4()
-      }
+      uuid = Uuid.v4(),
+      identifyState = 'NEW_USER'
     }
-    return { _passtoken: wo.Webtoken.createToken(passtokenSource) }
+  }else {
+    identifyState = 'INPUT_BAD_FORMAT'
   }
-  return { errorCode: 'INPUT_FORMAT_ERROR', errorMsg: '输入格式错误' }
+  return { 
+    identifyState,
+    uuid,
+    _passtoken: Webtoken.createToken({
+      phone: option.User.phone,
+      uuid,
+      identifyState
+    })
+  }
 }
 
-/*****************
- *  request:
- *    url: '/api/User/signup',
- *    data: { 
- *      user: { 
- *        phone: +区号-手机号 
- *        passwordClient: 前端对原始密码进行 hash(password+uuid) 再交给后台，禁止明文传输密码或直接哈希。后台要再做 hash(passwordClient+uuid)=>passwordServer 存入数据库，防止彩虹表攻击。
- *      }
- *    },
- *    header: {
- *      _passtoken 前端把事先收到的 _passtoken 返回给后台，里面记录了该新用户的 phone, uuid, status。后台要核对 phone，防止前端作假。
- *    }
- *  response:
- *    data: {
- *    }
- */
-DAD.api.signup = DAD.api.v1.signup = function(option){
+DAD.api.sendPasscode = async function(option){
+  let passcode = ticCrypto.randomNumber({length:6})
+  let passcodeHash = ticCrypto.hash(passcode+option._passtokenSource.uuid)
+  let passcodeState = undefined
+  let passcodeExpireAt = undefined
+  // send SMS
+  let sendResult = await Messenger.sendSms(
+    option._passtokenSource.phone, 
+    { vendor: 'aliyun',
+      msgParam: passcode,
+      templateCode: 'SMS_142465215',
+      signName: 'LOG'
+    }
+  )
+  if (sendResult.state==='DONE') {
+    passcodeState = 'PASSCODE_SENT'
+  }else{
+    passcodeState = 'PASSCODE_UNSENT'
+    passcodeExpireAt = new Date(Date.now()+5*60*1000)
+  }
+  return {
+    passcodeState,
+    passcodeHash,
+    passcodeExpireAt,
+    _passtoken: Webtoken.createToken(Object.assign(
+      option._passtokenSource, 
+      {
+        passcode,
+        passcodeState,
+        passcodeExpireAt
+      })
+    )
+  }
+}
+
+DAD.api.register = DAD.api1.register = async function(option){
   if (option.User && option.User.phone && option.User.passwordClient
     && option._passtokenSource && option._passtokenSource.status === 'NEWUSER'
     && option.User.phone === option._passtokenSource.phone) {
@@ -78,21 +101,12 @@ DAD.api.signup = DAD.api.v1.signup = function(option){
       option.User.uuid = option._passtokenSource.uuid
       user = await DAD.setOne( { User: option.User } )
       if (user) {
-        return { User: user, _passtoken: wo.Webtoken.createToken(option._passtokenSource) }
+        return { User: user, _passtoken: Webtoken.createToken(option._passtokenSource) }
       }
   }
   return { errorCode: 'INPUT_FORMAT_ERROR', errorMsg: '输入格式错误' }
 }
 
-/*****************
- *  手机验证码
- */
-DAD.api.sendPasscode = DAD.api.v1.sendPasscode = function(option){
-  option._passtokenSource.passcode = ticCrypto.randomNumber({length:6})
-  // 发送短信
-  return { _passtoken: wo.Webtoken.createToken(option._passtokenSource) }
-}
-
-DAD.api.login = DAD.api.v1.login = function(){
+DAD.api.login = DAD.api1.login = async function(){
 
 }

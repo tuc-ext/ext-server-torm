@@ -167,13 +167,12 @@ function runServer () { // 配置并启动 Web 服务
     // reply.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     reply.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    let _who = ask.params._who
-    let _act = ask.params._act
-    let _api = ask.params._api
+    let { _who, _act, _api } = ask.params
 
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var result = await wo[_who][_api][_act](option)
+        mylog.info(result)
         reply.json(result) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } else {
         reply.json(null)
