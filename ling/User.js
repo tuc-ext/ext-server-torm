@@ -93,18 +93,28 @@ DAD.api.sendPasscode = async function(option){
   }
 }
 
+DAD.api.verifyPasscode = async function(option){
+
+}
+
 DAD.api.register = DAD.api1.register = async function(option){
   if (option.User && option.User.phone && option.User.passwordClient
-    && option._passtokenSource && option._passtokenSource.status === 'NEWUSER'
+    && option._passtokenSource && option._passtokenSource.identifyState === 'NEWUSER'
     && option.User.phone === option._passtokenSource.phone) {
       option.User.passwordServer = ticCrypto.hash(option.User.passwordClient + option._passtokenSource.uuid)
       option.User.uuid = option._passtokenSource.uuid
-      user = await DAD.setOne( { User: option.User } )
+      user = await DAD.addOne( { User: option.User } )
       if (user) {
-        return { User: user, _passtoken: Webtoken.createToken(option._passtokenSource) }
+        option._passtokenSource.state = 'ONLINE'
+        return { 
+          registerState = 'REGISTER_SUCCESS',
+          User: user,
+          _passtoken: Webtoken.createToken(option._passtokenSource) }
+      }else {
+        return { registerState: 'REGISTER_FAILED' }
       }
   }
-  return { errorCode: 'INPUT_FORMAT_ERROR', errorMsg: '输入格式错误' }
+  return { registerState: 'INPUT_BAD_FORMAT' }
 }
 
 DAD.api.login = DAD.api1.login = async function(){
