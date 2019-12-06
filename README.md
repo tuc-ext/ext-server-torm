@@ -8,3 +8,5 @@ TIC Node | 时光节点.服务端
       * 原型 [tic/node.console.design](https://git.faronear.org/tic/node.console.design)
       * 客户端 [tic/node.console.web](https://git.faronear.org/tic/node.console.web)
 
+## 更多资料
+* 前后端API:  <https://git.faronear.org/tac/log/log.api.md>
