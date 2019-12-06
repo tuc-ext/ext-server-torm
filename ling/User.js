@@ -18,8 +18,11 @@ const MOM = DAD.prototype // 原型对象
 MOM.__proto__ = Ling.prototype
 MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
-  hash: { default: undefined, sqlite: 'TEXT', mysql: 'VARCHAR(64) PRIMARY KEY' },
-
+  uuid: { default: undefined, sqlite: 'TEXT PRIMARY KEY', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  phone: { default: undefined, sqlite: 'TEXT' },
+  passwordServer: { default: undefined, sqlite: 'TEXT' },
+  portrait: { default: undefined, sqlite: 'TEXT' },
+  nickname: { default: undefined, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -35,8 +38,8 @@ const my={}
 DAD.api=DAD.api1={}
 
 DAD.api.identify = DAD.api1.identify = async function(option){
-  if (option.User && Internation.validatePhone({phone:option.User.phone})) {
-    let user = await DAD.getOne({User: {phone:option.User.phone}})
+  if (option && Internation.validatePhone({phone:option.phone})) {
+    let user = await DAD.getOne({User: {phone:option.phone}})
     let _state, uuid
     if (user) {
       uuid = user.uuid
@@ -49,7 +52,7 @@ DAD.api.identify = DAD.api1.identify = async function(option){
       _state,
       uuid,
       _passtoken: Webtoken.createToken({
-        phone: option.User.phone,
+        phone: option.phone,
         uuid,
         identifyState: _state
       })
@@ -104,8 +107,8 @@ DAD.api.sendPasscode = async function(option){
 
 DAD.api.verifyPasscode = async function(option){
   let _state
-  if (option && option.User.passcode && option._passtokenSource && new Date() < new Date(option._passtokenSource.passcodeExpireAt)) {
-    if (ticCrypto.hash(option.User.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
+  if (option && option.passcode && option._passtokenSource && new Date() < new Date(option._passtokenSource.passcodeExpireAt)) {
+    if (ticCrypto.hash(option.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
       _state = 'VERIFY_SUCCESS'
     }else{
       _state = 'VERIFY_FAILED'
@@ -125,19 +128,32 @@ DAD.api.verifyPasscode = async function(option){
 }
 
 DAD.api.register = DAD.api1.register = async function(option){
-  if (option.User && option.User.phone && option.User.passwordClient
-    && option._passtokenSource && option._passtokenSource.identifyState === 'NEW_USER'
+  if (option._passtokenSource && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
-    && option.User.phone === option._passtokenSource.phone) {
-      option.User.passwordServer = ticCrypto.hash(option.User.passwordClient + option._passtokenSource.uuid)
-      option.User.uuid = option._passtokenSource.uuid
-      user = await DAD.addOne( { User: option.User } )
+    && option._passtokenSource.identifyState === 'NEW_USER'
+    && option.phone && option.passwordClient
+    && option.phone === option._passtokenSource.phone) {
+      let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
+      let uuid = option._passtokenSource.uuid
+      let user = await DAD.addOne( { User: { 
+        uuid, 
+        phone:option.phone, 
+        passwordServer, 
+        nickname: option.phone 
+      } } )
       if (user) {
-        option._passtokenSource.state = 'ONLINE'
         return { 
-          registerState: 'REGISTER_SUCCESS',
-          User: user,
-          _passtoken: Webtoken.createToken(option._passtokenSource) }
+          _state: 'REGISTER_SUCCESS',
+          onlineUser: user,
+          _passtoken: Webtoken.createToken({
+            uuid,
+            phone: option.phone,
+            passwordClient: option.passwordClient,
+            onlineState: 'ONLINE',
+            onlineSince: new Date,
+            onlineExpireAt: new Date(Date.now()+30*24*60*60*1000)
+          })
+        }
       }else {
         return { registerState: 'REGISTER_FAILED' }
       }
