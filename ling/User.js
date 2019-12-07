@@ -4,7 +4,7 @@ const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
-const Internation = require('../../../so/so.base/Internation.js')
+const Internation = require('so.base/Internation.js')
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function User (prop) { // 构建类
