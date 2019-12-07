@@ -119,7 +119,7 @@ function runServer () { // 配置并启动 Web 服务
   const server = require('express')()
   const webToken = require('so.base/Webtoken')
 
-  const greenlock = (['https', 'httpall'].indexOf(wo.Config.protocol)>=0 && wo.Config.sslType==='greenlock'
+  const greenlock = (['https', 'httpall'].indexOf(wo.Config.protocol)>=0 && wo.Config.sslType==='greenlock')
     ? require('greenlock-express').create({
         version: 'draft-11',
         server: wo.Config.netType==='devnet' // for test: acme-staging-v02
