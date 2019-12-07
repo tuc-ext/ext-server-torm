@@ -45,7 +45,7 @@
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite -- server.js",
     "daemon": "cross-env NODE_ENV=production node server.js --protocol https",
     "daemon.sup": "",
-    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo -- --protocol https"
+    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo"
   },
   "author": ""
 }
