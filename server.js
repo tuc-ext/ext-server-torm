@@ -210,31 +210,31 @@ function runServer () { // 配置并启动 Web 服务
       cert: fs.readFileSync(wo.Config.sslCert),
       // ca: [ fs.readFileSync(wo.Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
     }, server).listen(wo.Config.port, function (err) {
-      if (err) mylog.log(err)
-      else mylog.log(`Server listening on ${wo.Config.protocol}://${wo.Config.host}:${wo.Config.port} for ${server.settings.env} environment`)
+      if (err) mylog.info(err)
+      else mylog.info(`Server listening on ${wo.Config.protocol}://${wo.Config.host}:${wo.Config.port} for ${server.settings.env} environment`)
     })
   } else if ('httpall' === wo.Config.protocol) {
     let portHttp = wo.Config.port ? wo.Config.port : 80 // 如果port参数已设置，使用它；否则默认为80
     let portHttps = (wo.Config.port && wo.Config.port !== 80) ? wo.Config.port + 443 : 443 // 如果port参数已设置，使用它+443；否则默认为443
     if (wo.Config.sslType === 'greenlock') {
       webServer = greenlock.listen(portHttp, portHttps, function (err) {
-        if (err) mylog.log(err)
-        else mylog.log(`Server listening on [${wo.Config.protocol}] http=>https://${wo.Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
+        if (err) mylog.info(err)
+        else mylog.info(`Server listening on [${wo.Config.protocol}] http=>https://${wo.Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
       })
     } else {
       require('http').createServer(server.all('*', function (ask, reply) {
         reply.redirect(`https://${wo.Config.host}:${portHttps}`)
       })).listen(portHttp, function(err) {
-        if (err) mylog.log(err)
-        else mylog.log(`Server listening on [${wo.Config.protocol}] http://${wo.Config.host}:${portHttp} for ${server.settings.env} environment`)  
+        if (err) mylog.info(err)
+        else mylog.info(`Server listening on [${wo.Config.protocol}] http://${wo.Config.host}:${portHttp} for ${server.settings.env} environment`)  
       })
       webServer = require('https').createServer({
         key: fs.readFileSync(wo.Config.sslKey),
         cert: fs.readFileSync(wo.Config.sslCert),
         // ca: [ fs.readFileSync(wo.Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
       }, server).listen(portHttps, function (err) {
-        if (err) mylog.log(err)
-        else mylog.log(`Server listening on [${wo.Config.protocol}] https://${wo.Config.host}:${portHttps} for ${server.settings.env} environment`)
+        if (err) mylog.info(err)
+        else mylog.info(`Server listening on [${wo.Config.protocol}] https://${wo.Config.host}:${portHttps} for ${server.settings.env} environment`)
       })
     }
   }
