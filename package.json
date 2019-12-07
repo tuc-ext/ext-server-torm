@@ -43,9 +43,9 @@
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite -- server.js",
-    "daemon": "npm run testnet",
-    "daemon.sup": "npm run testnet.sup",
-    "daemon.pm2": "npm run testnet.pm2"
+    "daemon": "cross-env NODE_ENV=production node server.js --protocol https",
+    "daemon.sup": "",
+    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo -- --protocol https"
   },
   "author": ""
 }
