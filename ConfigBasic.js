@@ -6,11 +6,11 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   protocol: 'http', // http|https|httpall
   host: 'server.log.yuanjin.net', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
   port: LOG_PORT_STANDARD, // 本节点的 Web服务端口号
-  sslType: 'greenlock', // file|greenlock
+  sslType: 'file', // file|greenlock
   sslDomainList: ['server.log.yuanjin.net'],
-  sslKey: 'ssl/privkey.pem', // ssl key file,
-  sslCert: 'ssl/fullchain.pem', // ssl cert file,
-  sslCA: 'ssl/client-cert.pem', // ssl ca file,
+  sslKey: '/etc/letsencrypt/live/server.log.yuanjin.net/privkey.pem', // ssl key file,
+  sslCert: '/etc/letsencrypt/live/server.log.yuanjin.net/fullchain.pem', // ssl cert file,
+  sslCA: '', // ssl ca file,
   tasking: 'single', // single|cluster: 单进程或多进程
   // 数据库设置
   dbType: 'sqlite',
