@@ -48,6 +48,7 @@ DAD.api.identify = DAD.api1.identify = async function(option){
       uuid = Uuid.v4(),
       _state = 'NEW_USER'
     }
+    console.log(`>>>>>>>>>> identify::::::: uuid = ${uuid}`)
     return {
       _state,
       uuid,
@@ -116,7 +117,8 @@ DAD.api.verifyPasscode = async function(option){
     return { 
       _state,
       _passtoken: Webtoken.createToken(Object.assign(
-        option._passtokenSource, {
+        option._passtokenSource, 
+        {
           verifyState: _state
         }
       ))
@@ -128,16 +130,17 @@ DAD.api.verifyPasscode = async function(option){
 }
 
 DAD.api.register = DAD.api1.register = async function(option){
-  if (option._passtokenSource && option._passtokenSource.identifyState === 'NEW_USER'
-    && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
+  console.log(`>>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  console.log(`>>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
+  if (option._passtokenSource 
     && option._passtokenSource.identifyState === 'NEW_USER'
+    && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
     && option.phone && option.passwordClient
     && option.phone === option._passtokenSource.phone) {
       let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
-      let uuid = option._passtokenSource.uuid
       let user = await DAD.addOne( { User: { 
-        uuid, 
-        phone:option.phone, 
+        uuid: option._passtokenSource.uuid,
+        phone: option.phone, 
         passwordServer, 
         nickname: option.phone 
       } } )
@@ -146,7 +149,7 @@ DAD.api.register = DAD.api1.register = async function(option){
           _state: 'REGISTER_SUCCESS',
           onlineUser: user,
           _passtoken: Webtoken.createToken({
-            uuid,
+            uuid: option._passtokenSource.uuid,
             phone: option.phone,
             passwordClient: option.passwordClient,
             onlineState: 'ONLINE',
@@ -155,12 +158,38 @@ DAD.api.register = DAD.api1.register = async function(option){
           })
         }
       }else {
-        return { registerState: 'REGISTER_FAILED' }
+        return { _state: 'REGISTER_FAILED' }
       }
   }
-  return { registerState: 'INPUT_MALFORMED' }
+  return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.login = DAD.api1.login = async function(){
+DAD.api.login = DAD.api1.login = async function(option){
+  console.log(`>>>>>>>>>> register::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
 
+  if (option && option.passwordClient
+    && option._passtokenSource && option._passtokenSource.phone && option._passtokenSource.uuid) {
+    let passwordServer = ticCrypto.hash(option.passwordClient+option._passtokenSource.uuid)
+    let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
+    if (onlineUser) {
+      if (onlineUser.passwordServer === passwordServer) {
+        return {
+          _state: 'LOGIN_SUCCESS',
+          onlineUser,
+          _passtoken: Webtoken.createToken({
+            uuid: option._passtokenSource.uuid
+          })
+        }
+      }else {
+        return { 
+          _state: 'LOGIN_FAILED_WRONG_PASSWORD'
+        }
+      }
+    }else {
+      return { 
+        _state: 'LOGIN_FAILED_USER_NOTEXIST'
+      }
+    }
+  }
+  return { _state: 'INPUT_MALFORMED'}
 }

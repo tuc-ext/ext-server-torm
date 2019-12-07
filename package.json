@@ -21,11 +21,11 @@
     "multer": "^1.3.0",
     "node-schedule": "^1.3.0",
     "serve-favicon": "^2.4.1",
-    "so.base": "git+https://git.faronear.org/so/so.base#20190714_release_passtoken",
-    "so.data": "git+https://git.faronear.org/so/so.data#20190701_release_initDb",
-    "so.ling": "git+https://git.faronear.org/so/so.ling#20190714_release_passtoken",
+    "so.base": "git+https://git.faronear.org/so/so.base",
+    "so.data": "git+https://git.faronear.org/so/so.data",
+    "so.ling": "git+https://git.faronear.org/so/so.ling",
     "socket.io": "^1.0.6",
-    "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto#20190109_preview"
+    "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto"
   },
   "devDependencies": {
     "browserify": "^16.0.0",
