@@ -42,9 +42,9 @@
     "ssl": "certbot certonly -d server.log.yuanjin.net --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite --inspect-brk -- server.js",
-    "dev": "cross-env NODE_ENV=development node server.js",
+    "dev": "cross-env NODE_ENV=development node server.js --env development --protocol http",
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite -- server.js",
-    "daemon": "cross-env NODE_ENV=production node server.js --protocol https",
+    "daemon": "cross-env NODE_ENV=production node server.js",
     "daemon.sup": "",
     "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo"
   },
