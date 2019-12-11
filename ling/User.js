@@ -23,6 +23,8 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   passwordServer: { default: undefined, sqlite: 'TEXT' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
+  whenRegister: { default: undefined, sqlite: 'TEXT' },
+  coinAddress: { default: {}, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -135,19 +137,33 @@ DAD.api.verifyPasscode = async function(option){
 }
 
 DAD.api.register = DAD.api1.register = async function(option){
-  console.log(`>>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
-  console.log(`>>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
+  console.log(`${__filename} >>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  console.log(`${__filename} >>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
   if (option._passtokenSource 
     && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
     && option.phone && option.passwordClient
     && option.phone === option._passtokenSource.phone) {
       let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
+      let pathBTC = "m/44'/0'/0'/0/0"
+      let pathETH = "m/44'/60'/0'/0/0"
+      let coinAddress = {
+        BTC: {
+          path: pathBTC,
+          address: ticCrypto.secword2account(wo.Config.secword, {coin: 'BTC', path: pathBTC}).address
+        },
+        ETH: { 
+          path: pathETH,
+          address: ticCrypto.secword2account(wo.Config.secword, {coin: 'ETH', path: pathETH}).address
+        }
+      }
       let user = await DAD.addOne( { User: { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone, 
         passwordServer, 
-        nickname: option.phone 
+        nickname: option.phone,
+        coinAddress,
+        whenRegister: new Date()
       } } )
       if (user) {
         return { 
