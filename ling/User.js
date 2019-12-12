@@ -18,8 +18,9 @@ const MOM = DAD.prototype // 原型对象
 MOM.__proto__ = Ling.prototype
 MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
-  uuid: { default: undefined, sqlite: 'TEXT PRIMARY KEY', mysql: 'VARCHAR(64) PRIMARY KEY' },
-  phone: { default: undefined, sqlite: 'TEXT' },
+  aiid: { default: undefined, sqlite:'INTEGER PRIMARY KEY' },
+  uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  phone: { default: undefined, sqlite: 'TEXT UNIQUE' },
   passwordServer: { default: undefined, sqlite: 'TEXT' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
@@ -145,8 +146,19 @@ DAD.api.register = DAD.api1.register = async function(option){
     && option.phone && option.passwordClient
     && option.phone === option._passtokenSource.phone) {
       let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
-      let pathBTC = "m/44'/0'/0'/0/0"
-      let pathETH = "m/44'/60'/0'/0/0"
+      let whenRegister = new Date()
+      // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
+      // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
+      // Account 最大到 parseInt(0x7FFFFFFF, 16), Coin/Index最大到 parseInt(0xFFFFFFFF, 16)
+      // 后面还可继续延伸 /xxx/xxx/xxx/......
+      let seed=ticCrypto.hash(whenRegister.valueOf()+option.phone, {hasher:'md5'})
+      let part0=parseInt(seed.slice(0,6), 16)
+      let part1=parseInt(seed.slice(6,12), 16)
+      let part2=parseInt(seed.slice(12,18), 16)
+      let part3=parseInt(seed.slice(18,24), 16)
+      let part4=parseInt(seed.slice(24,32), 16)
+      let pathBTC=`m/44'/0'/${part0}'/${part1}/${part2}/${part3}/${part4}`
+      let pathETH=`m/44'/60'/${part0}'/${part1}/${part2}/${part3}/${part4}`
       let coinAddress = {
         BTC: {
           path: pathBTC,
@@ -159,13 +171,18 @@ DAD.api.register = DAD.api1.register = async function(option){
       }
       let user = await DAD.addOne( { User: { 
         uuid: option._passtokenSource.uuid,
-        phone: option.phone, 
+        phone: option.phone,
         passwordServer, 
         nickname: option.phone,
         coinAddress,
-        whenRegister: new Date()
+        whenRegister,
       } } )
       if (user) {
+// 或者严格按照 BIP44 的规范，代价是，需要先加入数据库获得用户aiid后才能确定路径
+//        let pathBTC = `m/44'/0'/${user.aiid}'/0/0`
+//        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
+//        let coinAddress = { ... }
+//        await user.setMe({ User:{coinAddress}})
         return { 
           _state: 'REGISTER_SUCCESS',
           onlineUser: user,
