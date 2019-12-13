@@ -63,9 +63,8 @@ const Config = (function config () {
   mylog.info(`${localeText.tStartConfigCommander}`)
   commander
     .version(Config.VERSION, '-v, --version') // 默认是 -V。如果要 -v，就要加 '-v --version'
-    .option('-c, --consensus <type>', 'Consensus type: Pot|Pow|Alone. Default to ' + Config.consensus)
     .option('--dbType <type>', 'Database type: mysql|sqlite. Default to ' + Config.dbType)
-    .option('--dbName <name>', 'Database name')
+    .option('--dbName <name>', 'Database name. Default to ' + Config.dbName)
     .option('-e, --env <env>', 'Environment. Default to ' + (Config.env || process.env.NODE_ENV))
     .option('-H, --host <host>', 'Host ip or domain name. Default to ' + Config.host)
     .option('-P, --protocol <protocol>', 'Server protocol: http|https|httpall. Default to ' + Config.protocol)
@@ -77,9 +76,14 @@ const Config = (function config () {
     .parse(process.argv)
 
   // 把命令行参数 合并入配置。
+  Config.env = commander.env || Config.env || process.env.NODE_ENV
+  if (Config.env === 'production') {
+    Config = deepmerge(Config, Config.production)
+  }
+  delete Config.production
+
   Config.dbType = commander.dbType || Config.dbType
   Config.dbName = commander.dbName || Config.dbName
-  Config.env = commander.env || Config.env || process.env.NODE_ENV
   Config.host = commander.host || Config.host || require('so.base/Network.js').getMyIp() // // 本节点的从外部可访问的 IP or Hostname，不能是 127.0.0.1 或 localhost
   Config.protocol = commander.protocol || Config.protocol
   Config.port = parseInt(commander.port) || parseInt(Config.port) || (Config.protocol === 'http' ? 80 : Config.protocol === 'https' ? 443 : undefined) // 端口默认为http 80, https 443, 或80|443(httpall)
@@ -87,11 +91,6 @@ const Config = (function config () {
   Config.sslCert = commander.sslCert || Config.sslCert
   Config.sslKey = commander.sslKey || Config.sslKey
   Config.sslCA = commander.sslCA || Config.sslCA
-
-  if (Config.env === 'production') {
-    Config = deepmerge(Config, Config.production)
-  }
-  delete Config.production
 
   mylog.info(`${localeText.tResultConfig} Config = ${JSON.stringify(Config)}`)
 
