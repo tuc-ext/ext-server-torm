@@ -232,3 +232,7 @@ DAD.api.login = DAD.api1.login = async function(option){
   }
   return { _state: 'INPUT_MALFORMED'}
 }
+
+DAD.api.logout = async function(){ // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
+  return { _state: 'INPUT_MALFORMED' }
+}

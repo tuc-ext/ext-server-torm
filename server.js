@@ -66,7 +66,7 @@ const Config = (function config () {
     .option('-c, --consensus <type>', 'Consensus type: Pot|Pow|Alone. Default to ' + Config.consensus)
     .option('--dbType <type>', 'Database type: mysql|sqlite. Default to ' + Config.dbType)
     .option('--dbName <name>', 'Database name')
-    .option('-e, --env <evn>', 'Environment. Default to ' + (Config.env || process.env.NODE_ENV))
+    .option('-e, --env <env>', 'Environment. Default to ' + (Config.env || process.env.NODE_ENV))
     .option('-H, --host <host>', 'Host ip or domain name. Default to ' + Config.host)
     .option('-P, --protocol <protocol>', 'Server protocol: http|https|httpall. Default to ' + Config.protocol)
     .option('-p, --port <port>', 'Server port number. Default to ' + Config.port ? Config.port : '80|443 for http|https')
@@ -88,6 +88,11 @@ const Config = (function config () {
   Config.sslKey = commander.sslKey || Config.sslKey
   Config.sslCA = commander.sslCA || Config.sslCA
 
+  if (Config.env === 'production') {
+    Config = deepmerge(Config, Config.production)
+  }
+  delete Config.production
+
   mylog.info(`${localeText.tResultConfig} Config = ${JSON.stringify(Config)}`)
 
   return Config
@@ -107,9 +112,13 @@ async function initSingle () {
   wo.DataStore = await require('so.data')(wo.Config.dbType)._init(wo.Config.dbName)
 //  wo.DataCache = await require('./modules/util/redis.js')({ db: wo.Config.redisIndex })
 
+  let ethNetType='ropsten', timeout=5000
+  wo.EtherscanApi = require('etherscan-api').init('胡编乱造的apikey也可以用', ethNetType, timeout) // 测试发现，1）随便编个字符串都可以作为apikey。2）只有访问主网的apikey使用才会被etherscan记录。
+
   mylog.info('Loading classes and Creating tables......')
   wo.Ling = require('so.ling')
 
+  wo.Fund = await require('./ling/Fund.js')._init(wo.DataStore)
   wo.User = await require('./ling/User.js')._init(wo.DataStore)
 
   return wo
