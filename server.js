@@ -66,7 +66,7 @@ const Config = (function config () {
     .option('-c, --consensus <type>', 'Consensus type: Pot|Pow|Alone. Default to ' + Config.consensus)
     .option('--dbType <type>', 'Database type: mysql|sqlite. Default to ' + Config.dbType)
     .option('--dbName <name>', 'Database name')
-    .option('-e, --env <evn>', 'Environment. Default to ' + Config.env)
+    .option('-e, --env <evn>', 'Environment. Default to ' + (Config.env || process.env.NODE_ENV))
     .option('-H, --host <host>', 'Host ip or domain name. Default to ' + Config.host)
     .option('-P, --protocol <protocol>', 'Server protocol: http|https|httpall. Default to ' + Config.protocol)
     .option('-p, --port <port>', 'Server port number. Default to ' + Config.port ? Config.port : '80|443 for http|https')
@@ -79,7 +79,7 @@ const Config = (function config () {
   // 把命令行参数 合并入配置。
   Config.dbType = commander.dbType || Config.dbType
   Config.dbName = commander.dbName || Config.dbName
-  Config.env = commander.env || Config.env
+  Config.env = commander.env || Config.env || process.env.NODE_ENV
   Config.host = commander.host || Config.host || require('so.base/Network.js').getMyIp() // // 本节点的从外部可访问的 IP or Hostname，不能是 127.0.0.1 或 localhost
   Config.protocol = commander.protocol || Config.protocol
   Config.port = parseInt(commander.port) || parseInt(Config.port) || (Config.protocol === 'http' ? 80 : Config.protocol === 'https' ? 443 : undefined) // 端口默认为http 80, https 443, 或80|443(httpall)

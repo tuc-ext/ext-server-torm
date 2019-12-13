@@ -77,9 +77,7 @@ DAD.api.sendPasscode = async function(option){
   let passcodeExpireAt = undefined
   // send SMS
   let sendResult
-  if (wo.Config.env==='development') {
-    sendResult = {state:'DONE'}
-  }else {
+  if (process.env.NODE_ENV==='production') {
     sendResult = await Messenger.sendSms(
       option._passtokenSource.phone, 
       { vendor: 'aliyun',
@@ -88,7 +86,10 @@ DAD.api.sendPasscode = async function(option){
         signName: 'LOG'
       }
     )
+  }else {
+    sendResult = {state:'DONE'}
   }
+
   if (sendResult.state==='DONE') {
     _state = 'PASSCODE_SENT'
     passcodeSentAt = new Date()
