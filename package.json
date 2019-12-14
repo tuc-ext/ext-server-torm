@@ -29,15 +29,13 @@
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto"
   },
   "devDependencies": {
-    "browserify": "^16.0.0",
     "cross-env": "^5.1.3",
     "eslint": "^5.11.1",
     "eslint-config-standard": "^12.0.0",
     "pm2": "^3.5.0",
     "standard": "^12.0.1",
     "supervisor": "^0.12.0",
-    "watchify": "^3.10.0",
-    "webpack": "^3.10.0"
+    "watchify": "^3.10.0"
   },
   "scripts": {
     "ssl": "certbot certonly -d server.log.yuanjin.net --standalone",
@@ -45,8 +43,9 @@
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,data.sqlite -- server.js",
+    "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name log.server.oo",
     "daemon": "cross-env NODE_ENV=production node server.js",
-    "daemon.sup": "",
+    "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,data.log,data.sqlite -- server.js",
     "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo"
   },
   "author": ""
