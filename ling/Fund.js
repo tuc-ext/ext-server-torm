@@ -16,7 +16,8 @@ MOM.__proto__ = Ling.prototype
 MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
-  uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  uuidUser: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  usdtTransactionList: { default: {}, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -45,29 +46,60 @@ let pageNumber = 1
 let pageSize = 10
 let sort = 'asc'
 
-DAD.api.getMyBill = async function (address, contract){
-  address = acc1
-  contract = contractUSDT
-  // 查询当前区块高度   console.log(await wo.EtherscanApi.proxy.eth_blockNumber())
-  // 查询以太币余额    var balance = await wo.EtherscanApi.account.balance(acc2)
-  // 查询以太币余额    console.log(`ether balance = ${JSON.stringify(balance)}`)
-      var tokenBalance = await wo.EtherscanApi.account.tokenbalance(address, '', contract)
-      console.log(`usdt balance = ${JSON.stringify(tokenBalance)}`)
-  // 查询以太币交易    var txlist = await wo.EtherscanApi.account.txlist(address, startBlock, endBlock, pageNumber, pageSize, sort)
-      var txlist = await wo.EtherscanApi.account.tokentx(address, contract, startBlock, endBlock, pageNumber, pageSize, sort)
-        .catch(function(err) { console.log(err); return null } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
-      console.log(`tx list = ${JSON.stringify(txlist)}`)
-      if (txlist && txlist.status==='1') {
-          let tx
-          for (tx of txlist.result){
-              if (tx.from===address) {
-                  console.log(`汇出 ${tx.value/Math.pow(10, tx.tokenDecimal)} 到 ${tx.to}`)
-              }else if (tx.to===address) {
-                  console.log(`收到 ${tx.value/Math.pow(10, tx.tokenDecimal)} 从 ${tx.from}`)
-                  console.log('存入数据库...')
-                  tx2db(tx)
-              }
-          }
+DAD.api.getMyTokenBalance = async function (option){
+  if (option && option._passtoken && option.coinType){
+    let onlineUser = wo.User.getOne({User: {uuid:option._passtoken.uuid}})
+    let address = onlineUser.coinAddress[option.coinType].address
+    let tokenContract = wo.Config.ETH_TOKEN_INFO[option.coinType].contract
+    // 查询以太币余额 await api.account.balance(address)
+    let tokenBalanceResult = await wo.EtherscanApi.account.tokenBalanceResult(address, '', tokenContract) // tokenName must be empty '', otherwise it fails, don't know why.
+    console.log(`My ${option.coinType} balance = ${JSON.stringify(tokenBalanceResult)}`) // {"status":"1","message":"OK","result":"116517481000"}
+    if (tokenBalanceResult && tokenBalanceResult.status===1) {
+      return {
+        _state: 'SMOOTH', 
+        balance: tokenBalanceResult.result
       }
+    }
+    return { 
+      _state: 'EXCEPTION'
+    }
   }
-  
+  return { 
+    _state: 'INPUT_MALFORMED'
+  }
+}
+
+DAD.api.getMyTokenBill = async function (option){
+  let onlineUser = wo.User.getOne({User: {uuid:option._passtoken.uuid}})
+  let address = onlineUser.coinAddress[option.coinType].address
+  let tokenContract = wo.Config.ETH_TOKEN_INFO[option.coinType].contract
+  // 查询以太币交易    var txlist = await wo.EtherscanApi.account.txlist(address, startBlock, endBlock, pageNumber, pageSize, sort)
+  var txlist = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
+    .catch(function(err) { console.log(err); return null } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
+  console.log(`tx list = ${JSON.stringify(txlist)}`)
+  if (txlist && txlist.status==='1') {
+    let hasNewTransaction = false
+    let usdtTransactionList = await DAD.getOne({Fund: { uuidUser: option._passtoken.uuid}}) // 读取已有的该用户的交易列表
+    for (let tx of txlist.result){
+      if (tx.from===address) {
+        console.log(`汇出 ${tx.value/Math.pow(10, tx.tokenDecimal)} 到 ${tx.to}`)
+      }else if (tx.to===address) {
+        console.log(`收到 ${tx.value/Math.pow(10, tx.tokenDecimal)} 从 ${tx.from}`)
+        console.log('存入数据库...')
+        if (!usdtTansactionList[tx.hash]){
+          tx.validSince = new Date() // 保留所有原始 tx 数据，再补充fiv需要的信息
+          usdtTransactionList[tx.hash] = tx
+          hasNewTransaction = true
+        }
+      }
+    }
+    hasNewTransaction ? DAD.setOne({Fund: {uuidUser: option._passtoken.uuid, usdtTransactionList}}) : ''
+    return { 
+      _state: 'SMOOTH', 
+      usdtTransactionList,
+    }
+  }
+  return { 
+    _state: 'EXCEPTION',
+  }
+}

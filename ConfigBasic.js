@@ -11,16 +11,12 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   dbType: 'sqlite',
   dbName: 'data.sqlite/log.sqlite',
 
-  /* 数据库，HTTP 等设置（与时光链本身无关） */
-  HTTP_BODY_LIMIT: '50mb',
-  UPLOAD_LIMIT: 1048576, // 单位: Byte。
-  SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
-  // todo: 改名为 DB_*
-  LIMIT_DEFAULT: 12,
-  LIMIT_MAX: 1000,
-  MARK_DELETED: 'MARK_DELETED',
-  MARK_LINKED: 'MARK_LINKED', // 建立了关系（care, know, join 等）
-  MARK_RELEASED: 'MARK_RELEASED', // 解除了关系（care, know, join 等）
+  ETH_TOKEN_INFO: {
+    USDT: { 
+      contract: '0xb16815dbeceb459d9e33b8bba45ed717c479ea1c',
+      owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
+    }
+  },
 
   production: {
     protocol: 'https',
@@ -34,6 +30,24 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     */
     sslKey: '/etc/letsencrypt/live/server.log.yuanjin.net/privkey.pem', // ssl key file,
     sslCert: '/etc/letsencrypt/live/server.log.yuanjin.net/fullchain.pem', // ssl cert file,
-    sslCA: '', // ssl ca file,  
-  }
+    sslCA: '', // ssl ca file,
+
+    ETH_TOKEN_INFO: {
+      USDT: { contract: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
+      EURT: { contract: '0xabdf147870235fcfc34153828c769a70b3fae01f' },
+      CNHT: { contract: '0x6e109e9dd7fa1a58bc3eff667e8e41fc3cc07aef' },
+    },
+  },
+
+    /* 数据库，HTTP 等设置（与时光链本身无关） */
+    HTTP_BODY_LIMIT: '50mb',
+    UPLOAD_LIMIT: 1048576, // 单位: Byte。
+    SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
+    // todo: 改名为 DB_*
+    LIMIT_DEFAULT: 12,
+    LIMIT_MAX: 1000,
+    MARK_DELETED: 'MARK_DELETED',
+    MARK_LINKED: 'MARK_LINKED', // 建立了关系（care, know, join 等）
+    MARK_RELEASED: 'MARK_RELEASED', // 解除了关系（care, know, join 等）  
+
 }
