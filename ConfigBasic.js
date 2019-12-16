@@ -13,7 +13,7 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
 
   ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
   ETH_TOKEN_INFO: {
-    USDT: { // created by myself in Ethereum's testnet 'ropsten'
+    USDT_ON_ETH: { // created by myself in Ethereum's testnet 'ropsten'
       contract: '0xb16815dbeceb459d9e33b8bba45ed717c479ea1c',
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
@@ -34,9 +34,9 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     sslCA: '', // ssl ca file,
 
     ETH_TOKEN_INFO: {
-      USDT: { contract: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
-      EURT: { contract: '0xabdf147870235fcfc34153828c769a70b3fae01f' },
-      CNHT: { contract: '0x6e109e9dd7fa1a58bc3eff667e8e41fc3cc07aef' },
+      USDT_ON_ETH: { contract: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
+      EURT_ON_ETH: { contract: '0xabdf147870235fcfc34153828c769a70b3fae01f' },
+      CNHT_ON_ETH: { contract: '0x6e109e9dd7fa1a58bc3eff667e8e41fc3cc07aef' },
     },
   },
 
