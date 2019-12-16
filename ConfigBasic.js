@@ -11,8 +11,9 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   dbType: 'sqlite',
   dbName: 'data.sqlite/log.sqlite',
 
+  ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
   ETH_TOKEN_INFO: {
-    USDT: { 
+    USDT: { // created by myself in Ethereum's testnet 'ropsten'
       contract: '0xb16815dbeceb459d9e33b8bba45ed717c479ea1c',
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
