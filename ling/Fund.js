@@ -67,7 +67,12 @@ DAD.api.getMyTokenBalance = async function (option){
 
 DAD.api.getMyTokenBill = async function (option){
   let onlineUser = await wo.User.getOne({User: {uuid:option._passtokenSource.uuid}})
-  let address = acc1 || onlineUser.coinAddress[option.coinType].address
+  let address 
+  switch (option.coinType) {
+    case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
+    case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address
+  }
+  address = acc1
   let tokenContract = wo.Config.ETH_TOKEN_INFO.USDT.contract || wo.Config.ETH_TOKEN_INFO[option.coinType].contract
   // 查询以太币交易    var txlist = await wo.EtherscanApi.account.txlist(address, startBlock, endBlock, pageNumber, pageSize, sort)
   var txlist = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
