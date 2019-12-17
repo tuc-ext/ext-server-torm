@@ -1,7 +1,5 @@
 'use strict'
 const Ling = require('so.ling')
-const ticCrypto = require('tic.crypto')
-const Webtoken = require('so.base/Webtoken.js')
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function Fund (prop) { // 构建类
@@ -18,6 +16,8 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuidUser: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
   usdtTransactionDict: { default: {}, sqlite: 'TEXT' },
+  usdtDepositSum: { default: 0, sqlite: 'Number' },
+  logDepositSum: { default: 0, sqlite: 'Number' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -88,7 +88,7 @@ DAD.api.getMyTokenBill = async function (option){
   console.log(`tx list = ${JSON.stringify(txlist)}`)
   if (txlist && txlist.status==='1') {
     let hasNewTransaction = false
-    let { usdtTransactionDict } = await DAD.getOne({Fund: { uuidUser: option._passtokenSource.uuid}}) // 读取已有的该用户的交易列表
+    let { logDepositSum, usdtDepositSum, usdtTransactionDict } = await DAD.getOne({Fund: { uuidUser: option._passtokenSource.uuid}}) // 读取已有的该用户的交易列表
       || await DAD.addOne({Fund:{uuidUser: option._passtokenSource.uuid}})
     for (let tx of txlist.result){
       if (tx.from===address) {
@@ -96,17 +96,23 @@ DAD.api.getMyTokenBill = async function (option){
       }else if (tx.to===address) {
         console.log(`收到 ${tx.value/Math.pow(10, tx.tokenDecimal)} 从 ${tx.from}`)
         console.log('存入数据库...')
-        if (!usdtTransactionDict[tx.hash]){
+        if (!usdtTransactionDict[tx.hash]){ // 是新的交易
           tx.whenImported = new Date() // 保留所有原始 tx 数据，再补充fiv需要的信息
+          tx.amount = tx.value/Math.pow(10, tx.tokenDecimal)
+          tx.exchangeRate = wo.Config.EXCHANGE_RATE.USDT2LOG
+          usdtDepositSum += tx.amount
+          logDepositSum += (tx.amount*wo.Config.EXCHANGE_RATE.USDT2LOG)
           usdtTransactionDict[tx.hash] = tx
           hasNewTransaction = true
         }
       }
     }
-    hasNewTransaction ? DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, usdtTransactionDict }}) : ''
+    hasNewTransaction ? DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, logDepositSum, usdtDepositSum, usdtTransactionDict }}) : ''
     return { 
       _state: 'SMOOTH', 
       usdtTransactionDict,
+      usdtDepositSum,
+      logDepositSum,
     }
   }
   return { 

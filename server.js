@@ -114,9 +114,10 @@ async function initSingle () {
   let ethNetType='ropsten', timeout=5000
   wo.EtherscanApi = require('etherscan-api').init('胡编乱造的apikey也可以用', ethNetType, timeout) // 测试发现，1）随便编个字符串都可以作为apikey。2）只有访问主网的apikey使用才会被etherscan记录。
 
+  wo.System = require('./System.js')
+
   mylog.info('Loading classes and Creating tables......')
   wo.Ling = require('so.ling')
-
   wo.Fund = await require('./ling/Fund.js')._init(wo.DataStore)
   wo.User = await require('./ling/User.js')._init(wo.DataStore)
 
@@ -179,7 +180,7 @@ function runServer () { // 配置并启动 Web 服务
     // reply.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     reply.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    let { _who, _act, _api } = ask.params
+    let { _api, _who, _act } = ask.params
 
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {

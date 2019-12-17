@@ -18,6 +18,9 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
   },
+  EXCHANGE_RATE: { 
+    USDT2LOG: 33,
+  },
 
   production: {
     protocol: 'https',
