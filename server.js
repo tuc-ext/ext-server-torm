@@ -111,8 +111,7 @@ async function initSingle () {
   wo.DataStore = await require('so.data')(wo.Config.dbType)._init(wo.Config.dbName)
 //  wo.DataCache = await require('./modules/util/redis.js')({ db: wo.Config.redisIndex })
 
-  let ethNetType='ropsten', timeout=5000
-  wo.EtherscanApi = require('etherscan-api').init('胡编乱造的apikey也可以用', ethNetType, timeout) // 测试发现，1）随便编个字符串都可以作为apikey。2）只有访问主网的apikey使用才会被etherscan记录。
+  wo.EtherscanApi = require('etherscan-api').init(wo.Config.ETHERSCAN_APIKEY, wo.Config.ETH_NETTYPE, 5000)
 
   wo.System = require('./System.js')
 

@@ -11,7 +11,8 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   dbType: 'sqlite',
   dbName: 'data.sqlite/log.sqlite',
 
-  ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
+  ETHERSCAN_APIKEY: '测试发现，其实胡编的也可以用，不管对主网还是测试网。但只有访问主网的apikey使用才会被etherscan记录。',
+  ETH_NETTYPE: 'ropsten',
   ETH_TOKEN_INFO: {
     USDT_ON_ETH: { // created by myself in Ethereum's testnet 'ropsten'
       contract: '0xb16815dbeceb459d9e33b8bba45ed717c479ea1c',
@@ -39,6 +40,8 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     sslCert: '/etc/letsencrypt/live/server.log.yuanjin.net/fullchain.pem', // ssl cert file,
     sslCA: '', // ssl ca file,
 
+    ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
+    ETH_NETTYPE: undefined,
     ETH_TOKEN_INFO: {
       USDT_ON_ETH: { contract: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
       EURT_ON_ETH: { contract: '0xabdf147870235fcfc34153828c769a70b3fae01f' },
