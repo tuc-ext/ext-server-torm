@@ -99,9 +99,9 @@ DAD.api.getMyTokenBill = async function (option){
         if (!usdtTransactionDict[tx.hash]){ // 是新的交易
           tx.whenImported = new Date() // 保留所有原始 tx 数据，再补充fiv需要的信息
           tx.amount = tx.value/Math.pow(10, tx.tokenDecimal)
-          tx.exchangeRate = wo.Config.EXCHANGE_RATE.USDT2LOG
+          tx.exchangeRate = wo.Config.coinSet.USDT_ON_ETH.exchange
           usdtDepositSum += tx.amount
-          logDepositSum += (tx.amount*wo.Config.EXCHANGE_RATE.USDT2LOG)
+          logDepositSum += (tx.amount*wo.Config.coinSet.USDT_ON_ETH.exchange)
           usdtTransactionDict[tx.hash] = tx
           hasNewTransaction = true
         }

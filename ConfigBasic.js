@@ -18,8 +18,11 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
   },
-  EXCHANGE_RATE: { 
-    USDT2LOG: 33,
+  coinSet: {
+    USDT_ON_ETH: { name: 'USDT(ERC20)', exchange: 100 },
+//      USDT_ON_BTC: 'USDT(BTC)',
+    BTC: { name: 'BTC', exchange: 939 },
+    ETH: { name: 'ETH', exchange: 15 },
   },
 
   production: {

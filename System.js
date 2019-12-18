@@ -21,6 +21,7 @@ DAD.api={}
 
 DAD.api.getConfiguration=function(){
   return { 
-    EXCHANGE_RATE: wo.Config.EXCHANGE_RATE
+//    EXCHANGE_RATE: wo.Config.EXCHANGE_RATE,
+    coinSet: wo.Config.coinSet,
   }
 }
