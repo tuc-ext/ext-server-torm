@@ -15,6 +15,18 @@ MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  name: { default: undefined, sqlite: 'TEXT' },
+  desc: { default: undefined, sqlite: 'TEXT' },
+  amount: { default: 1, sqlite: 'INTEGER' },
+  profitRate: { default: 0.05, sqlite: 'REAL' },
+  createTime: { default: undefined, sqlite: 'TEXT' },
+  startTime: { default: undefined, sqlite: 'TEXT' },
+  startPrice: { default: undefined, sqlite: 'REAL' },
+  dealPrice: { default: undefined, sqlite: 'REAL' },
+  dealOwner: { default: undefined, sqlite: 'TEXT' },
+  dealTime: { default: undefined, sqlite: 'TEXT' }, // 交易达成的时间
+  releaseTime: { default: undefined, sqlite: 'TEXT' },
+  releasePrice: { default: undefined, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -29,3 +41,10 @@ const my={}
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
 
+DAD.api.getPlaceList=async function(option){
+  return [
+    {name: '慕尼黑', price: '50', dueDate: '2019-06-06 18:00', profit: '15'},
+    {name: '新加坡', price: '30', dueDate: '2019-06-07 1:00', profit: '5'}
+  ]
+  return await DAD.getAll(option)
+}

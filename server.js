@@ -120,6 +120,7 @@ async function initSingle () {
   wo.Ling = require('so.ling')
   wo.Fund = await require('./ling/Fund.js')._init(wo.DataStore)
   wo.User = await require('./ling/User.js')._init(wo.DataStore)
+  wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
 
   return wo
 }
