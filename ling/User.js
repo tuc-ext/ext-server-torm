@@ -41,7 +41,7 @@ const my={}
 DAD.api=DAD.api1={}
 
 DAD.api.identify = DAD.api1.identify = async function(option){
-  if (option && Internation.validatePhone({phone:option.phone})) {
+  if (option.phone && Internation.validatePhone({phone:option.phone})) {
     let user = await DAD.getOne({User: {phone:option.phone}})
     let _state, uuid
     if (user) {
@@ -51,7 +51,7 @@ DAD.api.identify = DAD.api1.identify = async function(option){
       uuid = Uuid.v4(),
       _state = 'NEW_USER'
     }
-    console.log(`>>>>>>>>>> identify::::::: uuid = ${uuid}`)
+    mylog.info(`>>>>>>>>>> identify::::::: uuid = ${uuid}`)
     return {
       _state,
       uuid,
@@ -68,11 +68,11 @@ DAD.api.identify = DAD.api1.identify = async function(option){
 DAD.api.sendPasscode = async function(option){
   let _state
   let passcode = ticCrypto.randomNumber({length:6})
-  console.log('passcode = '+passcode)
+  mylog.info('passcode = '+passcode)
   let passcodeHash = ticCrypto.hash(passcode+option._passtokenSource.uuid)
-  console.log('uuid = '+option._passtokenSource.uuid)
-  console.log('passcodeHash = '+passcodeHash)
-  console.log('phone = '+option._passtokenSource.phone)
+  mylog.info('uuid = '+option._passtokenSource.uuid)
+  mylog.info('passcodeHash = '+passcodeHash)
+  mylog.info('phone = '+option._passtokenSource.phone)
   let passcodeSentAt = undefined
   let passcodeExpireAt = undefined
   // send SMS
@@ -117,7 +117,7 @@ DAD.api.sendPasscode = async function(option){
 
 DAD.api.verifyPasscode = async function(option){
   let _state
-  if (option && option.passcode && option._passtokenSource && new Date() < new Date(option._passtokenSource.passcodeExpireAt)) {
+  if (option.passcode && option._passtokenSource && new Date() < new Date(option._passtokenSource.passcodeExpireAt)) {
     if (ticCrypto.hash(option.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
       _state = 'VERIFY_SUCCESS'
     }else{
@@ -139,8 +139,8 @@ DAD.api.verifyPasscode = async function(option){
 }
 
 DAD.api.register = DAD.api1.register = async function(option){
-  console.log(`${__filename} >>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
-  console.log(`${__filename} >>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
+  mylog.info(`${__filename} >>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  mylog.info(`${__filename} >>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
   if (option._passtokenSource 
     && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
@@ -204,9 +204,9 @@ DAD.api.register = DAD.api1.register = async function(option){
 }
 
 DAD.api.login = DAD.api1.login = async function(option){
-  console.log(`>>>>>>>>>> register::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  mylog.info(`>>>>>>>>>> register::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
 
-  if (option && option.passwordClient
+  if (option.passwordClient
     && option._passtokenSource && option._passtokenSource.phone && option._passtokenSource.uuid) {
     let passwordServer = ticCrypto.hash(option.passwordClient+option._passtokenSource.uuid)
     let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})

@@ -164,27 +164,28 @@ function runServer () { // 配置并启动 Web 服务
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    var option = { data: {}, _req: ask, _res: reply }
+    var option = { _passtokenSource: webToken.verifyToken(ask.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in ask.query) { // GET 方法传来的参数
       option[key] = wo.Ling.json2obj(ask.query[key])
     }
     for (let key in ask.body) { // POST 方法传来的参数
       option[key] = ask.headers["content-type"]==='application/json' ? ask.body[key] : wo.Ling.json2obj(ask.body[key])
     }
+    let { _api, _who, _act } = ask.params
+    mylog.info(`[ request ${_api}/${_who}/${_act} indata ] `); console.log(option)
 
-    /// //////// authentication ///////////////////
-    option._passtokenSource = webToken.verifyToken(ask.headers._passtoken, wo.Config.tokenKey) || {}
+    option._req = ask
+    option._res = reply
 
     reply.setHeader('charset', 'utf-8')
     // reply.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
     // reply.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     reply.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    let { _api, _who, _act } = ask.params
-
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var result = await wo[_who][_api][_act](option)
+        mylog.info(`[ response ${_api}/${_who}/${_act} outdata ] `); console.log(result)
         reply.json(result) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } else {
         reply.json({_state:'URL_MALFORMED'})
