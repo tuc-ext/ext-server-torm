@@ -51,7 +51,7 @@ DAD.api.identify = DAD.api1.identify = async function(option){
       uuid = Uuid.v4(),
       _state = 'NEW_USER'
     }
-    mylog.info(`>>>>>>>>>> identify::::::: uuid = ${uuid}`)
+    mylog.info(`identify::::::: uuid = ${uuid}`)
     return {
       _state,
       uuid,
@@ -139,8 +139,8 @@ DAD.api.verifyPasscode = async function(option){
 }
 
 DAD.api.register = DAD.api1.register = async function(option){
-  mylog.info(`${__filename} >>>>>>>>>> register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
-  mylog.info(`${__filename} >>>>>>>>>> register::::::: option.passwordClient = ${option.passwordClient}`)
+  mylog.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  mylog.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
   if (option._passtokenSource 
     && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
@@ -204,7 +204,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 }
 
 DAD.api.login = DAD.api1.login = async function(option){
-  mylog.info(`>>>>>>>>>> register::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  mylog.info(`login ::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
 
   if (option.passwordClient
     && option._passtokenSource && option._passtokenSource.phone && option._passtokenSource.uuid) {

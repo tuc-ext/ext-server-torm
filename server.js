@@ -172,7 +172,7 @@ function runServer () { // 配置并启动 Web 服务
       option[key] = ask.headers["content-type"]==='application/json' ? ask.body[key] : wo.Ling.json2obj(ask.body[key])
     }
     let { _api, _who, _act } = ask.params
-    mylog.info(`[ request ${_api}/${_who}/${_act} indata ] `); console.log(option)
+    mylog.info(`<<< request ${_api}/${_who}/${_act} indata: `); console.log(option)
 
     option._req = ask
     option._res = reply
@@ -185,7 +185,7 @@ function runServer () { // 配置并启动 Web 服务
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var result = await wo[_who][_api][_act](option)
-        mylog.info(`[ response ${_api}/${_who}/${_act} outdata ] `); console.log(result)
+        mylog.info(`>>> response ${_api}/${_who}/${_act} outdata: `); console.log(result)
         reply.json(result) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } else {
         reply.json({_state:'URL_MALFORMED'})

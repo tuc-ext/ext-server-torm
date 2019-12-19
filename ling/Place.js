@@ -43,8 +43,8 @@ DAD.api=DAD.api1={}
 
 DAD.api.getPlaceList=async function(option){
   return [
-    {name: '慕尼黑', price: '50', dueDate: '2019-06-06 18:00', profit: '15'},
-    {name: '新加坡', price: '30', dueDate: '2019-06-07 1:00', profit: '5'}
+    {uuid: 'sfsafas', name: '慕尼黑', price: '50', releaseTime: '2019-12-19 18:00', profit: '15'},
+    {uuid: 'sfasdas', name: '新加坡', price: '30', releaseTime: '2019-12-19 7:35', profit: '5'}
   ]
   return await DAD.getAll(option)
 }
