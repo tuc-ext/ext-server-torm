@@ -160,44 +160,50 @@ function runServer () { // 配置并启动 Web 服务
 
   /** * 路由中间件 ***/
 
-  server.all('/:_api/:_who/:_act', async function (ask, reply) { // API 格式：http://address:port/api/Block/getBlockList
+  server.all('/:_api/:_who/:_act', async function (req, res) { // API 格式：http://address:port/api/Block/getBlockList
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    var option = { _passtokenSource: webToken.verifyToken(ask.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
-    for (let key in ask.query) { // GET 方法传来的参数
-      option[key] = wo.Ling.json2obj(ask.query[key])
+    var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    for (let key in req.query) { // GET 方法传来的参数
+      option[key] = wo.Ling.json2obj(req.query[key])
     }
-    for (let key in ask.body) { // POST 方法传来的参数
-      option[key] = ask.headers["content-type"]==='application/json' ? ask.body[key] : wo.Ling.json2obj(ask.body[key])
+    for (let key in req.body) { // POST 方法传来的参数
+      option[key] = req.headers["content-type"]==='application/json' ? req.body[key] : wo.Ling.json2obj(req.body[key])
     }
-    let { _api, _who, _act } = ask.params
-    mylog.info(`<<< request ${_api}/${_who}/${_act} indata: `); console.log(option)
+    let { _api, _who, _act } = req.params
+    console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
+    console.info(`[ Request ${_api}/${_who}/${_act} indata ] `)
+    console.log(option)
+    console.log('↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑')
 
-    option._req = ask
-    option._res = reply
+    option._req = req
+    option._res = res
 
-    reply.setHeader('charset', 'utf-8')
-    // reply.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
-    // reply.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
-    reply.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
+    res.setHeader('charset', 'utf-8')
+    // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
+    // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
-        var result = await wo[_who][_api][_act](option)
-        mylog.info(`>>> response ${_api}/${_who}/${_act} outdata: `); console.log(result)
-        reply.json(result) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
+        var outdata = await wo[_who][_api][_act](option)
+        console.info(`↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓`)
+        console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
+        console.log(outdata)
+        console.log('⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️')
+        res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } else {
-        reply.json({_state:'URL_MALFORMED'})
+        res.json({_state:'URL_MALFORMED'})
       }
     } catch (exception) {
       mylog.info(exception)
-      reply.json({_state:'EXECUTION_ERROR'})
+      res.json({_state:'EXECUTION_ERROR'})
     }
   })
 
-  server.all('*', function (ask, reply) { /* 错误的API调用进入这里。 */
-    reply.json(null)
+  server.all('*', function (req, res) { /* 错误的API调用进入这里。 */
+    res.json(null)
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
@@ -234,8 +240,8 @@ function runServer () { // 配置并启动 Web 服务
         else mylog.info(`Server listening on [${wo.Config.protocol}] http=>https://${wo.Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
       })
     } else {
-      require('http').createServer(server.all('*', function (ask, reply) {
-        reply.redirect(`https://${wo.Config.host}:${portHttps}`)
+      require('http').createServer(server.all('*', function (req, res) {
+        res.redirect(`https://${wo.Config.host}:${portHttps}`)
       })).listen(portHttp, function(err) {
         if (err) mylog.info(err)
         else mylog.info(`Server listening on [${wo.Config.protocol}] http://${wo.Config.host}:${portHttp} for ${server.settings.env} environment`)  

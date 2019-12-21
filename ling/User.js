@@ -24,6 +24,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   passwordServer: { default: undefined, sqlite: 'TEXT' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
+  balance: { default: 0, sqlite: 'REAL' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
   coinAddress: { default: {}, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
