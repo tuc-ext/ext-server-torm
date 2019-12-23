@@ -1,5 +1,6 @@
 'use strict'
 const Ling = require('so.ling')
+const DAY_MILLIS = 24*60*60*1000
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function Place(prop) { // 构建类
@@ -23,10 +24,12 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   createTime: { default: undefined, sqlite: 'TEXT' },
   startTime: { default: undefined, sqlite: 'TEXT' },
   startPrice: { default: undefined, sqlite: 'REAL' },
+  buyTime: { default: undefined, sqlite: 'INTEGER' }, // 交易达成的时间
+  buyTimeHourly: { default: undefined, sqlite: 'INTEGER'},
   buyPrice: { default: undefined, sqlite: 'REAL' },
-  buyTime: { default: undefined, sqlite: 'TEXT' }, // 交易达成的时间
   sellTime: { default: undefined, sqlite: 'TEXT' },
-  sellPrice: { default: undefined, sqlite: 'TEXT' },
+  sellTimeHourly: { default: undefined, sqlite: 'INTEGER'},
+  sellPrice: { default: undefined, sqlite: 'INTEGER' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -42,12 +45,38 @@ const my = {}
 DAD.api = DAD.api1 = {}
 
 DAD.api.getPlaceList = async function (option) {
-  if (wo.Config.env === 'production') {
+  if (true) { // wo.Config.env === 'production') {
     return await DAD.getAll(option)
   }else {
     return [
-      { aiid:1, uuid:'sfsafas', name: '慕尼黑', profitRate:'0.05', buyPrice:50, buyTime:'2019-12-30T16:37:08.235Z', sellTime:'2019-12-31T16:37:08.235Z', sellPrice:'52.5' },
-      { aiid:2, uuid:'sfasdas', name: '新加坡', profitRate:'0.15', buyPrice:100, buyTime:'2019-12-19T08:25:35.546Z', sellTime:'2019-12-20T08:25:35.546Z', sellPrice:'115' }, 
+      { aiid:1, uuid:'sfsafas', name: '慕尼黑', profitRate:'0.05', 
+        buyTime:new Date('2019-12-30T16:37:08.235Z').valueOf(), 
+        buyTimeHourly:new Date('2019-12-30T16:37:08.235Z').valueOf() % DAY_MILLIS,
+        buyPrice:50, 
+        sellTime:new Date('2019-12-31T16:37:08.235Z').valueOf(), 
+        sellTimeHourly:new Date('2019-12-31T16:37:08.235Z').valueOf() % DAY_MILLIS, 
+        sellPrice:'52.5' },
+      { aiid:2, uuid:'sfasdas', name: '新加坡', profitRate:'0.15', 
+        buyTime:new Date('2019-12-19T08:25:35.546Z').valueOf(), 
+        buyTimeHourly:new Date('2019-12-19T08:25:35.546Z').valueOf() % DAY_MILLIS, 
+        buyPrice:100, 
+        sellTime:new Date('2019-12-20T08:25:35.546Z').valueOf(), 
+        sellTimeHourly:new Date('2019-12-20T08:25:35.546Z').valueOf() % DAY_MILLIS, 
+        sellPrice:'115' 
+      }, 
+    ]  
+  }
+}
+
+DAD.api.getMyPlaceList = async function(option){
+  if (true) { // wo.Config.env === 'production') {
+    option.Place = option.Place || {}
+    option.Place.uuidOwner=option._passtokenSource.uuid
+    return await DAD.getAll(option)
+  }else {
+    return [
+      { aiid:1, uuid:'sfsafas', name: '慕尼黑', profitRate:'0.05', buyPrice:50, buyTime:new Date('2019-12-30T16:37:08.235Z').valueOf(), sellTime:new Date('2019-12-31T16:37:08.235Z').valueOf(), sellPrice:'52.5' },
+      { aiid:2, uuid:'sfasdas', name: '新加坡', profitRate:'0.15', buyPrice:100, buyTime:new Date('2019-12-19T08:25:35.546Z').valueOf(), sellTime:new Date('2019-12-20T08:25:35.546Z').valueOf(), sellPrice:'115' }, 
     ]  
   }
 }
@@ -55,13 +84,16 @@ DAD.api.getPlaceList = async function (option) {
 DAD.api.payToBuyEstate = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   let estate = await DAD.getOne({Place:{uuid:option.Place.uuid}})
-  if (buyer.balance >= estate.sellPrice){
+  if ( estate.sellTime < Date.now() // 再次确认，尚未被买走
+    && buyer.balance >= estate.sellPrice){
     buyer.balance -= estate.sellPrice
     estate.uuidOwner = buyer.uuid
     estate.buyPrice = estate.sellPrice
     estate.sellPrice = estate.buyPrice*(1+estate.profitRate)
-    estate.buyTime = new Date()
-    estate.sellTime = new Date(estate.buyTime.valueOf() + 24*60*60*1000)
+    estate.buyTime = Date.now()
+    estate.buyTimeHourly = estate.buyTime % DAY_MILLIS
+    estate.sellTime = estate.buyTime + DAY_MILLIS
+    estate.sellTimeHourly = estate.sellTimeHourly % DAY_MILLIS
     await estate.setMe()
     await buyer.setMe()
     return {
