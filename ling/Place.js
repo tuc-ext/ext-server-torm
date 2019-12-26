@@ -94,6 +94,15 @@ DAD.api.payToBuyEstate = async function(option){
     estate.buyTimeHourly = estate.buyTime % DAY_MILLIS
     estate.sellTime = estate.buyTime + DAY_MILLIS
     estate.sellTimeHourly = estate.sellTime % DAY_MILLIS
+    let transaction = new wo.Trade({
+      uuidEstate: estate.uuid,
+      uuidBuyer: buyer.uuid,
+      uuidSeller: estate.uuidOwner,
+      dealPrice: estate.sellPrice,
+      dealTime: estate.buyTime
+    })
+    transaction.uuidEstate = estate.uuid
+
     if (await estate.setMe() && await buyer.setMe()){
       return {
         _state: 'TRADE_SUCCESS',

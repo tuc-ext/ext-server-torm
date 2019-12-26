@@ -120,6 +120,7 @@ async function initSingle () {
   wo.Fund = await require('./ling/Fund.js')._init(wo.DataStore)
   wo.User = await require('./ling/User.js')._init(wo.DataStore)
   wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
+  wo.Trade = await require('./ling/Trade.js')._init(wo.DataStore)
 
   return wo
 }
@@ -175,7 +176,7 @@ function runServer () { // 配置并启动 Web 服务
     console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
     console.info(`[ Request ${_api}/${_who}/${_act} indata ] `)
     console.log(option)
-    console.log('↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑')
+    console.log('👆 👆 👆 👆 👆 👆 👆 👆')
 
     option._req = req
     option._res = res
@@ -188,7 +189,7 @@ function runServer () { // 配置并启动 Web 服务
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var outdata = await wo[_who][_api][_act](option)
-        console.info(`↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓`)
+        console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
         console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
         console.log(outdata)
         console.log('⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️')
