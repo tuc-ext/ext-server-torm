@@ -16,7 +16,7 @@ MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
-  uuidOwner: {default: undefined, sqlite: 'TEXT UNIQUE' },
+  uuidOwner: {default: undefined, sqlite: 'TEXT' },
   name: { default: undefined, sqlite: 'TEXT' },
   desc: { default: undefined, sqlite: 'TEXT' },
   amount: { default: 1, sqlite: 'INTEGER' },
@@ -27,9 +27,9 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   buyTime: { default: undefined, sqlite: 'INTEGER' }, // 交易达成的时间
   buyTimeHourly: { default: undefined, sqlite: 'INTEGER'},
   buyPrice: { default: undefined, sqlite: 'REAL' },
-  sellTime: { default: undefined, sqlite: 'TEXT' },
+  sellTime: { default: undefined, sqlite: 'INTEGER' },
   sellTimeHourly: { default: undefined, sqlite: 'INTEGER'},
-  sellPrice: { default: undefined, sqlite: 'INTEGER' },
+  sellPrice: { default: undefined, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -93,12 +93,15 @@ DAD.api.payToBuyEstate = async function(option){
     estate.buyTime = Date.now()
     estate.buyTimeHourly = estate.buyTime % DAY_MILLIS
     estate.sellTime = estate.buyTime + DAY_MILLIS
-    estate.sellTimeHourly = estate.sellTimeHourly % DAY_MILLIS
-    await estate.setMe()
-    await buyer.setMe()
-    return {
-      _state: 'TRADE_SUCCESS',
-      estate
+    estate.sellTimeHourly = estate.sellTime % DAY_MILLIS
+    if (await estate.setMe() && await buyer.setMe()){
+      return {
+        _state: 'TRADE_SUCCESS',
+        estate
+      }  
     }
+  }
+  return { 
+    _state: 'TRADE_FAILED' 
   }
 }
