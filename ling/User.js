@@ -204,20 +204,42 @@ DAD.api.register = DAD.api1.register = async function(option){
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.login = DAD.api1.login = async function(option){
-  mylog.info(`login ::::::: _passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+DAD.api.autologin = async function(option){
+  if (option._passtokenSource && option._passtokenSource.uuid && option._passtokenSource.passwordClient){
+    let passwordServer = ticCrypto.hash(option._passtokenSource.passwordClient+option._passtokenSource.uuid)
+    let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
+    if (onlineUser) {
+      if (onlineUser.passwordServer === passwordServer 
+        && onlineUser.phone === option._passtokenSource.phone){
+        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: onlineUser }
+      }else{
+        return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
+      }
+    }else {
+      return { _state: 'AUTOLOGIN_FAILED_USER_NOT_EXIST'}
+    }
+  }
+  return { _state: 'INPUT_MALFORMED' }
+}
 
-  if (option.passwordClient
-    && option._passtokenSource && option._passtokenSource.phone && option._passtokenSource.uuid) {
+DAD.api.login = DAD.api1.login = async function(option){
+  if (option.passwordClient && option.phone 
+    && option._passtokenSource && option._passtokenSource.uuid) {
     let passwordServer = ticCrypto.hash(option.passwordClient+option._passtokenSource.uuid)
     let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
     if (onlineUser) {
-      if (onlineUser.passwordServer === passwordServer) {
+      if (onlineUser.passwordServer === passwordServer
+        && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
           onlineUser,
           _passtoken: Webtoken.createToken({
-            uuid: option._passtokenSource.uuid
+            uuid: option._passtokenSource.uuid,
+            phone: option.phone,
+            passwordClient: option.passwordClient,
+            onlineState: 'ONLINE',
+            onlineSince: new Date,
+            onlineExpireAt: new Date(Date.now()+30*24*60*60*1000)
           })
         }
       }else {
