@@ -81,32 +81,31 @@ DAD.api.getMyPlaceList = async function(option){
   }
 }
 
-DAD.api.payToBuyEstate = async function(option){
+DAD.api.payToBuyPlace = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
-  let estate = await DAD.getOne({Place:{uuid:option.Place.uuid}})
-  if ( estate.sellTime < Date.now() // 再次确认，尚未被买走
-    && buyer.balance >= estate.sellPrice){
-    buyer.balance -= estate.sellPrice
-    estate.uuidOwner = buyer.uuid
-    estate.buyPrice = estate.sellPrice
-    estate.sellPrice = estate.buyPrice*(1+estate.profitRate)
-    estate.buyTime = Date.now()
-    estate.buyTimeHourly = estate.buyTime % DAY_MILLIS
-    estate.sellTime = estate.buyTime + DAY_MILLIS
-    estate.sellTimeHourly = estate.sellTime % DAY_MILLIS
+  let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
+  if ( place.sellTime < Date.now() // 再次确认，尚未被买走
+    && buyer.balance >= place.sellPrice){
+    buyer.balance -= place.sellPrice
+    place.uuidOwner = buyer.uuid
+    place.buyPrice = place.sellPrice
+    place.sellPrice = place.buyPrice*(1+place.profitRate)
+    place.buyTime = Date.now()
+    place.buyTimeHourly = place.buyTime % DAY_MILLIS
+    place.sellTime = place.buyTime + DAY_MILLIS
+    place.sellTimeHourly = place.sellTime % DAY_MILLIS
     let transaction = new wo.Trade({
-      uuidEstate: estate.uuid,
+      uuidPlace: place.uuid,
       uuidBuyer: buyer.uuid,
-      uuidSeller: estate.uuidOwner,
-      dealPrice: estate.sellPrice,
-      dealTime: estate.buyTime
+      uuidSeller: place.uuidOwner,
+      dealPrice: place.sellPrice,
+      dealTime: place.buyTime
     })
-    transaction.uuidEstate = estate.uuid
 
-    if (await estate.setMe() && await buyer.setMe()){
+    if (await place.setMe() && await buyer.setMe()){
       return {
         _state: 'TRADE_SUCCESS',
-        estate
+        place
       }  
     }
   }
