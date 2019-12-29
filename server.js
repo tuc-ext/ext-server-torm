@@ -166,10 +166,10 @@ function runServer () { // 配置并启动 Web 服务
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
     var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
-    for (let key in req.query) { // GET 方法传来的参数
+    for (let key in req.query) { // GET 方法传来的参数. 
       option[key] = wo.Ling.json2obj(req.query[key])
     }
-    for (let key in req.body) { // POST 方法传来的参数
+    for (let key in req.body) { // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
       option[key] = req.headers["content-type"]==='application/json' ? req.body[key] : wo.Ling.json2obj(req.body[key])
     }
     let { _api, _who, _act } = req.params

@@ -6,6 +6,29 @@ const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
 
+// https://cnodejs.org/topic/5721cd79fa48138c41110f05
+const Multer=require('multer') // https://www.npmjs.com/package/multer
+//const FileSystem=require('fs')
+const Bluebird=require('bluebird') // http://bluebirdjs.com/
+//const PromisedFS=Bluebird.promisifyAll(FileSystem)  // 或者：https://www.npmjs.com/package/fs-bluebird
+const Uploader = Bluebird.promisify(Multer({
+  //dest:'./File/', // 这样，不能自定义文件名。
+  storage:Multer.diskStorage({
+    destination: function (req, file, cb) { // 如果直接提供字符串，Multer会负责创建该目录。如果提供函数，你要负责确保该目录存在。
+      var folder='./' // 目录是相对于本应用的入口js的，即相对于 server.js 的位置。
+//      try{ FileSystem.accessSync(folder) }catch(e){ FileSystem.mkdirSync(folder)  }  // 我已确保它存在。或者用 exists 方法。
+      cb(null, folder)
+    },
+    filename: function (req, file, cb) { // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
+      var ext=file.originalname.replace(/^.*\.(\w+)$/,'$1')
+      cb(null, req.body.usage+'-'+Date.now()+'.'+ext) // 这时还没有用 json2obj 和 decodeURIComponent 过滤，所以要专门过滤一次。
+    }
+  }),
+  //fileFilter:function(req, file, cb) {},
+  //limits:{fileSize:10485760}
+}).single('portrait'))
+
+
 /****************** 类和原型 *****************/
 const DAD = module.exports = function User (prop) { // 构建类
   this._class = this.constructor.name
@@ -40,6 +63,15 @@ const my={}
 
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
+
+DAD.api.changePortrait = async function (option) {
+  await Uploader(option._req, option._res)
+  console.log(option._req.body.whoami)
+  console.log(typeof option._req.body.whoami)
+  console.log(JSON.stringify(option._req.body)) // 对 multipart 的 HTTP Post，bodyParser过滤后的 req.body 是空的，要被 multer 过滤后才出现 req.body
+  console.log(option._req.file)
+  return { _state: 'SUCCESS'}
+}
 
 DAD.api.identify = DAD.api1.identify = async function(option){
   if (option.phone && Internation.validatePhone({phone:option.phone})) {
