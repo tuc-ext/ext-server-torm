@@ -151,12 +151,30 @@ function runServer () { // 配置并启动 Web 服务
 
   server.use(require('morgan')(server.get('env') === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/data.log', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
-  server.use(require('cookie-parser')())
-  server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   server.use(require('cors')())
   server.use(require('compression')())
+  server.use(require('cookie-parser')())
+  server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
+  const Multer=require('multer')
+  server.use(Multer({
+    //dest:'./File/', // 这样，不能自定义文件名。
+    storage:Multer.diskStorage({
+      destination: function (req, file, cb) { // 如果直接提供字符串，Multer会负责创建该目录。如果提供函数，你要负责确保该目录存在。
+        let folder = './upload/' // 目录是相对于本应用的入口js的，即相对于 server.js 的位置。
+        cb(null, folder)
+      },
+      filename: function (req, file, cb) { // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
+        let ext = file.originalname.replace(/^.*\.(\w+)$/,'$1')
+        let _passtokenSource = webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {}
+        let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
+        cb(null, filename)
+      }
+    }),
+    //fileFilter:function(req, file, cb) {},
+    limits:{fileSize:10485760}
+  }).single('file'))
 
-  server.use(require('express').static(path.join(__dirname, '../log.admin/dist'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
+  server.use(require('express').static(path.join(__dirname, 'upload'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
   // server.use(require('serve-favicon')(path.join(__dirname, 'public', 'favicon.ico')))
 
   /** * 路由中间件 ***/

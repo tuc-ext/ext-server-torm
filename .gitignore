@@ -12,3 +12,4 @@ ConfigSecret.js
 .idea
 *.db
 *.rdb
+upload/*/*_*
