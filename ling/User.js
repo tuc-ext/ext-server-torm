@@ -25,6 +25,9 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
   balance: { default: 0, sqlite: 'REAL' },
+  kyc: { default: {}, sqlite:'TEXT'},
+  idCardCover: { default: {}, sqlite:'TEXT' },
+  idCardBack: { default: {}, sqlite:'TEXT' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
   coinAddress: { default: {}, sqlite: 'TEXT' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
@@ -53,6 +56,32 @@ DAD.api.changePortrait = async function (option) {
   }else{
     return { _state: 'USER_NOT_ONLINE' }
   }
+}
+
+DAD.api.uploadIdCard = async function(option){
+  if (option._passtokenSource && option._passtokenSource.uuid) {
+    let file = option._req.file
+    if (file && /^image\//.test(file.mimetype)) {
+      let obj
+      if (option.side==='Cover') {
+        obj = {idCardCover: option._req.file.filename}
+      }else if (option.side==='Back') {
+        obj = {idCardBack: option._req.file.filename}
+      }
+      await DAD.setOne({User:obj, cond:{uuid: option._passtokenSource.uuid}})
+      return Object.assign(file, { _state: 'SUCCESS'})
+    }else{
+      return { _state: 'FILE_NOT_IMAGE'}
+    }
+  }else{
+    return { _state: 'USER_NOT_ONLINE' }
+  }
+}
+
+DAD.api.updateKycL1 = async function(option) {
+  option.User.kyc._stateL1='SUBMITTED'
+  await DAD.setOne({ User:{ kyc: option.User.kyc }, cond:{uuid: option._passtokenSource.uuid } })
+  return option.User.kyc
 }
 
 DAD.api.identify = DAD.api1.identify = async function(option){
