@@ -26,10 +26,13 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   nickname: { default: undefined, sqlite: 'TEXT' },
   balance: { default: 0, sqlite: 'REAL' },
   kyc: { default: {}, sqlite:'TEXT'},
-  idCardCover: { default: {}, sqlite:'TEXT' },
-  idCardBack: { default: {}, sqlite:'TEXT' },
+  idCardCover: { default: undefined, sqlite:'TEXT' },
+  idCardBack: { default: undefined, sqlite:'TEXT' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
   coinAddress: { default: {}, sqlite: 'TEXT' },
+  estateProfitSum: { default:0, sqlite: 'REAL' },
+  estateFeeSum: { default:0, sqlite: 'REAL' },
+  estateTaxSum: { default:0, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -37,7 +40,11 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
 const my={}
 
 /****************** 实例方法 (instance methods) ******************/
-
+MOM.normalize=function(){
+  this.icode = wo.System.encode(this.aiid)
+  delete this.aiid
+  return this
+}
 
 /****************** 类方法 (class methods) ******************/
 
@@ -92,7 +99,7 @@ DAD.api.identify = DAD.api1.identify = async function(option){
       uuid = user.uuid
       _state = 'OLD_USER'
     } else {
-      uuid = Uuid.v4(),
+      uuid = `${DAD.name}-${Uuid.v4()}`,
       _state = 'NEW_USER'
     }
     mylog.info(`identify::::::: uuid = ${uuid}`)

@@ -204,9 +204,25 @@ function runServer () { // 配置并启动 Web 服务
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
+    async function normalize(result){ // 有的实例的normalize 需要session信息，比如 Message 要根据当前用户判断 vote 。所以这个函数定义在这里。
+      if (result && result instanceof wo.Ling){ // 是 Ling 元素
+        await result.normalize(option) // 有的 normalize 需要 option，例如检查当前用户是否投票了某消息
+        // 不进入下一层去递归normalize了。
+      }else if (result && typeof result==='object'){ // 是其他对象或数组
+        for (var i in result){
+          await normalize(result[i])
+        }
+      }else if (typeof result==='undefined'){ // reply.json(undefined 或 nothing) 会导致什么都不输出给前端，可能导致前端默默出错。因此这时返回null。
+        mylog.info('undefined impossible!!!!!!!!!!!!!!!!')
+        result=null
+      }
+      return result
+    }
+
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var outdata = await wo[_who][_api][_act](option)
+        await normalize(outdata)
         console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
         console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
         console.log(outdata)

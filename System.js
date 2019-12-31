@@ -16,6 +16,31 @@ const my={}
 
 /****************** 类方法 (class methods) ******************/
 
+DAD.encode=function(aiid) {
+  let alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
+  let base = 16367
+  let num = (aiid+base)*(base - alphabet.length)
+  let code = ''
+  let mod
+  while ( num > 0) {
+      mod = num % alphabet.length;
+      num = (num - mod) / alphabet.length
+      code = code+alphabet[mod] // 倒序存放
+  }
+  return code;
+}
+
+DAD.decode=function(code) {
+  let alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
+  let base = 16367
+  let len = code.length
+  let num = 0
+  for (let i=0; i < len; i++) {
+      num += alphabet.indexOf(code[i]) * Math.pow(alphabet.length, i)
+  }
+  return num/(base - alphabet.length)-base
+}
+
 /****************** API方法 ******************/
 DAD.api={}
 

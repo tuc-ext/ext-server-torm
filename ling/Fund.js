@@ -94,6 +94,7 @@ DAD.api.getMyTokenBill = async function (option){
   console.log(`tx list = ${JSON.stringify(txlist)}`)
   if (txlist && txlist.status==='1') {
     let hasNewTransaction = false
+    let newLogDepositSum = 0
     let { logDepositSum, usdtDepositSum, usdtTransactionDict } = await DAD.getOne({Fund: { uuidUser: option._passtokenSource.uuid}}) // 读取已有的该用户的交易列表
       || await DAD.addOne({Fund:{uuidUser: option._passtokenSource.uuid}})
     for (let tx of txlist.result){
@@ -108,17 +109,23 @@ DAD.api.getMyTokenBill = async function (option){
           tx.exchangeRate = wo.Config.coinSet.USDT_ON_ETH.exchange
           usdtDepositSum += tx.amount
           logDepositSum += (tx.amount*wo.Config.coinSet.USDT_ON_ETH.exchange)
+          newLogDepositSum += (tx.amount*wo.Config.coinSet.USDT_ON_ETH.exchange)
           usdtTransactionDict[tx.hash] = tx
           hasNewTransaction = true
         }
       }
     }
-    hasNewTransaction ? DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, logDepositSum, usdtDepositSum, usdtTransactionDict }}) : ''
+    if (hasNewTransaction) {
+      DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, logDepositSum, usdtDepositSum, usdtTransactionDict }})
+      let onlineUser=await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+      onlineUser.setMe( {User:{ balance: onlineUser.balance+newLogDepositSum }, cond: {uuid: option._passtokenSource.uuid }, excludeSelf:true})
+    }
     return { 
       _state: 'SMOOTH', 
       usdtTransactionDict,
       usdtDepositSum,
       logDepositSum,
+      newLogDepositSum
     }
   }
   return { 
