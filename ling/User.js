@@ -22,10 +22,14 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
   phone: { default: undefined, sqlite: 'TEXT UNIQUE' },
   passwordServer: { default: undefined, sqlite: 'TEXT' },
+  regcode: { default: undefined, sqlite: 'TEXT' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
   balance: { default: 0, sqlite: 'REAL' },
-  kyc: { default: {}, sqlite:'TEXT'},
+  realname: { default: '', sqlite: 'TEXT' },
+  idNumber: { default: '', sqlite: 'TEXT' },
+  kycStateL1: { default: undefined, sqlite:'TEXT' },
+  kycStateL2: { default: undefined, sqlite: 'TEXT' },
   idCardCover: { default: undefined, sqlite:'TEXT' },
   idCardBack: { default: undefined, sqlite:'TEXT' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
@@ -41,7 +45,7 @@ const my={}
 
 /****************** 实例方法 (instance methods) ******************/
 MOM.normalize=function(){
-  this.icode = wo.System.encode(this.aiid)
+  this.regcode = wo.System.encode(this.aiid)
   delete this.aiid
   return this
 }
@@ -86,9 +90,13 @@ DAD.api.uploadIdCard = async function(option){
 }
 
 DAD.api.updateKycL1 = async function(option) {
-  option.User.kyc._stateL1='SUBMITTED'
-  await DAD.setOne({ User:{ kyc: option.User.kyc }, cond:{uuid: option._passtokenSource.uuid } })
-  return option.User.kyc
+  if (option.User && option.User.realname && option.User.idNumber){
+    option.User.kycStateL1='SUBMITTED'
+    await DAD.setOne({ User:option.User, cond:{uuid: option._passtokenSource.uuid } })
+    return { _state: 'SUBMITTED' }
+  }else {
+    return { _state: 'INPUT_MALFORMED' }
+  }
 }
 
 DAD.api.identify = DAD.api1.identify = async function(option){
@@ -151,7 +159,7 @@ DAD.api.sendPasscode = async function(option){
       passcodeSentAt,
       passcodeExpireAt,
       _passtoken: Webtoken.createToken(Object.assign(
-        option._passtokenSource, { 
+        option._passtokenSource, {
           passcodeHash,
           passcodeState: _state,
           passcodeSentAt,
@@ -167,25 +175,34 @@ DAD.api.sendPasscode = async function(option){
 }
 
 DAD.api.verifyPasscode = async function(option){
-  let _state
-  if (option.passcode && option._passtokenSource && new Date() < new Date(option._passtokenSource.passcodeExpireAt)) {
-    if (ticCrypto.hash(option.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
-      _state = 'VERIFY_SUCCESS'
-    }else{
-      _state = 'VERIFY_FAILED'
-    }
-    return { 
-      _state,
-      _passtoken: Webtoken.createToken(Object.assign(
-        option._passtokenSource, 
-        {
-          verifyState: _state
-        }
-      ))
-    }
+  if (option._passtokenSource && Date.now()>new Date(option._passtokenSource.passcodeExpireAt)){
+    return { _state: 'PASSCODE_EXPIRED'}
   }
-  return {
-    _state: 'INPUT_MALFORMED'
+  if (/^[0-9a-z]+$/.test(option.regcode)){
+    let aiid = wo.System.decode(option.regcode)
+    if (!await DAD.getOne({User:{aiid:aiid}})){
+      return { _state: 'REGCODE_USER_NOTEXIST' }
+    }
+  }else {
+    return { _state: 'REGCODE_MALFORMED' }
+  }
+  if (/^\d{6}$/.test(option.passcode)) {
+    if (ticCrypto.hash(option.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
+      return { 
+        _state: 'VERIFY_SUCCESS',
+        _passtoken: Webtoken.createToken(Object.assign(
+          option._passtokenSource, 
+          {
+            regcode: option.regcode,
+            verifyState: 'VERIFY_SUCCESS'
+          }
+        ))
+      }
+    }else {
+      return { _state: 'VERIFY_FAILED' }
+    }
+  }else {
+    return {  _state: 'PASSCODE_MALFORMED' }
   }
 }
 
@@ -195,15 +212,15 @@ DAD.api.register = DAD.api1.register = async function(option){
   if (option._passtokenSource 
     && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
-    && option.phone && option.passwordClient
-    && option.phone === option._passtokenSource.phone) {
+    && option.phone && option.phone === option._passtokenSource.phone
+    && option.passwordClient) {
       let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
       let whenRegister = new Date()
       // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
       // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
       // Account 最大到 parseInt(0x7FFFFFFF, 16), Coin/Index最大到 parseInt(0xFFFFFFFF, 16)
       // 后面还可继续延伸 /xxx/xxx/xxx/......
-      let seed=ticCrypto.hash(whenRegister.valueOf()+option.phone, {hasher:'md5'})
+      let seed=ticCrypto.hash(whenRegister.valueOf()+option._passtokenSource.uuid, {hasher:'md5'})
       let part0=parseInt(seed.slice(0,6), 16)
       let part1=parseInt(seed.slice(6,12), 16)
       let part2=parseInt(seed.slice(12,18), 16)
@@ -225,6 +242,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
         passwordServer, 
+        regcode: option._passtokenSource.regcode,
         nickname: option.phone,
         coinAddress,
         whenRegister,

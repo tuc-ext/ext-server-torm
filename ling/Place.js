@@ -20,6 +20,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   uuidOwner: {default: undefined, sqlite: 'TEXT' },
   name: { default: undefined, sqlite: 'TEXT' },
   desc: { default: undefined, sqlite: 'TEXT' },
+  image: { default: undefined, sqlite: 'TEXT' },
   amount: { default: 1, sqlite: 'INTEGER' },
   profitRate: { default: 0.05, sqlite: 'REAL', info: '卖家盈利，是成本价的一个比例' },
   feeRate: { default: 0.005, sqlite: 'REAL', info: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例'},
@@ -96,5 +97,25 @@ DAD.api.payToBuyPlace = async function(option){
   }
   return { 
     _state: 'TRADE_FAILED' 
+  }
+}
+
+DAD.api.uploadImage=async function(option){
+  if (option._passtokenSource && option._passtokenSource.uuid
+    && option.Place && option.Place.uuid) {
+    let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
+    if (place && place.uuidOwner === option._passtokenSource.uuid) {
+      let file = option._req.file
+      if (file && /^image\//.test(file.mimetype)) {
+        await DAD.setOne({Place:{image:option._req.file.filename}, cond:{uuid: option.Place.uuid}})
+        return Object.assign(file, { _state: 'SUCCESS'})
+      }else{
+        return { _state: 'FILE_NOT_IMAGE'}
+      }
+    }else {
+      return { _state: 'NOT_ESTATE_OWNER' }
+    }
+  }else{
+    return { _state: 'USER_NOT_ONLINE' }
   }
 }

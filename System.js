@@ -16,9 +16,11 @@ const my={}
 
 /****************** 类方法 (class methods) ******************/
 
+const alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
+const base = 16367
+
+
 DAD.encode=function(aiid) {
-  let alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
-  let base = 16367
   let num = (aiid+base)*(base - alphabet.length)
   let code = ''
   let mod
@@ -31,8 +33,6 @@ DAD.encode=function(aiid) {
 }
 
 DAD.decode=function(code) {
-  let alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
-  let base = 16367
   let len = code.length
   let num = 0
   for (let i=0; i < len; i++) {

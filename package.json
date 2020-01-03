@@ -46,7 +46,8 @@
     "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name log.server.oo",
     "daemon": "cross-env NODE_ENV=production node server.js",
     "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,data.log,data.sqlite -- server.js",
-    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo"
+    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo",
+    "certbot": "certbot certonly -d server.log.yuanjin.net"
   },
   "author": ""
 }
