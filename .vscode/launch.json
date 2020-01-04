@@ -4,11 +4,25 @@
     {
         "type": "node",
         "request": "launch",
-        "name": "Launch/自启动",
+        "name": "node server.js",
         "cwd": "${workspaceFolder}",
         "program": "${workspaceFolder}/server.js",
 //          "args": [], // param for script
 //          "runtimeArgs": "" // param for node itself
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "nodemon server.js",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/server.js",
+      "restart": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     }
   ]
 }

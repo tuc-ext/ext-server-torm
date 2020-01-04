@@ -178,11 +178,36 @@ DAD.api.verifyPasscode = async function(option){
   if (option._passtokenSource && Date.now()>new Date(option._passtokenSource.passcodeExpireAt)){
     return { _state: 'PASSCODE_EXPIRED'}
   }
+  if (/^\d{6}$/.test(option.passcode)) {
+    if (ticCrypto.hash(option.passcode+option._passtokenSource.uuid)===option._passtokenSource.passcodeHash) {
+      return { 
+        _state: 'VERIFY_SUCCESS',
+        _passtoken: Webtoken.createToken(Object.assign(
+          option._passtokenSource, 
+          {
+            verifyState: 'VERIFY_SUCCESS'
+          }
+        ))
+      }
+    }else {
+      return { _state: 'VERIFY_FAILED' }
+    }
+  }else {
+    return {  _state: 'PASSCODE_MALFORMED' }
+  }
+}
+
+DAD.api.prepareRegister = async function(option){
+  if (option._passtokenSource && Date.now()>new Date(option._passtokenSource.passcodeExpireAt)){
+    return { _state: 'PASSCODE_EXPIRED'}
+  }
   if (/^[0-9a-z]+$/.test(option.regcode)){
     let aiid = wo.System.decode(option.regcode)
-    if (!await DAD.getOne({User:{aiid:aiid}})){
+    if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
+
+    }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
       return { _state: 'REGCODE_USER_NOTEXIST' }
-    }
+    } 
   }else {
     return { _state: 'REGCODE_MALFORMED' }
   }
@@ -213,7 +238,7 @@ DAD.api.register = DAD.api1.register = async function(option){
     && option._passtokenSource.identifyState === 'NEW_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
     && option.phone && option.phone === option._passtokenSource.phone
-    && option.passwordClient) {
+    && option._passtokenSource.uuid && option.passwordClient) {
       let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
       let whenRegister = new Date()
       // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
@@ -324,6 +349,26 @@ DAD.api.login = DAD.api1.login = async function(option){
   return { _state: 'INPUT_MALFORMED'}
 }
 
-DAD.api.logout = async function(){ // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
+DAD.api.logout = async function(option){ // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
   return { _state: 'INPUT_MALFORMED' }
+}
+
+DAD.api.resetPassword = async function(option){
+  if (option._passtokenSource 
+    && option._passtokenSource.identifyState === 'OLD_USER'
+    && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
+    && option.phone && option.phone === option._passtokenSource.phone
+    && option._passtokenSource.uuid && option.passwordClient) {
+      let onlineUser = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
+      let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
+      let updated = await DAD.setOne({User:{passwordServer}, cond:{uuid:option._passtokenSource.uuid}})
+      if (updated && updated.passwordServer === passwordServer){
+        return { _state: 'RESET_SUCCESS' }
+      }else {
+        return { _state: 'RESET_FAILED' }
+      }
+    }else{
+      return { _state: 'INPUT_MALFORMED' }
+    }
+
 }

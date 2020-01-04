@@ -66,7 +66,13 @@ DAD.api.getMyTokenBalance = async function (option){
 }
 
 DAD.api.getMyTokenBill = async function (option){
+  if (!option._passtokenSource.uuid) {
+    return { _state: 'USER_OFFLINE' }
+  }
   let onlineUser = await wo.User.getOne({User: {uuid:option._passtokenSource.uuid}})
+  if (!onlineUser) {
+    return { _state: 'USER_NOT_FOUND'}
+  }
   let address, tokenContract, txlist
   if (wo.Config.env==='production'){
     switch (option.coinType) {
@@ -116,19 +122,17 @@ DAD.api.getMyTokenBill = async function (option){
       }
     }
     if (hasNewTransaction) {
-      DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, logDepositSum, usdtDepositSum, usdtTransactionDict }})
-      let onlineUser=await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
-      onlineUser.setMe( {User:{ balance: onlineUser.balance+newLogDepositSum }, cond: {uuid: option._passtokenSource.uuid }, excludeSelf:true})
+      await DAD.setOne({ Fund: { uuidUser: option._passtokenSource.uuid, logDepositSum, usdtDepositSum, usdtTransactionDict }})
+      await onlineUser.setMe( {User:{ balance: onlineUser.balance+newLogDepositSum }, cond: {uuid: option._passtokenSource.uuid }, excludeSelf:true})
     }
     return { 
-      _state: 'SMOOTH', 
+      _state: 'SUCCESS', 
       usdtTransactionDict,
       usdtDepositSum,
       logDepositSum,
       newLogDepositSum
     }
-  }
-  return { 
-    _state: 'EXCEPTION',
+  }else {
+    return { _state: 'CHAIN_QUERY_FAILED' }
   }
 }
