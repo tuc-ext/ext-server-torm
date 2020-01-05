@@ -37,6 +37,8 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   estateProfitSum: { default:0, sqlite: 'REAL' },
   estateFeeSum: { default:0, sqlite: 'REAL' },
   estateTaxSum: { default:0, sqlite: 'REAL' },
+  depositUsdtSum: { default:0, sqlite: 'REAL' },
+  depositLogSum: { default:0, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
