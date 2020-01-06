@@ -20,7 +20,6 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
   txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
   txTime: { default: undefined, sqlite: 'TEXT' },
-  whenImported: { default: undefined, sqlite: 'TEXT' },
   amount: { default: undefined, sqlite: 'REAL' },
   amountSource: { default: undefined, sqlite: 'REAL' },
   exchangeRate: { default: undefined, sqlite: 'REAL' },
@@ -71,7 +70,7 @@ DAD.api.getMyTokenBalance = async function (option){
   }
 }
 
-DAD.api.refreshDeposit = async function (option){
+DAD.api.refreshMyDeposit = async function (option){
   if (!option._passtokenSource.uuid) {
     return { _state: 'USER_OFFLINE' }
   }
@@ -80,7 +79,7 @@ DAD.api.refreshDeposit = async function (option){
     return { _state: 'USER_NOT_FOUND'}
   }
   let address, tokenContract, txlistChain
-  if (wo.Config.env==='production'){
+  if (false) { // wo.Config.env==='production'){
     switch (option.coinType) {
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
       case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address
@@ -128,12 +127,12 @@ DAD.api.refreshDeposit = async function (option){
         if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash:txChain.hash}})) { // usdtTransactionDict[txChain.hash]){ // 是新的交易
           let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txType:'DEPOSIT_USDT'})
           txDB.txHash = txChain.hash
-          txDB.txTimeUnix = txChain.timeStamp*1000
+          txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
-          txDB.whenImported = new Date()
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
           txDB.exchangeRate = wo.Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
+//          txChain.timeIso = 
           txDB.json = txChain
           await txDB.addMe()
           await onlineUser.setMe({User:{
@@ -159,4 +158,17 @@ DAD.api.refreshDeposit = async function (option){
   }else {
     return { _state: 'CHAIN_QUERY_FAILED' }
   }
+}
+
+DAD.api.getMyTradeList = async function (option){
+  option.Trade = option.Trade || {}
+  option.Trade.uuidUser = option._passtokenSource.uuid
+  let txlist = await DAD.getAll({Trade:option.Trade, config:option.config})
+  if (txlist) {
+    return { 
+      _state: "SUCCESS", 
+      txlist: txlist
+    }
+  }
+  return { _state: 'INPUT_MALFORMED' }
 }
