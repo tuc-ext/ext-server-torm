@@ -1,5 +1,6 @@
 'use strict'
 const Ling = require('so.ling')
+const ticCrypto = require('tic.crypto')
 const DAY_MILLIS = 24*60*60*1000
 
 /****************** 类和原型 *****************/
@@ -82,6 +83,7 @@ DAD.api.payToBuyPlace = async function(option){
         txTimeUnix: txTimeUnix,
         txTime: new Date(txTimeUnix)
       })
+      txSeller.txHash = ticCrypto.hash(txSeller.getJson({exclude:['aiid','uuid']}))
       await txSeller.addMe()
     }
     place.uuidOwner = buyer.uuid
@@ -102,6 +104,7 @@ DAD.api.payToBuyPlace = async function(option){
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
     })
+    txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
     
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       return {
