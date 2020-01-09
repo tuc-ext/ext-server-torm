@@ -1,5 +1,6 @@
 'use strict'
 const Ling = require('so.ling')
+const ticCrypto = require('tic.crypto')
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function Trade (prop) { // 构建类
@@ -11,11 +12,13 @@ DAD._table = DAD.name
 
 const MOM = DAD.prototype // 原型对象
 MOM.__proto__ = Ling.prototype
-MOM._tablekey = 'uuidUser'
+MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE' },
   uuidUser: { default: undefined, sqlite: 'TEXT', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  uuidPlace: { default: undefined, sqlite: 'TEXT' },
+  uuidOther: { default: undefined, sqlite: 'TEXT' },
   txType: { default: undefined, sqlite: 'TEXT' },
   txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
   txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
@@ -124,24 +127,25 @@ DAD.api.refreshMyDeposit = async function (option){
       }else if (txChain.to===address) {
         console.log(`收到 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 从 ${txChain.from}`)
         console.log('存入数据库...')
-        if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash:txChain.hash}})) { // usdtTransactionDict[txChain.hash]){ // 是新的交易
+        let txHash = ticCrypto.hash(txChain.hash+option._passtokenSource.uuid)
+        if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash}})) {
           let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txType:'DEPOSIT_USDT'})
-          txDB.txHash = txChain.hash
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
           txDB.exchangeRate = wo.Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
-//          txChain.timeIso = 
           txDB.json = txChain
-          await txDB.addMe()
-          await onlineUser.setMe({User:{
-            balance: onlineUser.balance+txDB.amount, 
-            depositUsdtSum: onlineUser.depositUsdtSum+txDB.amountSource,
-            depositLogSum: onlineUser.depositLogSum+txDB.amount
-          }, cond:{uuid: option._passtokenSource.uuid}, excludeSelf:true})
-          depositUsdtNew += txDB.amountSource
-          depositLogNew += txDB.amount
+          txDB.txHash = txHash
+          if (await txDB.addMe()) {
+            await onlineUser.setMe({User:{
+              balance: onlineUser.balance+txDB.amount, 
+              depositUsdtSum: onlineUser.depositUsdtSum+txDB.amountSource,
+              depositLogSum: onlineUser.depositLogSum+txDB.amount
+            }, cond:{uuid: option._passtokenSource.uuid}, excludeSelf:true})
+            depositUsdtNew += txDB.amountSource
+            depositLogNew += txDB.amount
+          }
         }
       }
     }

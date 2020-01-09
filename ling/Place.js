@@ -61,34 +61,49 @@ DAD.api.getMyPlaceList = async function(option){
 DAD.api.payToBuyPlace = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
-  if ( place.sellTimeUnix < Date.now() // 再次确认，尚未被买走
+  let txTimeUnix = Date.now()
+  let seller
+  if ( place.sellTimeUnix < txTimeUnix // 再次确认，尚未被买走
     && buyer.balance >= place.sellPrice){
     buyer.balance -= place.sellPrice
     buyer.estateFeeSum += place.buyPrice*place.feeRate
     buyer.estateTaxSum += place.buyPrice*place.taxRate
-    let seller
     if (place.uuidOwner) {
       seller = await wo.User.getOne({User:{uuid:place.uuidOwner}})
       seller.estateProfitSum += place.buyPrice*place.profitRate
       seller.balance += place.buyPrice*(1+place.profitRate)
-      await seller.setMe()
+
+      let txSeller = new wo.Trade({
+        uuidPlace: place.uuid,
+        uuidUser: seller.uuid,
+        uuidOther: buyer.uuid,
+        amount: place.sellPrice,
+        txType: 'ESTATE_SELLOUT',
+        txTimeUnix: txTimeUnix,
+        txTime: new Date(txTimeUnix)
+      })
+      await txSeller.addMe()
     }
     place.uuidOwner = buyer.uuid
     place.buyPrice = place.sellPrice
     place.sellPrice = place.buyPrice*(1+place.profitRate)*(1+place.feeRate+place.taxRate)
-    place.buyTimeUnix = Date.now()
+    place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
     place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
+    if (wo.Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
-    let transaction = new wo.Trade({
-      uuidPlace: place.uuid,
-      uuidBuyer: buyer.uuid,
-      uuidSeller: place.uuidOwner,
-      dealPrice: place.sellPrice,
-      dealTime: place.buyTimeUnix
-    })
 
-    if (await place.setMe() && await buyer.setMe()){
+    let txBuyer = new wo.Trade({
+      uuidPlace: place.uuid,
+      uuidUser: buyer.uuid,
+      uuidOther: seller?seller.uuid:undefined,
+      amount: place.buyPrice,
+      txType: 'ESTATE_BUYIN',
+      txTimeUnix: txTimeUnix,
+      txTime: new Date(txTimeUnix),
+    })
+    
+    if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       return {
         _state: 'TRADE_SUCCESS',
         place
