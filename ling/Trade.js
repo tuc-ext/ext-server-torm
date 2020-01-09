@@ -16,7 +16,7 @@ MOM._tablekey = 'uuid'
 MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  uuidUser: { default: undefined, sqlite: 'TEXT', mysql: 'VARCHAR(64) PRIMARY KEY' },
+  uuidUser: { default: undefined, sqlite: 'TEXT', info: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
   uuidPlace: { default: undefined, sqlite: 'TEXT' },
   uuidOther: { default: undefined, sqlite: 'TEXT' },
   txType: { default: undefined, sqlite: 'TEXT' },
@@ -126,9 +126,9 @@ DAD.api.refreshMyDeposit = async function (option){
         console.log(`汇出 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 到 ${txChain.to}`)
       }else if (txChain.to===address) {
         console.log(`收到 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 从 ${txChain.from}`)
-        console.log('存入数据库...')
         let txHash = ticCrypto.hash(txChain.hash+option._passtokenSource.uuid)
         if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash}})) {
+          console.log('存入数据库...')
           let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txType:'DEPOSIT_USDT'})
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)

@@ -99,7 +99,7 @@ DAD.api.payToBuyPlace = async function(option){
       uuidPlace: place.uuid,
       uuidUser: buyer.uuid,
       uuidOther: seller?seller.uuid:undefined,
-      amount: place.buyPrice,
+      amount: -place.buyPrice, // 作为买家，是负数
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
@@ -109,7 +109,8 @@ DAD.api.payToBuyPlace = async function(option){
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       return {
         _state: 'TRADE_SUCCESS',
-        place
+        place,
+        trade: txBuyer
       }  
     }
   }
