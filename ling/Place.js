@@ -18,9 +18,10 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
   pcode: { default: undefined, sqlite: 'TEXT UNIQUE', info:'人工定义的地区编号，用于防止重复' },
-  uuidOwner: {default: undefined, sqlite: 'TEXT' },
+  uuidOwner: { default: undefined, sqlite: 'TEXT' },
+  uuidPreowner: { default: undefined, sqlite: 'TEXT' },
   name: { default: undefined, sqlite: 'TEXT' },
-  desc: { default: undefined, sqlite: 'TEXT' },
+  intro: { default: undefined, sqlite: 'TEXT' },
   image: { default: undefined, sqlite: 'TEXT' },
   amount: { default: 1, sqlite: 'INTEGER' },
   profitRate: { default: 0.05, sqlite: 'REAL', info: '卖家盈利，是成本价的一个比例' },
@@ -86,6 +87,7 @@ DAD.api.payToBuyPlace = async function(option){
       txSeller.txHash = ticCrypto.hash(txSeller.getJson({exclude:['aiid','uuid']}))
       await txSeller.addMe()
     }
+    place.uuidPreowner = place.uuidOwner
     place.uuidOwner = buyer.uuid
     place.buyPrice = place.sellPrice
     place.sellPrice = place.buyPrice*(1+place.profitRate)*(1+place.feeRate+place.taxRate)
@@ -98,7 +100,7 @@ DAD.api.payToBuyPlace = async function(option){
     let txBuyer = new wo.Trade({
       uuidPlace: place.uuid,
       uuidUser: buyer.uuid,
-      uuidOther: seller?seller.uuid:undefined,
+      uuidOther: place.uuidOwner,
       amount: -place.buyPrice, // 作为买家，是负数
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
@@ -137,4 +139,14 @@ DAD.api.uploadImage=async function(option){
   }else{
     return { _state: 'USER_NOT_ONLINE' }
   }
+}
+
+DAD.api.changeIntro=async function(option){
+  if (option._passtokenSource && option._passtokenSource.uuid
+    && option.Place && option.Place.uuid && option.Place.intro) {
+      await DAD.setOne(option)
+      return { _state: 'SUCCESS' }
+    }else {
+      return { _state: 'INPUT_MALFORMED' }
+    }
 }
