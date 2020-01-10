@@ -8,7 +8,7 @@ module.exports = [
   {
     pcode: 'LD',
     name: {zhCN:'伦敦'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -19,7 +19,7 @@ module.exports = [
   {
     pcode: 'MNH',
     name: {zhCN:'慕尼黑'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -30,7 +30,7 @@ module.exports = [
   {
     pcode: 'YSTBR',
     name: {zhCN:'伊斯坦布尔'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -41,7 +41,7 @@ module.exports = [
   {
     pcode: 'DHL',
     name: {zhCN:'德黑兰'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -52,7 +52,7 @@ module.exports = [
   {
     pcode: 'MSK',
     name: {zhCN:'莫斯科'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -63,7 +63,7 @@ module.exports = [
   {
     pcode: 'YSLB',
     name: {zhCN:'伊斯兰堡'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -74,7 +74,7 @@ module.exports = [
   {
     pcode: 'YG',
     name: {zhCN:'仰光'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -85,7 +85,7 @@ module.exports = [
   {
     pcode: 'XJP',
     name: {zhCN:'新加坡'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -96,7 +96,7 @@ module.exports = [
   {
     pcode: 'BJ',
     name: {zhCN:'北京'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -107,7 +107,7 @@ module.exports = [
   {
     pcode: 'DJ',
     name: {zhCN:'东京'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -118,7 +118,7 @@ module.exports = [
   {
     pcode: 'XN',
     name: {zhCN:'悉尼'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -129,7 +129,7 @@ module.exports = [
   {
     pcode: 'SLMQD',
     name: {zhCN:'所罗门群岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -140,7 +140,7 @@ module.exports = [
   {
     pcode: 'HLD',
     name: {zhCN:'惠灵顿'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -151,7 +151,7 @@ module.exports = [
   {
     pcode: 'ZTD',
     name: {zhCN:'中途岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -162,7 +162,7 @@ module.exports = [
   {
     pcode: 'XWYQD',
     name: {zhCN:'夏威夷群岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -173,7 +173,7 @@ module.exports = [
   {
     pcode: 'MKSSQD',
     name: {zhCN:'马克萨斯群岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -184,7 +184,7 @@ module.exports = [
   {
     pcode: 'WGH',
     name: {zhCN:'温哥华'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -195,7 +195,7 @@ module.exports = [
   {
     pcode: 'TPY',
     name: {zhCN:'太平洋'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -206,7 +206,7 @@ module.exports = [
   {
     pcode: 'ZJG',
     name: {zhCN:'芝加哥'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -217,7 +217,7 @@ module.exports = [
   {
     pcode: 'BSD',
     name: {zhCN:'波士顿'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -228,7 +228,7 @@ module.exports = [
   {
     pcode: 'SDYG',
     name: {zhCN:'圣地亚哥'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -239,7 +239,7 @@ module.exports = [
   {
     pcode: 'LYRNL',
     name: {zhCN:'里约热内卢'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -250,7 +250,7 @@ module.exports = [
   {
     pcode: 'YSRQD',
     name: {zhCN:'亚速尔群岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,
@@ -261,7 +261,7 @@ module.exports = [
   {
     pcode: 'MDLQD',
     name: {zhCN:'马德拉群岛'},
-    desc: '',
+    intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
     feeRate: FEE_RATE,

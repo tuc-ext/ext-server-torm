@@ -101,6 +101,15 @@ DAD.api.updateKycL1 = async function(option) {
   }
 }
 
+DAD.api.updateKycL2 = async function(option) {
+  if (option.User && option.User.idCardCover && option.User.idCardBack){
+    await DAD.setOne({ User:{kecStateL2: 'SUBMITTED', cond:{uuid: option._passtokenSource.uuid } })
+    return { _state: 'SUBMITTED' }
+  }else {
+    return { _state: 'INPUT_MALFORMED' }
+  }
+}
+
 DAD.api.identify = DAD.api1.identify = async function(option){
   if (option.phone && Internation.validatePhone({phone:option.phone})) {
     let user = await DAD.getOne({User: {phone:option.phone}})
