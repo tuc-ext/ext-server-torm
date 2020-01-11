@@ -135,7 +135,7 @@ DAD.api.payToBuyPlace = async function(option){
 }
 
 DAD.api.uploadImage=async function(option){
-  if (option._passtokenSource && option._passtokenSource.uuid
+  if (option._passtokenSource && option._passtokenSource.isOnline
     && option.Place && option.Place.uuid) {
     let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
     if (place && place.uuidOwner === option._passtokenSource.uuid) {
@@ -155,8 +155,9 @@ DAD.api.uploadImage=async function(option){
 }
 
 DAD.api.changeIntro=async function(option){
-  if (option._passtokenSource && option._passtokenSource.uuid
-    && option.Place && option.Place.uuid && option.Place.intro) {
+  if (option._passtokenSource && option._passtokenSource.isOnline
+    && option.Place && option.Place.uuid && option.Place.intro 
+    && option.Place.uuidOwner === option._passtokenSource.uuid) {
       await DAD.setOne(option)
       return { _state: 'SUCCESS' }
     }else {

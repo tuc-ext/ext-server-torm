@@ -25,7 +25,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   regcode: { default: undefined, sqlite: 'TEXT' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
-  balance: { default: 0, sqlite: 'REAL' },
+  lang: { default: undefined, sqlite: 'TEXT' },
   realname: { default: '', sqlite: 'TEXT' },
   idNumber: { default: '', sqlite: 'TEXT' },
   kycStateL1: { default: undefined, sqlite:'TEXT' },
@@ -34,6 +34,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   idCardBack: { default: undefined, sqlite:'TEXT' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
   coinAddress: { default: {}, sqlite: 'TEXT' },
+  balance: { default: 0, sqlite: 'REAL' },
   estateProfitSum: { default:0, sqlite: 'REAL' },
   estateFeeSum: { default:0, sqlite: 'REAL' },
   estateTaxSum: { default:0, sqlite: 'REAL' },
@@ -61,7 +62,7 @@ MOM.normalize=function(){
 DAD.api=DAD.api1={}
 
 DAD.api.changePortrait = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.uuid) {
+  if (option._passtokenSource && option._passtokenSource.isOnline) {
     let file = option._req.file
     if (file && /^image\//.test(file.mimetype)) {
       await DAD.setOne({User:{portrait:option._req.file.filename}, cond:{uuid: option._passtokenSource.uuid}})
@@ -75,7 +76,7 @@ DAD.api.changePortrait = async function (option) {
 }
 
 DAD.api.uploadIdCard = async function(option){
-  if (option._passtokenSource && option._passtokenSource.uuid) {
+  if (option._passtokenSource && option._passtokenSource.isOnline) {
     let file = option._req.file
     if (file && /^image\//.test(file.mimetype)) {
       let obj
@@ -285,6 +286,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         nickname: option.phone,
         coinAddress,
         whenRegister,
+        lang: option.lang
       } } )
       if (user) {
 // 或者严格按照 BIP44 的规范，代价是，需要先加入数据库获得用户aiid后才能确定路径
@@ -299,7 +301,7 @@ DAD.api.register = DAD.api1.register = async function(option){
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
             passwordClient: option.passwordClient,
-            onlineState: 'ONLINE',
+            isOnline: 'ONLINE',
             onlineSince: new Date,
             onlineExpireAt: new Date(Date.now()+30*24*60*60*1000)
           })
@@ -312,7 +314,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 }
 
 DAD.api.autologin = async function(option){
-  if (option._passtokenSource && option._passtokenSource.uuid && option._passtokenSource.passwordClient){
+  if (option._passtokenSource && option._passtokenSource.isOnline && option._passtokenSource.uuid && option._passtokenSource.passwordClient){
     let passwordServer = ticCrypto.hash(option._passtokenSource.passwordClient+option._passtokenSource.uuid)
     let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
     if (onlineUser) {
@@ -344,7 +346,7 @@ DAD.api.login = DAD.api1.login = async function(option){
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
             passwordClient: option.passwordClient,
-            onlineState: 'ONLINE',
+            isOnline: 'ONLINE',
             onlineSince: new Date,
             onlineExpireAt: new Date(Date.now()+30*24*60*60*1000)
           })
@@ -385,4 +387,11 @@ DAD.api.resetPassword = async function(option){
       return { _state: 'INPUT_MALFORMED' }
     }
 
+}
+
+DAD.api.setLang=function(option){
+  if (option && option.User && option.User.lang
+    && option._passtokenSource && option._passtokenSource.isOnline){
+      wo.User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
+    }
 }

@@ -74,7 +74,7 @@ DAD.api.getMyTokenBalance = async function (option){
 }
 
 DAD.api.refreshMyDeposit = async function (option){
-  if (!option._passtokenSource.uuid) {
+  if (!option._passtokenSource.isOnline) {
     return { _state: 'USER_OFFLINE' }
   }
   let onlineUser = await wo.User.getOne({User: {uuid:option._passtokenSource.uuid}})
