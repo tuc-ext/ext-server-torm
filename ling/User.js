@@ -37,6 +37,9 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   estateProfitSum: { default:0, sqlite: 'REAL' },
   estateFeeSum: { default:0, sqlite: 'REAL' },
   estateTaxSum: { default:0, sqlite: 'REAL' },
+  estateHoldingNumber: { default:0, sqlite: 'INTEGER' },
+  estateHoldingValue: { default:0, sqlite:'REAL'},
+  estateHoldingProfit: {default:0, sqlite:'REAL'},
   depositUsdtSum: { default:0, sqlite: 'REAL' },
   depositLogSum: { default:0, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
@@ -103,7 +106,7 @@ DAD.api.updateKycL1 = async function(option) {
 
 DAD.api.updateKycL2 = async function(option) {
   if (option.User && option.User.idCardCover && option.User.idCardBack){
-    await DAD.setOne({ User:{kecStateL2: 'SUBMITTED', cond:{uuid: option._passtokenSource.uuid } })
+    await DAD.setOne({ User:{kecStateL2: 'SUBMITTED', cond:{uuid: option._passtokenSource.uuid } }})
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }

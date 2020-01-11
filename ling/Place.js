@@ -19,7 +19,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
   pcode: { default: undefined, sqlite: 'TEXT UNIQUE', info:'人工定义的地区编号，用于防止重复' },
   uuidOwner: { default: undefined, sqlite: 'TEXT' },
-  uuidPreowner: { default: undefined, sqlite: 'TEXT' },
+  uuidPreowner: { default: undefined, sqlite: 'TEXT', info:'交易对手的uuid' },
   name: { default: undefined, sqlite: 'TEXT' },
   intro: { default: undefined, sqlite: 'TEXT' },
   image: { default: undefined, sqlite: 'TEXT' },
@@ -64,16 +64,35 @@ DAD.api.payToBuyPlace = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
   let txTimeUnix = Date.now()
-  let seller
+
   if ( place.sellTimeUnix < txTimeUnix // 再次确认，尚未被买走
     && buyer.balance >= place.sellPrice){
     buyer.balance -= place.sellPrice
     buyer.estateFeeSum += place.buyPrice*place.feeRate
     buyer.estateTaxSum += place.buyPrice*place.taxRate
+    buyer.estateHoldingNumber += 1
+    buyer.estateHoldingValue += place.sellPrice*(1+place.profitRate)
+    buyer.estateHoldingProfit += place.sellPrice*place.profitRate
+
+    let txBuyer = new wo.Trade({
+      uuidPlace: place.uuid,
+      uuidUser: buyer.uuid,
+      uuidOther: place.uuidOwner, // 前任主人就是这次交易的对家
+      amount: -place.sellPrice, // 作为买家，是负数
+      txType: 'ESTATE_BUYIN',
+      txTimeUnix: txTimeUnix,
+      txTime: new Date(txTimeUnix),
+    })
+    txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
+
     if (place.uuidOwner) {
-      seller = await wo.User.getOne({User:{uuid:place.uuidOwner}})
-      seller.estateProfitSum += place.buyPrice*place.profitRate
+      let seller = await wo.User.getOne({User:{uuid:place.uuidOwner}})
       seller.balance += place.buyPrice*(1+place.profitRate)
+      seller.estateProfitSum += place.buyPrice*place.profitRate
+      seller.estateHoldingNumber -= 1
+      seller.estateHoldingValue -= place.buyPrice*(1+place.profitRate)
+      seller.estateHoldingProfit -= place.buyPrice*place.profitRate
+      await seller.setMe()
 
       let txSeller = new wo.Trade({
         uuidPlace: place.uuid,
@@ -87,6 +106,7 @@ DAD.api.payToBuyPlace = async function(option){
       txSeller.txHash = ticCrypto.hash(txSeller.getJson({exclude:['aiid','uuid']}))
       await txSeller.addMe()
     }
+
     place.uuidPreowner = place.uuidOwner
     place.uuidOwner = buyer.uuid
     place.buyPrice = place.sellPrice
@@ -96,17 +116,6 @@ DAD.api.payToBuyPlace = async function(option){
     place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
     if (wo.Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
-
-    let txBuyer = new wo.Trade({
-      uuidPlace: place.uuid,
-      uuidUser: buyer.uuid,
-      uuidOther: place.uuidOwner,
-      amount: -place.buyPrice, // 作为买家，是负数
-      txType: 'ESTATE_BUYIN',
-      txTimeUnix: txTimeUnix,
-      txTime: new Date(txTimeUnix),
-    })
-    txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
     
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       return {
