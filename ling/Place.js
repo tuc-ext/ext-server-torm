@@ -65,6 +65,10 @@ DAD.api.payToBuyPlace = async function(option){
   let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
   let txTimeUnix = Date.now()
 
+  if (buyer.estateHoldingNumber >= 10){
+    return { _state: 'EXCEED_HOLDING_NUMBER' }
+  }
+
   if ( place.sellTimeUnix < txTimeUnix // 再次确认，尚未被买走
     && buyer.balance >= place.sellPrice){
     buyer.balance -= place.sellPrice
