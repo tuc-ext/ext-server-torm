@@ -22,7 +22,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
   phone: { default: undefined, sqlite: 'TEXT UNIQUE' },
   passwordServer: { default: undefined, sqlite: 'TEXT' },
-  regcode: { default: undefined, sqlite: 'TEXT' },
+  regcode: { default: undefined, sqlite: 'TEXT', info:'我的邀请人的邀请码' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
   lang: { default: undefined, sqlite: 'TEXT' },
@@ -43,6 +43,8 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   estateHoldingProfit: {default:0, sqlite:'REAL'},
   depositUsdtSum: { default:0, sqlite: 'REAL' },
   depositLogSum: { default:0, sqlite: 'REAL' },
+  communityNumber: { default:0, sqlite: 'INTEGER' },
+  communityRewardSum: { default:0, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
@@ -294,6 +296,16 @@ DAD.api.register = DAD.api1.register = async function(option){
 //        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
 //        let coinAddress = { ... }
 //        await user.setMe({ User:{coinAddress}})
+        let aiid = wo.System.decode(option._passtokenSource.regcode)
+        if (aiid > 0) {
+          let inviter = await DAD.getOne({User:{aiid:aiid }})
+          if (inviter){
+            inviter.communityNumber++
+            inviter.communityRewardSum+=wo.Config.COMMUNITY_REWARD
+            await inviter.setMe()
+          }
+        }
+
         return { 
           _state: 'REGISTER_SUCCESS',
           onlineUser: user,
@@ -394,4 +406,11 @@ DAD.api.setLang=function(option){
     && option._passtokenSource && option._passtokenSource.isOnline){
       wo.User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
     }
+}
+
+DAD.api.getMyCommunityNumber=async function(option){
+  let myself = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
+  let myregcode = wo.System.encode(myself.aiid)
+  let communityNumber = await DAD.getCount({User: {regcode:myregcode}})
+  return { _state: 'SUCCESS', communityNumber }
 }

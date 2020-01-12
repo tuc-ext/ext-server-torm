@@ -25,6 +25,7 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     BTC: { name: 'BTC', exchange: 939 },
     ETH: { name: 'ETH', exchange: 15 },
   },
+  COMMUNITY_REWARD: 5,
 
   production: {
     protocol: 'https',

@@ -20,7 +20,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   pcode: { default: undefined, sqlite: 'TEXT UNIQUE', info:'人工定义的地区编号，用于防止重复' },
   uuidOwner: { default: undefined, sqlite: 'TEXT' },
   uuidPreowner: { default: undefined, sqlite: 'TEXT', info:'交易对手的uuid' },
-  name: { default: undefined, sqlite: 'TEXT' },
+  name: { default: {}, sqlite: 'TEXT' },
   intro: { default: undefined, sqlite: 'TEXT' },
   image: { default: undefined, sqlite: 'TEXT' },
   amount: { default: 1, sqlite: 'INTEGER' },
@@ -86,6 +86,7 @@ DAD.api.payToBuyPlace = async function(option){
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
+      json: { Place:{name: place.name} }
     })
     txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
 
@@ -105,7 +106,8 @@ DAD.api.payToBuyPlace = async function(option){
         amount: place.sellPrice,
         txType: 'ESTATE_SELLOUT',
         txTimeUnix: txTimeUnix,
-        txTime: new Date(txTimeUnix)
+        txTime: new Date(txTimeUnix),
+        json: { Place:{name: place.name} }
       })
       txSeller.txHash = ticCrypto.hash(txSeller.getJson({exclude:['aiid','uuid']}))
       await txSeller.addMe()
