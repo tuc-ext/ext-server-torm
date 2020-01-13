@@ -108,8 +108,9 @@ DAD.api.updateKycL1 = async function(option) {
 }
 
 DAD.api.updateKycL2 = async function(option) {
-  if (option.User && option.User.idCardCover && option.User.idCardBack){
-    await DAD.setOne({ User:{kecStateL2: 'SUBMITTED', cond:{uuid: option._passtokenSource.uuid } }})
+  let user = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+  if (user && user.idCardCover && user.idCardBack){
+    await DAD.setOne({ User:{kycStateL2: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }

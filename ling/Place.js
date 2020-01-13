@@ -158,9 +158,9 @@ DAD.api.uploadImage=async function(option){
 
 DAD.api.changeIntro=async function(option){
   if (option._passtokenSource && option._passtokenSource.isOnline
-    && option.Place && option.Place.uuid && option.Place.intro 
-    && option.Place.uuidOwner === option._passtokenSource.uuid) {
-      await DAD.setOne(option)
+    && option.Place && option.Place.uuid && option.Place.intro) {
+      // todo: 确认 option.Place.uuidOwner === option._passtokenSource.uuid
+      await DAD.setOne({Place:{intro:option.Place.intro}, cond:{uuid:option.Place.uuid}})
       return { _state: 'SUCCESS' }
     }else {
       return { _state: 'INPUT_MALFORMED' }
