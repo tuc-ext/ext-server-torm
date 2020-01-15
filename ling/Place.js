@@ -27,7 +27,6 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   profitRate: { default: 0.05, sqlite: 'REAL', info: '卖家盈利，是成本价的一个比例' },
   feeRate: { default: 0.005, sqlite: 'REAL', info: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例'},
   taxRate: { default: 0.005, sqlite: 'REAL', info: '公共税收，通常是原始销售价格的一个比例'},
-  createTime: { default: undefined, sqlite: 'TEXT' },
   startTime: { default: undefined, sqlite: 'TEXT' },
   startPrice: { default: undefined, sqlite: 'REAL' },
   buyTimeUnix: { default: undefined, sqlite: 'INTEGER' }, // 交易达成的时间
@@ -60,15 +59,69 @@ DAD.api.getMyPlaceList = async function(option){
   return await DAD.getAll(option)
 }
 
+DAD.api.payToCreatePlace = async function(option){
+  let creator = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+
+  if (creator.estateHoldingNumber >= 10){
+    return { _state: 'EXCEED_HOLDING_NUMBER' }
+  }
+
+  let txTimeUnix = Date.now()
+  if (option.Place.nameNative && option.Place.profitRate && option.Place.startPrice && creator.balance >= option.Place.startPrice) {
+    let place = new DAD(option.Place)
+    place.uuidOwner = option._passtokenSource.uuid
+    place.feeRate = wo.Config.FEE_RATE
+    place.taxRate = wo.Config.TAX_RATE
+    place.buyPrice = place.startPrice
+    place.sellPrice = place.buyPrice*(1+place.profitRate)*(1+place.feeRate+place.taxRate)
+    place.startTime = new Date(txTimeUnix)
+    place.buyTimeUnix = txTimeUnix
+    place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
+    place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
+    if (wo.Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
+    place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
+
+    creator.balance -= place.startPrice
+    // 创建新地产时，不需要交税费
+    creator.estateHoldingNumber += 1
+    creator.estateHoldingValue += place.startPrice*(1+place.profitRate)
+    creator.estateHoldingProfit += place.startPrice*place.profitRate
+
+    if (await place.addMe() && await creator.setMe()) {
+      let txBuyer = new wo.Trade({
+        uuidPlace: place.uuid,
+        uuidUser: creator.uuid,
+        uuidOther: 'SYSTEM', // 前任主人就是这次交易的对家
+        amount: -place.sellPrice, // 作为买家，是负数
+        txType: 'ESTATE_CREATE',
+        txTimeUnix: txTimeUnix,
+        txTime: new Date(txTimeUnix),
+        json: { Place:{name: place.name} }
+      })
+      txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
+      if (await txBuyer.addMe()) {
+        return { _state: 'ESTATE_CREATE_SUCCESS',
+          place,
+          trade: txBuyer
+        }
+      }
+    }
+
+    return { 
+      _state: 'ESTATE_CREATE_FAILED' 
+    }
+  }
+}
+
 DAD.api.payToBuyPlace = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
-  let txTimeUnix = Date.now()
 
   if (buyer.estateHoldingNumber >= 10){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
+  let txTimeUnix = Date.now()
   if ( place.sellTimeUnix < txTimeUnix // 再次确认，尚未被买走
     && buyer.balance >= place.sellPrice){
     buyer.balance -= place.sellPrice
@@ -103,7 +156,7 @@ DAD.api.payToBuyPlace = async function(option){
         uuidPlace: place.uuid,
         uuidUser: seller.uuid,
         uuidOther: buyer.uuid,
-        amount: place.sellPrice,
+        amount: place.buyPrice*(1+place.profitRate), // 注意不包含税费
         txType: 'ESTATE_SELLOUT',
         txTimeUnix: txTimeUnix,
         txTime: new Date(txTimeUnix),
@@ -125,18 +178,31 @@ DAD.api.payToBuyPlace = async function(option){
     
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       return {
-        _state: 'TRADE_SUCCESS',
+        _state: 'ESTATE_BUYIN_SUCCESS',
         place,
         trade: txBuyer
       }  
     }
   }
   return { 
-    _state: 'TRADE_FAILED' 
+    _state: 'ESTATE_BUYIN_FAILED' 
   }
 }
 
-DAD.api.uploadImage=async function(option){
+DAD.api.uploadImage = async function(option){
+  if (option._passtokenSource && option._passtokenSource.isOnline) {
+    let file = option._req.file
+    if (file &&  /^image\//.test(file.mimetype)) {
+      return Object.assign(file, {_state:'SUCCESS'})
+    }else {
+      return { _state: 'FILE_NOT_IMAGE'}
+    }
+  }else{
+    return { _state: 'USER_NOT_ONLINE' }
+  }
+}
+
+DAD.api.changeImage=async function(option){
   if (option._passtokenSource && option._passtokenSource.isOnline
     && option.Place && option.Place.uuid) {
     let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})

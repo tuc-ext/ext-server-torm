@@ -25,13 +25,17 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   regcode: { default: undefined, sqlite: 'TEXT', info:'我的邀请人的邀请码' },
   portrait: { default: undefined, sqlite: 'TEXT' },
   nickname: { default: undefined, sqlite: 'TEXT' },
-  lang: { default: undefined, sqlite: 'TEXT' },
   realname: { default: '', sqlite: 'TEXT' },
+  lang: { default: undefined, sqlite: 'TEXT' },
+  citizen: { default: undefined, sqlite: 'TEXT' },
+  idType: { default: undefined, sqlite: 'TEXT' },
   idNumber: { default: '', sqlite: 'TEXT' },
   kycStateL1: { default: undefined, sqlite:'TEXT' },
   kycStateL2: { default: undefined, sqlite: 'TEXT' },
+  kycStateL3: { default: undefined, sqlite: 'TEXT' },
   idCardCover: { default: undefined, sqlite:'TEXT' },
   idCardBack: { default: undefined, sqlite:'TEXT' },
+  idCardSelfie: { default: undefined, sqlite:'TEXT' },
   whenRegister: { default: undefined, sqlite: 'TEXT' },
   coinAddress: { default: {}, sqlite: 'TEXT' },
   balance: { default: 0, sqlite: 'REAL' },
@@ -86,6 +90,8 @@ DAD.api.uploadIdCard = async function(option){
         obj = {idCardCover: option._req.file.filename}
       }else if (option.side==='Back') {
         obj = {idCardBack: option._req.file.filename}
+      }else if (option.side==='Selfie') {
+        obj = {idCardSelfie: option._req.file.filename}
       }
       await DAD.setOne({User:obj, cond:{uuid: option._passtokenSource.uuid}})
       return Object.assign(file, { _state: 'SUCCESS'})
@@ -98,7 +104,7 @@ DAD.api.uploadIdCard = async function(option){
 }
 
 DAD.api.updateKycL1 = async function(option) {
-  if (option.User && option.User.realname && option.User.idNumber){
+  if (option.User && option.User.realname && option.User.idNumber && option.User.idType && option.User.citizen){
     option.User.kycStateL1='SUBMITTED'
     await DAD.setOne({ User:option.User, cond:{uuid: option._passtokenSource.uuid } })
     return { _state: 'SUBMITTED' }
@@ -111,6 +117,16 @@ DAD.api.updateKycL2 = async function(option) {
   let user = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   if (user && user.idCardCover && user.idCardBack){
     await DAD.setOne({ User:{kycStateL2: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
+    return { _state: 'SUBMITTED' }
+  }else {
+    return { _state: 'INPUT_MALFORMED' }
+  }
+}
+
+DAD.api.updateKycL3 = async function(option) {
+  let user = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+  if (user && user.idCardSelfie){
+    await DAD.setOne({ User:{kycStateL3: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }
@@ -289,7 +305,8 @@ DAD.api.register = DAD.api1.register = async function(option){
         nickname: option.phone,
         coinAddress,
         whenRegister,
-        lang: option.lang
+        lang: option.lang,
+        citizen: option.citizen
       } } )
       if (user) {
 // 或者严格按照 BIP44 的规范，代价是，需要先加入数据库获得用户aiid后才能确定路径

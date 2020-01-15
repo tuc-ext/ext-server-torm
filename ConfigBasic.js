@@ -26,6 +26,9 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     ETH: { name: 'ETH', exchange: 15 },
   },
   COMMUNITY_REWARD: 5,
+  PROFIT_RATE: 0.05,
+  FEE_RATE: 0.005,
+  TAX_RATE: 0.005,
 
   production: {
     protocol: 'https',
