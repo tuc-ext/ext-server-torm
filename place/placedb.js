@@ -7,7 +7,7 @@ const PRICE_HOUSE=10
 module.exports = [
   {
     pcode: 'LD',
-    name: {zhCN:'伦敦'},
+    name: { zhCN:'伦敦', enUS:'伦敦', native:'伦敦' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -18,7 +18,7 @@ module.exports = [
   },
   {
     pcode: 'MNH',
-    name: {zhCN:'慕尼黑'},
+    name: { zhCN:'慕尼黑', enUS:'慕尼黑', native:'慕尼黑' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -29,7 +29,7 @@ module.exports = [
   },
   {
     pcode: 'YSTBR',
-    name: {zhCN:'伊斯坦布尔'},
+    name: { zhCN:'伊斯坦布尔', enUS:'伊斯坦布尔', native:'伊斯坦布尔' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -40,7 +40,7 @@ module.exports = [
   },
   {
     pcode: 'DHL',
-    name: {zhCN:'德黑兰'},
+    name: { zhCN:'德黑兰', enUS:'德黑兰', native:'德黑兰' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -51,7 +51,7 @@ module.exports = [
   },
   {
     pcode: 'MSK',
-    name: {zhCN:'莫斯科'},
+    name: { zhCN:'莫斯科', enUS:'莫斯科', native:'莫斯科' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -62,7 +62,7 @@ module.exports = [
   },
   {
     pcode: 'YSLB',
-    name: {zhCN:'伊斯兰堡'},
+    name: { zhCN:'伊斯兰堡', enUS:'伊斯兰堡', native:'伊斯兰堡' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -73,7 +73,7 @@ module.exports = [
   },
   {
     pcode: 'YG',
-    name: {zhCN:'仰光'},
+    name: { zhCN:'仰光', enUS:'仰光', native:'仰光' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -84,7 +84,7 @@ module.exports = [
   },
   {
     pcode: 'XJP',
-    name: {zhCN:'新加坡'},
+    name: { zhCN:'新加坡', enUS:'新加坡', native:'新加坡' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -95,7 +95,7 @@ module.exports = [
   },
   {
     pcode: 'BJ',
-    name: {zhCN:'北京'},
+    name: { zhCN:'北京', enUS:'北京', native:'北京' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -106,7 +106,7 @@ module.exports = [
   },
   {
     pcode: 'DJ',
-    name: {zhCN:'东京'},
+    name: { zhCN:'东京', enUS:'东京', native:'东京' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -117,7 +117,7 @@ module.exports = [
   },
   {
     pcode: 'XN',
-    name: {zhCN:'悉尼'},
+    name: { zhCN:'悉尼', enUS:'悉尼', native:'悉尼' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -128,7 +128,7 @@ module.exports = [
   },
   {
     pcode: 'SLMQD',
-    name: {zhCN:'所罗门群岛'},
+    name: { zhCN:'所罗门群岛', enUS:'所罗门群岛', native:'所罗门群岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -139,7 +139,7 @@ module.exports = [
   },
   {
     pcode: 'HLD',
-    name: {zhCN:'惠灵顿'},
+    name: { zhCN:'惠灵顿', enUS:'惠灵顿', native:'惠灵顿' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -150,7 +150,7 @@ module.exports = [
   },
   {
     pcode: 'ZTD',
-    name: {zhCN:'中途岛'},
+    name: { zhCN:'中途岛', enUS:'中途岛', native:'中途岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -161,7 +161,7 @@ module.exports = [
   },
   {
     pcode: 'XWYQD',
-    name: {zhCN:'夏威夷群岛'},
+    name: { zhCN:'夏威夷群岛', enUS:'夏威夷群岛', native:'夏威夷群岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -172,7 +172,7 @@ module.exports = [
   },
   {
     pcode: 'MKSSQD',
-    name: {zhCN:'马克萨斯群岛'},
+    name: { zhCN:'马克萨斯群岛', enUS:'马克萨斯群岛', native:'马克萨斯群岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -183,7 +183,7 @@ module.exports = [
   },
   {
     pcode: 'WGH',
-    name: {zhCN:'温哥华'},
+    name: { zhCN:'温哥华', enUS:'温哥华', native:'温哥华' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -194,7 +194,7 @@ module.exports = [
   },
   {
     pcode: 'TPY',
-    name: {zhCN:'太平洋'},
+    name: { zhCN:'太平洋', enUS:'太平洋', native:'太平洋' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -205,7 +205,7 @@ module.exports = [
   },
   {
     pcode: 'ZJG',
-    name: {zhCN:'芝加哥'},
+    name: { zhCN:'芝加哥', enUS:'芝加哥', native:'芝加哥' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -216,7 +216,7 @@ module.exports = [
   },
   {
     pcode: 'BSD',
-    name: {zhCN:'波士顿'},
+    name: { zhCN:'波士顿', enUS:'波士顿', native:'波士顿' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -227,7 +227,7 @@ module.exports = [
   },
   {
     pcode: 'SDYG',
-    name: {zhCN:'圣地亚哥'},
+    name: { zhCN:'圣地亚哥', enUS:'圣地亚哥', native:'圣地亚哥' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -238,7 +238,7 @@ module.exports = [
   },
   {
     pcode: 'LYRNL',
-    name: {zhCN:'里约热内卢'},
+    name: { zhCN:'里约热内卢', enUS:'里约热内卢', native:'里约热内卢' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -249,7 +249,7 @@ module.exports = [
   },
   {
     pcode: 'YSRQD',
-    name: {zhCN:'亚速尔群岛'},
+    name: { zhCN:'亚速尔群岛', enUS:'亚速尔群岛', native:'亚速尔群岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
@@ -260,7 +260,7 @@ module.exports = [
   },
   {
     pcode: 'MDLQD',
-    name: {zhCN:'马德拉群岛'},
+    name: { zhCN:'马德拉群岛', enUS:'马德拉群岛', native:'马德拉群岛' },
     intro: '',
     amount: 1,
     profitRate: PROFIT_RATE,
