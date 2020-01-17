@@ -67,7 +67,7 @@ DAD.api.payToCreatePlace = async function(option){
   }
 
   let txTimeUnix = Date.now()
-  if (option.Place.nameNative && option.Place.profitRate && option.Place.startPrice && creator.balance >= option.Place.startPrice) {
+  if (option.Place.name && option.Place.profitRate && option.Place.startPrice && creator.balance >= option.Place.startPrice) {
     let place = new DAD(option.Place)
     place.uuidOwner = option._passtokenSource.uuid
     place.feeRate = wo.Config.FEE_RATE
