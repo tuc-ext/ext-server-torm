@@ -19,6 +19,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   uuidUser: { default: undefined, sqlite: 'TEXT', info: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
   uuidPlace: { default: undefined, sqlite: 'TEXT' },
   uuidOther: { default: undefined, sqlite: 'TEXT' },
+  txGroup: { default: undefined, sqlite: 'TEXT' },
   txType: { default: undefined, sqlite: 'TEXT' },
   txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
   txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
@@ -82,7 +83,7 @@ DAD.api.refreshMyDeposit = async function (option){
     return { _state: 'USER_NOT_FOUND'}
   }
   let address, tokenContract, txlistChain
-  if (false) { // wo.Config.env==='production'){
+  if (wo.Config.env==='production'){
     switch (option.coinType) {
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
       case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address
@@ -129,7 +130,7 @@ DAD.api.refreshMyDeposit = async function (option){
         let txHash = ticCrypto.hash(txChain.hash+option._passtokenSource.uuid)
         if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash}})) {
           console.log('存入数据库...')
-          let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txType:'DEPOSIT_USDT'})
+          let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txGroup:'DEPOSIT_TX', txType:'DEPOSIT_USDT'})
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)

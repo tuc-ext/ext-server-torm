@@ -66,8 +66,12 @@ DAD.api.payToCreatePlace = async function(option){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
+  if (option.Place.startPrice && creator.balance<option.Place.startPrice){
+    return { _state: 'BALANCE_NOT_ENOUGH' }
+  }
+
   let txTimeUnix = Date.now()
-  if (option.Place.name && option.Place.profitRate && option.Place.startPrice && creator.balance >= option.Place.startPrice) {
+  if (option.Place.name && option.Place.profitRate) {
     let place = new DAD(option.Place)
     place.uuidOwner = option._passtokenSource.uuid
     place.feeRate = wo.Config.FEE_RATE
@@ -93,6 +97,7 @@ DAD.api.payToCreatePlace = async function(option){
         uuidUser: creator.uuid,
         uuidOther: 'SYSTEM', // 前任主人就是这次交易的对家
         amount: -place.sellPrice, // 作为买家，是负数
+        txGroup: 'ESTATE_TX',
         txType: 'ESTATE_CREATE',
         txTimeUnix: txTimeUnix,
         txTime: new Date(txTimeUnix),
@@ -121,9 +126,12 @@ DAD.api.payToBuyPlace = async function(option){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
+  if (buyer.balance<place.sellPrice){
+    return { _state: 'BALANCE_NOT_ENOUGH' }
+  }
+
   let txTimeUnix = Date.now()
-  if ( place.sellTimeUnix < txTimeUnix // 再次确认，尚未被买走
-    && buyer.balance >= place.sellPrice){
+  if ( place.sellTimeUnix < txTimeUnix ){ // 再次确认，尚未被买走
     buyer.balance -= place.sellPrice
     buyer.estateFeeSum += place.buyPrice*place.feeRate
     buyer.estateTaxSum += place.buyPrice*place.taxRate
@@ -136,6 +144,7 @@ DAD.api.payToBuyPlace = async function(option){
       uuidUser: buyer.uuid,
       uuidOther: place.uuidOwner, // 前任主人就是这次交易的对家
       amount: -place.sellPrice, // 作为买家，是负数
+      txGroup: 'ESTATE_TX',
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
@@ -157,6 +166,7 @@ DAD.api.payToBuyPlace = async function(option){
         uuidUser: seller.uuid,
         uuidOther: buyer.uuid,
         amount: place.buyPrice*(1+place.profitRate), // 注意不包含税费
+        txGroup: 'ESTATE_TX',
         txType: 'ESTATE_SELLOUT',
         txTimeUnix: txTimeUnix,
         txTime: new Date(txTimeUnix),

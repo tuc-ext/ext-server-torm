@@ -22,8 +22,8 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   coinSet: {
     USDT_ON_ETH: { name: 'USDT(ERC20)', exchange: 100 },
 //      USDT_ON_BTC: 'USDT(BTC)',
-    BTC: { name: 'BTC', exchange: 939 },
-    ETH: { name: 'ETH', exchange: 15 },
+//    BTC: { name: 'BTC', exchange: 939 },
+//    ETH: { name: 'ETH', exchange: 15 },
   },
   COMMUNITY_REWARD: 5,
   PROFIT_RATE: 0.05,
