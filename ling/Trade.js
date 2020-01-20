@@ -1,6 +1,7 @@
 'use strict'
 const Ling = require('so.ling')
 const ticCrypto = require('tic.crypto')
+const DAY_MILLIS = 24*60*60*1000
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = function Trade (prop) { // 构建类
@@ -37,6 +38,18 @@ const my={}
 
 
 /****************** 类方法 (class methods) ******************/
+DAD.exchangeRate=function({date, coin}){
+  date = date || new Date()
+  coin = coin || 'USDT'
+  let epoch = new Date(wo.Config.EPOCH)
+  let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
+  let exchangeRate = 1
+  switch(coin){
+    case 'USDT': exchangeRate = 1000 - dayNumber
+    default: exchangeRate = 1000 - dayNumber
+  }
+  return exchangeRate
+}
 
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
@@ -134,7 +147,7 @@ DAD.api.refreshMyDeposit = async function (option){
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
-          txDB.exchangeRate = wo.Config.coinSet.USDT_ON_ETH.exchange
+          txDB.exchangeRate = DAD.exchangeRate({}) // wo.Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
           txDB.json = txChain
           txDB.txHash = txHash

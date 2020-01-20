@@ -235,8 +235,8 @@ DAD.api.prepareRegister = async function(option){
   if (option._passtokenSource && Date.now()>new Date(option._passtokenSource.passcodeExpireAt)){
     return { _state: 'PASSCODE_EXPIRED'}
   }
-  if (/^[0-9a-z]+$/.test(option.regcode)){
-    let aiid = wo.System.decode(option.regcode)
+  if (/^[0-9a-zA-Z]+$/.test(option.regcode)){
+    let aiid = wo.System.decode(option.regcode.toLowerCase())
     if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
 
     }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
@@ -301,25 +301,37 @@ DAD.api.register = DAD.api1.register = async function(option){
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
         passwordServer, 
-        regcode: option._passtokenSource.regcode,
+        regcode: option._passtokenSource.regcode.toLowerCase(),
         nickname: option.phone,
         coinAddress,
         whenRegister,
         lang: option.lang,
-        citizen: option.citizen
+        citizen: option.citizen,
+        balance: 10 * wo.Trade.exchangeRate({})
       } } )
+      let txReward = new wo.Trade({
+        uuidUser: option._passtokenSource.uuid,
+        txGroup: 'REWARD_TX',
+        txType: 'REWARD_REGIST',
+        amount: user.balance, // 作为买家，是负数
+        exchangeRate: wo.Trade.exchangeRate({}),
+        txTime: user.whenRegister,
+        txTimeUnix: new Date(user.whenRegister).valueOf(),
+      })
+      txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
+      let reward = await txReward.addMe()
       if (user) {
 // 或者严格按照 BIP44 的规范，代价是，需要先加入数据库获得用户aiid后才能确定路径
 //        let pathBTC = `m/44'/0'/${user.aiid}'/0/0`
 //        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
 //        let coinAddress = { ... }
 //        await user.setMe({ User:{coinAddress}})
-        let aiid = wo.System.decode(option._passtokenSource.regcode)
+        let aiid = wo.System.decode(option._passtokenSource.regcode.toLowerCase())
         if (aiid > 0) {
           let inviter = await DAD.getOne({User:{aiid:aiid }})
           if (inviter){
             inviter.communityNumber++
-            inviter.communityRewardSum+=wo.Config.COMMUNITY_REWARD
+//            inviter.communityRewardSum+=wo.Config.COMMUNITY_REWARD
             await inviter.setMe()
           }
         }

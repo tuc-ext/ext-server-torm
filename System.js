@@ -45,8 +45,12 @@ DAD.decode=function(code) {
 DAD.api={}
 
 DAD.api.getConfiguration=function(){
+  for (let coin in wo.Config.coinSet){
+    wo.Config.coinSet[coin].exchangeRate = wo.Trade.exchangeRate({})
+  }
   return { 
 //    EXCHANGE_RATE: wo.Config.EXCHANGE_RATE,
     coinSet: wo.Config.coinSet,
+    EPOCH: wo.Config.EPOCH
   }
 }

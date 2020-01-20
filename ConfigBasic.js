@@ -19,11 +19,12 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
   },
+  EPOCH: '2020-01-20T00:00:00.000Z',
   coinSet: {
-    USDT_ON_ETH: { name: 'USDT(ERC20)', exchange: 100 },
-//      USDT_ON_BTC: 'USDT(BTC)',
-//    BTC: { name: 'BTC', exchange: 939 },
-//    ETH: { name: 'ETH', exchange: 15 },
+    USDT_ON_ETH: { name: 'USDT(ERC)', exchangeRate: 1000 },
+//    USDT_ON_BTC: { name: 'USDT(Omni)', exchangeRate: 1000000 },
+//    BTC: { name: 'BTC', exchangeRate: 939 },
+//    ETH: { name: 'ETH', exchangeRate: 15 },
   },
   COMMUNITY_REWARD: 5,
   PROFIT_RATE: 0.05,
