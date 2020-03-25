@@ -8,15 +8,13 @@
   },
   "dependencies": {
     "body-parser": "^1.16.1",
-    "commander": "^2.14.1",
     "compression": "^1.7.3",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.1",
-    "deepmerge": "^2.1.0",
     "errorhandler": "^1.5.0",
     "etherscan-api": "^10.0.5",
     "express": "^4.14.1",
-    "greenlock-express": "^2.7.9",
+    "greenlock-express": "^4.0.3",
     "method-override": "^2.3.7",
     "morgan": "^1.8.1",
     "multer": "^1.4.2",
@@ -25,7 +23,6 @@
     "so.base": "git+https://git.faronear.org/so/so.base",
     "so.data": "git+https://git.faronear.org/so/so.data",
     "so.ling": "git+https://git.faronear.org/so/so.ling",
-    "socket.io": "^1.0.6",
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto"
   },
   "devDependencies": {
@@ -35,8 +32,7 @@
     "nodemon": "^2.0.2",
     "pm2": "^3.5.0",
     "standard": "^12.0.1",
-    "supervisor": "^0.12.0",
-    "watchify": "^3.10.0"
+    "supervisor": "^0.12.0"
   },
   "scripts": {
     "ssl": "certbot certonly -d server.log.yuanjin.net --standalone",

@@ -20,7 +20,7 @@ const alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
 const base = 16367
 
 
-DAD.encode=function(aiid) {
+DAD.aiid2regcode=function(aiid) {
   let num = (aiid+base)*(base - alphabet.length)
   let code = ''
   let mod
@@ -32,7 +32,7 @@ DAD.encode=function(aiid) {
   return code;
 }
 
-DAD.decode=function(code) {
+DAD.regcode2aiid=function(code) {
   let len = code.length
   let num = 0
   for (let i=0; i < len; i++) {

@@ -1,7 +1,7 @@
 const PROFIT_RATE=0.05
 const FEE_RATE=0.005
 const TAX_RATE=0.005
-const PRICE_CITY=8000
+const PRICE_CITY=5000
 const PRICE_HOUSE=10
 
 module.exports = [

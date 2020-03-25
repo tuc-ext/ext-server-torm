@@ -1,15 +1,22 @@
 'use strict'
 
-const LOG_PORT_STANDARD = 60564
-
 module.exports = { // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。
+  commanderOptions: [ // 命令行里可以接受的参数。将传给 config.js 里的 commander。每个参数的定义格式是 [参数名，参数键，描述]，后两者用于传给commander，取值后覆盖掉Config里的同名变量。
+    ['datastore', '-d, --datastore <string>', 'Datastore for permanent storage: \'type:name\'.'],
+    ['env', '--env <string>', 'Runtime environment: production|development.'],
+    ['host', '-H, --host <string>', 'Host ip or domain name.'],
+    ['protocol', '-P, --protocol <string>', 'Web Server protocol: http|https|httpall.'],
+    ['port', '-p, --port <number>', 'HTTP port number.'],
+    ['sslCert', '--sslCert <string>', 'SSL certificate file.'],
+    ['sslKey', '--sslKey <string>', 'SSL private key file.'],
+    ['sslType', '--sslType <string>', 'SSL provider type: file|greenlock.'],
+  ],
+
   protocol: 'http', // http|https|httpall
   host: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
-  port: LOG_PORT_STANDARD, // 本节点的 Web服务端口号
-  tasking: 'single', // single|cluster: 单进程或多进程
+  port: 60564, // 本节点的 Web服务端口号
   // 数据库设置
-  dbType: 'sqlite',
-  dbName: 'data.sqlite/log.sqlite',
+  datastore: 'sqlite:data.sqlite/log.sqlite',
 
   ETHERSCAN_APIKEY: '测试发现，其实胡编的也可以用，不管对主网还是测试网。但只有访问主网的apikey使用才会被etherscan记录。',
   ETH_NETTYPE: 'ropsten',
@@ -19,7 +26,7 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
   },
-  EPOCH: '2020-01-20T00:00:00.000Z',
+  EPOCH: '2020-03-25T16:00:00.000Z',
   coinSet: {
     USDT_ON_ETH: { name: 'USDT(ERC)', exchangeRate: 1000 },
 //    USDT_ON_BTC: { name: 'USDT(Omni)', exchangeRate: 1000000 },
@@ -35,12 +42,6 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     protocol: 'https',
     host: 'server.log.yuanjin.net',
     sslType: 'file', // file|greenlock
-    sslDomainList: ['server.log.yuanjin.net'],
-    /* 注意，浏览器认识，但我们自己的后台，比如 钱包后台wallet.server，不认识 letsencrypt 提供的 ssl证书。
-    解决办法：  https://stackoverflow.com/questions/31673587/error-unable-to-verify-the-first-certificate-in-nodejs
-    简单的解法：  https://www.npmjs.com/package/ssl-root-cas
-    sslCert 不要使用 cert.pem，而使用 fullchain.pem, 把所有中间证书都带上，即可！
-    */
     sslKey: '/etc/letsencrypt/live/server.log.yuanjin.net/privkey.pem', // ssl key file,
     sslCert: '/etc/letsencrypt/live/server.log.yuanjin.net/fullchain.pem', // ssl cert file,
     sslCA: '', // ssl ca file,
@@ -54,15 +55,15 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     },
   },
 
-    /* 数据库，HTTP 等设置（与时光链本身无关） */
-    HTTP_BODY_LIMIT: '50mb',
-    UPLOAD_LIMIT: 1048576, // 单位: Byte。
-    SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
-    // todo: 改名为 DB_*
-    LIMIT_DEFAULT: 12,
-    LIMIT_MAX: 1000,
-    MARK_DELETED: 'MARK_DELETED',
-    MARK_LINKED: 'MARK_LINKED', // 建立了关系（care, know, join 等）
-    MARK_RELEASED: 'MARK_RELEASED', // 解除了关系（care, know, join 等）  
+  /* 数据库，HTTP 等设置（与时光链本身无关） */
+  HTTP_BODY_LIMIT: '50mb',
+  UPLOAD_LIMIT: 1048576, // 单位: Byte。
+  SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
+  // todo: 改名为 DB_*
+  LIMIT_DEFAULT: 12,
+  LIMIT_MAX: 1000,
+  MARK_DELETED: 'MARK_DELETED',
+  MARK_LINKED: 'MARK_LINKED', // 建立了关系（care, know, join 等）
+  MARK_RELEASED: 'MARK_RELEASED', // 解除了关系（care, know, join 等）  
 
 }

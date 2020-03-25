@@ -58,7 +58,7 @@ const my={}
 
 /****************** 实例方法 (instance methods) ******************/
 MOM.normalize=function(){
-  this.regcode = wo.System.encode(this.aiid)
+  this.regcode = wo.System.aiid2regcode(this.aiid)
   delete this.aiid
   return this
 }
@@ -237,7 +237,7 @@ DAD.api.prepareRegister = async function(option){
     return { _state: 'PASSCODE_EXPIRED'}
   }
   if (/^[0-9a-zA-Z]+$/.test(option.regcode)){
-    let aiid = wo.System.decode(option.regcode.toLowerCase())
+    let aiid = wo.System.regcode2aiid(option.regcode.toLowerCase())
     if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
 
     }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
@@ -278,16 +278,18 @@ DAD.api.register = DAD.api1.register = async function(option){
       let whenRegister = new Date()
       // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
       // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
-      // Account 最大到 parseInt(0x7FFFFFFF, 16), Coin/Index最大到 parseInt(0xFFFFFFFF, 16)
+      // Account/Change/Index 最大到 parseInt(0x7FFFFFFF, 16)
       // 后面还可继续延伸 /xxx/xxx/xxx/......
       let seed=ticCrypto.hash(whenRegister.valueOf()+option._passtokenSource.uuid, {hasher:'md5'})
       let part0=parseInt(seed.slice(0,6), 16)
       let part1=parseInt(seed.slice(6,12), 16)
       let part2=parseInt(seed.slice(12,18), 16)
       let part3=parseInt(seed.slice(18,24), 16)
-      let part4=parseInt(seed.slice(24,32), 16)
-      let pathBTC=`m/44'/0'/${part0}'/${part1}/${part2}/${part3}/${part4}`
-      let pathETH=`m/44'/60'/${part0}'/${part1}/${part2}/${part3}/${part4}`
+      let part4=parseInt(seed.slice(24,30), 16)
+      let part5=parseInt(seed.slice(31,32), 16)
+      let path=`${part0}'/${part1}/${part2}/${part3}/${part4}/${part5}`
+      let pathBTC=`m/44'/0'/${path}`
+      let pathETH=`m/44'/60'/${path}`
       let coinAddress = {
         BTC: {
           path: pathBTC,
@@ -327,7 +329,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 //        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
 //        let coinAddress = { ... }
 //        await user.setMe({ User:{coinAddress}})
-        let aiid = wo.System.decode(option._passtokenSource.regcode.toLowerCase())
+        let aiid = wo.System.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
         if (aiid > 0) {
           let inviter = await DAD.getOne({User:{aiid:aiid }})
           if (inviter){
@@ -435,13 +437,14 @@ DAD.api.resetPassword = async function(option){
 DAD.api.setLang=function(option){
   if (option && option.User && option.User.lang
     && option._passtokenSource && option._passtokenSource.isOnline){
-      wo.User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
+      let result = wo.User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
+      return result?true:false
     }
 }
 
 DAD.api.getMyCommunityNumber=async function(option){
   let myself = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
-  let myregcode = wo.System.encode(myself.aiid)
+  let myregcode = wo.System.aiid2regcode(myself.aiid)
   let communityNumber = await DAD.getCount({User: {regcode:myregcode}})
   return { _state: 'SUCCESS', communityNumber }
 }
