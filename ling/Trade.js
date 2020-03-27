@@ -99,7 +99,7 @@ DAD.api.refreshMyDeposit = async function (option){
   if (Config.env==='production'){
     switch (option.coinType) {
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
-      case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address
+      case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address.toLowerCase()
     }
     tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
     txlistChain = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
