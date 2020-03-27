@@ -1,6 +1,7 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
+const to = require('typeorm')
 
 const Config = require('so.base/Config.js')
 
@@ -29,6 +30,14 @@ async function initSingle () {
   wo.Trade = await require('./ling/Trade.js')._init(wo.DataStore)
   wo.User = await require('./ling/User.js')._init(wo.DataStore)
   wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
+  wo.Story = await require('./ling/Story.js')
+
+  await to.createConnection({
+    type:'sqlite',
+    database: 'data.sqlite/to.sqlite',
+    entities: [ wo.Story.schema ],
+    synchronize: true,
+  })
 
   return wo
 }

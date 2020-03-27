@@ -3,6 +3,10 @@ const Ling = require('so.ling')
 const ticCrypto = require('tic.crypto')
 const DAY_MILLIS = 24*60*60*1000
 
+const Config = require('so.base/Config.js')
+const Story = require('./Story.js')
+const to = require('typeorm')
+
 /****************** 类和原型 *****************/
 const DAD = module.exports = class Place extends Ling { // 构建类
   constructor(prop){
@@ -75,15 +79,15 @@ DAD.api.payToCreatePlace = async function(option){
   if (option.Place.name && option.Place.profitRate) {
     let place = new DAD(option.Place)
     place.uuidOwner = option._passtokenSource.uuid
-    place.feeRate = wo.Config.FEE_RATE
-    place.taxRate = wo.Config.TAX_RATE
+    place.feeRate = Config.FEE_RATE
+    place.taxRate = Config.TAX_RATE
     place.buyPrice = place.startPrice
     place.sellPrice = place.buyPrice*(1+place.profitRate)*(1+place.feeRate+place.taxRate)
     place.startTime = new Date(txTimeUnix)
     place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
     place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
-    if (wo.Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
+    if (Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
 
     creator.balance -= place.startPrice
@@ -123,6 +127,8 @@ DAD.api.payToBuyPlace = async function(option){
   let buyer = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
   let place = await DAD.getOne({Place:{uuid:option.Place.uuid}})
 
+  let fromTimeUnix = place.buyTimeUnix
+
   if (buyer.estateHoldingNumber >= 10){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
@@ -153,7 +159,7 @@ DAD.api.payToBuyPlace = async function(option){
     })
     txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
 
-    if (place.uuidOwner) {
+    if (place.uuidOwner) { // 如果有前任主人。（如果没有，就是系统初始化状态）
       let seller = await wo.User.getOne({User:{uuid:place.uuidOwner}})
       seller.balance += place.buyPrice*(1+place.profitRate)
       seller.estateProfitSum += place.buyPrice*place.profitRate
@@ -184,10 +190,21 @@ DAD.api.payToBuyPlace = async function(option){
     place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
     place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
-    if (wo.Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/6 // 开发测试环境下，每4小时到期
+    if (Config.env!=='production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS/24 // 开发测试环境下，每1小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
     
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
+      if (place.uuidPreowner) {
+        Story.create({
+          image: Story.findOne({image: place.image}) ? null : place.image, // 不要提交重复的照片（如果新主人没有更换图片）
+          text: Story.findOne({intro: place.intro}) ? null : place.intro, 
+          owner: place.uuidPreowner, 
+          place: place.uuid,
+          fromTime: new Date(fromTimeUnix),
+          toTime: new Date(txTimeUnix),
+        })
+        .save()
+      }
       return {
         _state: 'ESTATE_BUYIN_SUCCESS',
         place,
@@ -200,7 +217,7 @@ DAD.api.payToBuyPlace = async function(option){
   }
 }
 
-DAD.api.uploadImage = async function(option){
+DAD.api.uploadImage = async function(option){ // Estate 尚未存入数据库，只是上传图片，不修改数据库
   if (option._passtokenSource && option._passtokenSource.isOnline) {
     let file = option._req.file
     if (file &&  /^image\//.test(file.mimetype)) {

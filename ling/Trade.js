@@ -3,6 +3,10 @@ const Ling = require('so.ling')
 const ticCrypto = require('tic.crypto')
 const DAY_MILLIS = 24*60*60*1000
 
+const Story = require('./Story.js')
+const Config = require('so.base/Config.js')
+const User = require('./User.js')
+
 /****************** 类和原型 *****************/
 const DAD = module.exports = class Trade extends Ling { // 构建类
   constructor(prop){
@@ -40,12 +44,12 @@ const my={}
 
 /****************** 类方法 (class methods) ******************/
 DAD.exchangeRate=function({date=new Date(), coin='USDT'}){
-  let epoch = new Date(wo.Config.EPOCH)
+  let epoch = new Date(Config.EPOCH)
   let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
   let exchangeRate = 1000
   switch(coin){
-    case 'USDT': exchangeRate = 1000 - dayNumber*10; break;
-    default: exchangeRate = 1000 - dayNumber*10
+    case 'USDT': exchangeRate = 1000 - dayNumber; break;
+    default: exchangeRate = 1000 - dayNumber
   }
   console.log('exchangeRate=', exchangeRate)
   return exchangeRate
@@ -62,9 +66,9 @@ let sort = 'desc'
 
 DAD.api.getMyTokenBalance = async function (option){
   if (option && option._passtokenSource && option.coinType){
-    let onlineUser = wo.User.getOne({User: {uuid:option._passtokenSource.uuid}})
+    let onlineUser = User.getOne({User: {uuid:option._passtokenSource.uuid}})
     let address = onlineUser.coinAddress[option.coinType].address
-    let tokenContract = wo.Config.ETH_TOKEN_INFO[option.coinType].contract
+    let tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
     // 查询以太币余额 await api.account.balance(address)
     let tokenBalanceResult = await wo.EtherscanApi.account.tokenBalanceResult(address, '', tokenContract) // tokenName must be empty '', otherwise it fails, don't know why.
     console.log(`My ${option.coinType} balance = ${JSON.stringify(tokenBalanceResult)}`) // {"status":"1","message":"OK","result":"116517481000"}
@@ -87,17 +91,17 @@ DAD.api.refreshMyDeposit = async function (option){
   if (!option._passtokenSource.isOnline) {
     return { _state: 'USER_OFFLINE' }
   }
-  let onlineUser = await wo.User.getOne({User: {uuid:option._passtokenSource.uuid}})
+  let onlineUser = await User.getOne({User: {uuid:option._passtokenSource.uuid}})
   if (!onlineUser) {
     return { _state: 'USER_NOT_FOUND'}
   }
   let address, tokenContract, txlistChain
-  if (wo.Config.env==='production'){
+  if (Config.env==='production'){
     switch (option.coinType) {
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
       case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address
     }
-    tokenContract = wo.Config.ETH_TOKEN_INFO[option.coinType].contract
+    tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
     txlistChain = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
       .catch(function(err) { console.log(err); return null } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
   }else {
@@ -106,7 +110,7 @@ DAD.api.refreshMyDeposit = async function (option){
     let accNone = '0xaDe455212458D41EF81fF157f39320128D161735' // 没有钱，没用过，为了测试。
 
     address = acc1
-    tokenContract = wo.Config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
+    tokenContract = Config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
     txlistChain = {"status":"1","message":"OK","result":[
       {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x331e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
       {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x321e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
@@ -129,7 +133,7 @@ DAD.api.refreshMyDeposit = async function (option){
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
-          txDB.exchangeRate = DAD.exchangeRate({}) // wo.Config.coinSet.USDT_ON_ETH.exchange
+          txDB.exchangeRate = DAD.exchangeRate({}) // Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
           txDB.json = txChain
           txDB.txHash = txHash

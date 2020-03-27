@@ -6,6 +6,9 @@ const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
 
+const Config = require('so.base/Config.js')
+const User = require('./User.js')
+
 /****************** 类和原型 *****************/
 const DAD = module.exports = class User extends Ling { // 构建类
   constructor(prop){
@@ -115,7 +118,7 @@ DAD.api.updateKycL1 = async function(option) {
 }
 
 DAD.api.updateKycL2 = async function(option) {
-  let user = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+  let user = await User.getOne({User:{uuid:option._passtokenSource.uuid}})
   if (user && user.idCardCover && user.idCardBack){
     await DAD.setOne({ User:{kycStateL2: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
     return { _state: 'SUBMITTED' }
@@ -125,7 +128,7 @@ DAD.api.updateKycL2 = async function(option) {
 }
 
 DAD.api.updateKycL3 = async function(option) {
-  let user = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
+  let user = await User.getOne({User:{uuid:option._passtokenSource.uuid}})
   if (user && user.idCardSelfie){
     await DAD.setOne({ User:{kycStateL3: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
     return { _state: 'SUBMITTED' }
@@ -293,11 +296,11 @@ DAD.api.register = DAD.api1.register = async function(option){
       let coinAddress = {
         BTC: {
           path: pathBTC,
-          address: ticCrypto.secword2account(wo.Config.secword, {coin: 'BTC', path: pathBTC}).address
+          address: ticCrypto.secword2account(Config.secword, {coin: 'BTC', path: pathBTC}).address
         },
         ETH: { 
           path: pathETH,
-          address: ticCrypto.secword2account(wo.Config.secword, {coin: 'ETH', path: pathETH}).address
+          address: ticCrypto.secword2account(Config.secword, {coin: 'ETH', path: pathETH}).address
         }
       }
       let user = await DAD.addOne( { User: { 
@@ -334,7 +337,7 @@ DAD.api.register = DAD.api1.register = async function(option){
           let inviter = await DAD.getOne({User:{aiid:aiid }})
           if (inviter){
             inviter.communityNumber++
-//            inviter.communityRewardSum+=wo.Config.COMMUNITY_REWARD
+//            inviter.communityRewardSum+=Config.COMMUNITY_REWARD
             await inviter.setMe()
           }
         }
@@ -437,7 +440,7 @@ DAD.api.resetPassword = async function(option){
 DAD.api.setLang=function(option){
   if (option && option.User && option.User.lang
     && option._passtokenSource && option._passtokenSource.isOnline){
-      let result = wo.User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
+      let result = User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
       return result?true:false
     }
 }

@@ -23,7 +23,8 @@
     "so.base": "git+https://git.faronear.org/so/so.base",
     "so.data": "git+https://git.faronear.org/so/so.data",
     "so.ling": "git+https://git.faronear.org/so/so.ling",
-    "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto"
+    "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
+    "typeorm": "^0.2.24"
   },
   "devDependencies": {
     "cross-env": "^5.1.3",
