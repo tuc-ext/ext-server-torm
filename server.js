@@ -34,7 +34,7 @@ async function initSingle () {
 
   await to.createConnection({
     type:'sqlite',
-    database: 'data.sqlite/to.sqlite',
+    database: 'data.sqlite/log.sqlite',
     entities: [ wo.Story.schema ],
     synchronize: true,
   })
