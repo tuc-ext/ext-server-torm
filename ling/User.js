@@ -7,7 +7,6 @@ const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
 
 const Config = require('so.base/Config.js')
-const User = require('./User.js')
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = class User extends Ling { // 构建类
