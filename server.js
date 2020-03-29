@@ -27,16 +27,16 @@ async function initSingle () {
 
   mylog.info('Loading classes and Creating tables......')
   wo.Ling = require('so.ling')
-  wo.Trade = await require('./ling/Trade.js')._init(wo.DataStore)
-  wo.User = await require('./ling/User.js')._init(wo.DataStore)
-  wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
+  wo.Trade = await require('./ling/Trade.js')
+  wo.User = await require('./ling/User.js')
+  wo.Place = await require('./ling/Place.js')
   wo.Story = await require('./ling/Story.js')
 
   await to.createConnection({
     type:'sqlite',
-    database: 'data.sqlite/to.sqlite',
-    entities: [ wo.Story.schema ],
-    synchronize: true,
+    database: 'data.sqlite/log.sqlite',
+    entities: [ wo.Story.schema, wo.User.getEntitySchema(), wo.Trade.getEntitySchema(), wo.Place.getEntitySchema() ],
+    synchronize: Config.env!=='production'?true:false,
   })
 
   return wo

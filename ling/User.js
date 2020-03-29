@@ -1,5 +1,4 @@
 'use strict'
-const Ling = require('so.ling')
 const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')
@@ -7,74 +6,69 @@ const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
 
 const Config = require('so.base/Config.js')
+const to = require('typeorm')
 
 /****************** 类和原型 *****************/
-const DAD = module.exports = class User extends Ling { // 构建类
-  constructor(prop){
-    super(prop)
-    this._class = this.constructor.name
-    this.setProp(prop)  
+const DAD = module.exports = class User extends to.BaseEntity { // 构建类
+
+  static _model = {
+    aiid: { type:Number, primary:true, generated:true, },
+    uuid: { type:String, generated:'uuid', unique:true },
+    phone: { type:String, unique:true, },
+    passwordServer: { type:String, },
+    regcode: { type:String, nullable:true, comment:'我的邀请人的邀请码' },
+    portrait: { type:String, nullable:true },
+    nickname: { type:String, nullable:true },
+    realname: { type:String, nullable:true },
+    lang: { type:String, nullable:true },
+    citizen: { type:String, nullable:true },
+    idType: { type:String, nullable:true },
+    idNumber: { type:String, nullable:true },
+    kycStateL1: { type:String, nullable:true },
+    kycStateL2: { type:String, nullable:true },
+    kycStateL3: { type:String, nullable:true },
+    idCardCover: { type:String, nullable:true },
+    idCardBack: { type:String, nullable:true },
+    idCardSelfie: { type:String, nullable:true },
+    whenRegister: { type:String, nullable:true },
+    coinAddress: { type:String, nullable:true },
+    balance: { type:'real', default:0 },
+    estateProfitSum: { type:'real', default:0 },
+    estateFeeSum: { type:'real', default:0 },
+    estateTaxSum: { type:'real', default:0 },
+    estateHoldingNumber: { type:'int', default:0 },
+    estateHoldingValue: { type:'real', default:0 },
+    estateHoldingProfit: { type:'real', default:0 },
+    depositUsdtSum: { type:'real', default:0 },
+    depositLogSum: { type:'real', default:0 },
+    communityNumber: { type:'int', default:0 },
+    communityRewardSum: { type:'real', default:0 },
+    json: { type:'simple-json', default: {} } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
   }
+
+  static getEntitySchema(){
+    return new to.EntitySchema({
+      name: this.name,
+      target: this,
+      columns: this._model
+    })
+  }
+
+  normalize(){
+    this.regcode = ticCrypto.aiid2regcode(this.aiid)
+    delete this.aiid
+    return this
+  }
+  
 }
 
-const MOM = DAD.prototype // 原型对象
-MOM._table = DAD.name
-MOM._tablekey = 'uuid'
-MOM._model = { // 数据模型，用来初始化每个对象的数据
-  aiid: { default: undefined, sqlite:'INTEGER PRIMARY KEY' },
-  uuid: { default: undefined, sqlite: 'TEXT UNIQUE', mysql: 'VARCHAR(64) PRIMARY KEY' },
-  phone: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  passwordServer: { default: undefined, sqlite: 'TEXT' },
-  regcode: { default: undefined, sqlite: 'TEXT', info:'我的邀请人的邀请码' },
-  portrait: { default: undefined, sqlite: 'TEXT' },
-  nickname: { default: undefined, sqlite: 'TEXT' },
-  realname: { default: '', sqlite: 'TEXT' },
-  lang: { default: undefined, sqlite: 'TEXT' },
-  citizen: { default: undefined, sqlite: 'TEXT' },
-  idType: { default: undefined, sqlite: 'TEXT' },
-  idNumber: { default: '', sqlite: 'TEXT' },
-  kycStateL1: { default: undefined, sqlite:'TEXT' },
-  kycStateL2: { default: undefined, sqlite: 'TEXT' },
-  kycStateL3: { default: undefined, sqlite: 'TEXT' },
-  idCardCover: { default: undefined, sqlite:'TEXT' },
-  idCardBack: { default: undefined, sqlite:'TEXT' },
-  idCardSelfie: { default: undefined, sqlite:'TEXT' },
-  whenRegister: { default: undefined, sqlite: 'TEXT' },
-  coinAddress: { default: {}, sqlite: 'TEXT' },
-  balance: { default: 0, sqlite: 'REAL' },
-  estateProfitSum: { default:0, sqlite: 'REAL' },
-  estateFeeSum: { default:0, sqlite: 'REAL' },
-  estateTaxSum: { default:0, sqlite: 'REAL' },
-  estateHoldingNumber: { default:0, sqlite: 'INTEGER' },
-  estateHoldingValue: { default:0, sqlite:'REAL'},
-  estateHoldingProfit: {default:0, sqlite:'REAL'},
-  depositUsdtSum: { default:0, sqlite: 'REAL' },
-  depositLogSum: { default:0, sqlite: 'REAL' },
-  communityNumber: { default:0, sqlite: 'INTEGER' },
-  communityRewardSum: { default:0, sqlite: 'REAL' },
-  json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
-}
-
-/****************** 私有属性 (private members) ******************/
-const my={}
-
-/****************** 实例方法 (instance methods) ******************/
-MOM.normalize=function(){
-  this.regcode = wo.System.aiid2regcode(this.aiid)
-  delete this.aiid
-  return this
-}
-
-/****************** 类方法 (class methods) ******************/
-
-/****************** API方法 ******************/
-DAD.api=DAD.api1={}
+DAD.api={}
 
 DAD.api.changePortrait = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline) {
     let file = option._req.file
     if (file && /^image\//.test(file.mimetype)) {
-      await DAD.setOne({User:{portrait:option._req.file.filename}, cond:{uuid: option._passtokenSource.uuid}})
+      await DAD.update({uuid: option._passtokenSource.uuid}, {portrait:option._req.file.filename})
       return Object.assign(file, { _state: 'SUCCESS'})
     }else{
       return { _state: 'FILE_NOT_IMAGE'}
@@ -96,7 +90,7 @@ DAD.api.uploadIdCard = async function(option){
       }else if (option.side==='Selfie') {
         obj = {idCardSelfie: option._req.file.filename}
       }
-      await DAD.setOne({User:obj, cond:{uuid: option._passtokenSource.uuid}})
+      await DAD.update({uuid: option._passtokenSource.uuid}, obj)
       return Object.assign(file, { _state: 'SUCCESS'})
     }else{
       return { _state: 'FILE_NOT_IMAGE'}
@@ -109,7 +103,7 @@ DAD.api.uploadIdCard = async function(option){
 DAD.api.updateKycL1 = async function(option) {
   if (option.User && option.User.realname && option.User.idNumber && option.User.idType && option.User.citizen){
     option.User.kycStateL1='SUBMITTED'
-    await DAD.setOne({ User:option.User, cond:{uuid: option._passtokenSource.uuid } })
+    await DAD.update({uuid: option._passtokenSource.uuid }, option.User )
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }
@@ -117,9 +111,8 @@ DAD.api.updateKycL1 = async function(option) {
 }
 
 DAD.api.updateKycL2 = async function(option) {
-  let user = await User.getOne({User:{uuid:option._passtokenSource.uuid}})
-  if (user && user.idCardCover && user.idCardBack){
-    await DAD.setOne({ User:{kycStateL2: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
+  if (option.User && option.User.idCardCover && option.User.idCardBack){
+    await DAD.update({ uuid: option._passtokenSource.uuid }, {kycStateL2: 'SUBMITTED'} )
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }
@@ -127,27 +120,26 @@ DAD.api.updateKycL2 = async function(option) {
 }
 
 DAD.api.updateKycL3 = async function(option) {
-  let user = await User.getOne({User:{uuid:option._passtokenSource.uuid}})
-  if (user && user.idCardSelfie){
-    await DAD.setOne({ User:{kycStateL3: 'SUBMITTED'}, cond:{uuid: option._passtokenSource.uuid } })
+  if (option.User && Option.User.idCardSelfie){
+    await DAD.setOne({ uuid: option._passtokenSource.uuid }, {kycStateL3: 'SUBMITTED'} )
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }
   }
 }
 
-DAD.api.identify = DAD.api1.identify = async function(option){
+
+DAD.api.identify = async function(option){
   if (option.phone && Internation.validatePhone({phone:option.phone})) {
-    let user = await DAD.getOne({User: {phone:option.phone}})
+    let user = await DAD.findOne({phone:option.phone})
     let _state, uuid
     if (user) {
       uuid = user.uuid
       _state = 'OLD_USER'
     } else {
-      uuid = `${DAD.name}-${Uuid.v4()}`,
+      uuid = Uuid.v4(),
       _state = 'NEW_USER'
     }
-    mylog.info(`identify::::::: uuid = ${uuid}`)
     return {
       _state,
       uuid,
@@ -182,7 +174,7 @@ DAD.api.sendPasscode = async function(option){
         signName: 'LOG'
       }
     )
-  }else {
+  }else { // 开发环境
     sendResult = {state:'DONE'}
   }
 
@@ -239,10 +231,10 @@ DAD.api.prepareRegister = async function(option){
     return { _state: 'PASSCODE_EXPIRED'}
   }
   if (/^[0-9a-zA-Z]+$/.test(option.regcode)){
-    let aiid = wo.System.regcode2aiid(option.regcode.toLowerCase())
+    let aiid = ticCrypto.regcode2aiid(option.regcode.toLowerCase())
     if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
 
-    }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
+    }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.findOne({aiid:aiid})){
       return { _state: 'REGCODE_USER_NOTEXIST' }
     } 
   }else {
@@ -268,7 +260,7 @@ DAD.api.prepareRegister = async function(option){
   }
 }
 
-DAD.api.register = DAD.api1.register = async function(option){
+DAD.api.register = async function(option){
   mylog.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
   mylog.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
   if (option._passtokenSource 
@@ -302,7 +294,7 @@ DAD.api.register = DAD.api1.register = async function(option){
           address: ticCrypto.secword2account(Config.secword, {coin: 'ETH', path: pathETH}).address
         }
       }
-      let user = await DAD.addOne( { User: { 
+      let user = await DAD.insert( { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
         passwordServer, 
@@ -313,7 +305,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         lang: option.lang,
         citizen: option.citizen,
         balance: 10 * wo.Trade.exchangeRate({})
-      } } )
+      } )
       let txReward = new wo.Trade({
         uuidUser: option._passtokenSource.uuid,
         txGroup: 'REWARD_TX',
@@ -333,12 +325,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 //        await user.setMe({ User:{coinAddress}})
         let aiid = wo.System.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
         if (aiid > 0) {
-          let inviter = await DAD.getOne({User:{aiid:aiid }})
-          if (inviter){
-            inviter.communityNumber++
-//            inviter.communityRewardSum+=Config.COMMUNITY_REWARD
-            await inviter.setMe()
-          }
+          await DAD.getRepository().increment({aiid:aiid}, 'communityNumber', 1)
         }
 
         return { 
@@ -363,7 +350,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 DAD.api.autologin = async function(option){
   if (option._passtokenSource && option._passtokenSource.isOnline && option._passtokenSource.uuid && option._passtokenSource.passwordClient){
     let passwordServer = ticCrypto.hash(option._passtokenSource.passwordClient+option._passtokenSource.uuid)
-    let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
+    let onlineUser = await DAD.findOne({ uuid: option._passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer 
         && onlineUser.phone === option._passtokenSource.phone){
@@ -378,11 +365,11 @@ DAD.api.autologin = async function(option){
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.login = DAD.api1.login = async function(option){
+DAD.api.login = async function(option){
   if (option.passwordClient && option.phone 
     && option._passtokenSource && option._passtokenSource.uuid) {
     let passwordServer = ticCrypto.hash(option.passwordClient+option._passtokenSource.uuid)
-    let onlineUser = await DAD.getOne({User:{ uuid: option._passtokenSource.uuid }})
+    let onlineUser = await DAD.findOne({ uuid: option._passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer
         && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
@@ -421,11 +408,12 @@ DAD.api.resetPassword = async function(option){
     && option._passtokenSource.identifyState === 'OLD_USER'
     && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
     && option.phone && option.phone === option._passtokenSource.phone
-    && option._passtokenSource.uuid && option.passwordClient) {
-      let onlineUser = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
-      let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
-      let updated = await DAD.setOne({User:{passwordServer}, cond:{uuid:option._passtokenSource.uuid}})
-      if (updated && updated.passwordServer === passwordServer){
+    && option._passtokenSource.uuid && option.passwordClient
+    ) {
+      let onlineUser = await DAD.findOne({uuid:option._passtokenSource.uuid}) // 确保已经存在
+      if (onlineUser) {
+        let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
+        await DAD.update({uuid:option._passtokenSource.uuid}, {passwordServer: passwordServer})
         return { _state: 'RESET_SUCCESS' }
       }else {
         return { _state: 'RESET_FAILED' }
@@ -436,17 +424,18 @@ DAD.api.resetPassword = async function(option){
 
 }
 
-DAD.api.setLang=function(option){
+DAD.api.setLang=async function(option){
   if (option && option.User && option.User.lang
     && option._passtokenSource && option._passtokenSource.isOnline){
-      let result = User.setOne({User:{lang:option.User.lang}, cond:{uuid:option._passtokenSource.uuid}})
-      return result?true:false
+      await User.update({uuid:option._passtokenSource.uuid}, {lang:option.User.lang})
+      return true
     }
+  return false
 }
 
 DAD.api.getMyCommunityNumber=async function(option){
-  let myself = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
-  let myregcode = wo.System.aiid2regcode(myself.aiid)
-  let communityNumber = await DAD.getCount({User: {regcode:myregcode}})
+  let myself = await DAD.findOne({uuid:option._passtokenSource.uuid})
+  let myregcode = ticCrypto.aiid2regcode(myself.aiid)
+  let communityNumber = await DAD.count({regcode:myregcode})
   return { _state: 'SUCCESS', communityNumber }
 }

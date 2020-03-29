@@ -1,46 +1,38 @@
 'use strict'
-const Ling = require('so.ling')
 const ticCrypto = require('tic.crypto')
 const DAY_MILLIS = 24*60*60*1000
 
 const Story = require('./Story.js')
 const Config = require('so.base/Config.js')
-const User = require('./User.js')
+const to = require('typeorm')
 
 /****************** 类和原型 *****************/
-const DAD = module.exports = class Trade extends Ling { // 构建类
-  constructor(prop){
-    super(prop)
-    this._class = this.constructor.name
-    this.setProp(prop)  
+const DAD = module.exports = class Trade extends to.BaseEntity { // 构建类
+  static _model = { // 数据模型，用来初始化每个对象的数据
+    aiid: { type:Number, primary:true, generated:true },
+    uuid: { type:String, generated:'uuid', unique:true },
+    uuidUser: { type:String, nullable:true, comment: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
+    uuidPlace: { type:String, nullable:true },
+    uuidOther: { type:String, nullable:true },
+    txGroup: { type:String, nullable:true },
+    txType: { type:String, nullable:true },
+    txHash: { type:String, nullable:true, unique:true },
+    txTimeUnix: { type:'int', nullable:true },
+    txTime: { type:String, nullable:true },
+    amount: { type:'real', nullable:true },
+    amountSource: { type:'real', nullable:true },
+    exchangeRate: { type:'real', nullable:true },
+    json: { type:'simple-json', default:{} } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+  }
+
+  static getEntitySchema(){
+    return new to.EntitySchema({
+      name: this.name,
+      target: this,
+      columns: this._model
+    })
   }
 }
-
-const MOM = DAD.prototype // 原型对象
-MOM._table = DAD.name
-MOM._tablekey = 'uuid'
-MOM._model = { // 数据模型，用来初始化每个对象的数据
-  aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
-  uuid: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  uuidUser: { default: undefined, sqlite: 'TEXT', info: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
-  uuidPlace: { default: undefined, sqlite: 'TEXT' },
-  uuidOther: { default: undefined, sqlite: 'TEXT' },
-  txGroup: { default: undefined, sqlite: 'TEXT' },
-  txType: { default: undefined, sqlite: 'TEXT' },
-  txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
-  txTime: { default: undefined, sqlite: 'TEXT' },
-  amount: { default: undefined, sqlite: 'REAL' },
-  amountSource: { default: undefined, sqlite: 'REAL' },
-  exchangeRate: { default: undefined, sqlite: 'REAL' },
-  json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
-}
-
-/****************** 私有属性 (private members) ******************/
-const my={}
-
-/****************** 实例方法 (instance methods) ******************/
-
 
 /****************** 类方法 (class methods) ******************/
 DAD.exchangeRate=function({date=new Date(), coin='USDT'}){
@@ -56,7 +48,7 @@ DAD.exchangeRate=function({date=new Date(), coin='USDT'}){
 }
 
 /****************** API方法 ******************/
-DAD.api=DAD.api1={}
+DAD.api={}
 
 let startBlock = 6327420 // USDT contract 创建的区块。就算从0起也速度很快，不受影响。
 let endBlock = 'latest'
@@ -66,7 +58,7 @@ let sort = 'desc'
 
 DAD.api.getMyTokenBalance = async function (option){
   if (option && option._passtokenSource && option.coinType){
-    let onlineUser = User.getOne({User: {uuid:option._passtokenSource.uuid}})
+    let onlineUser = await wo.User.findOne( {uuid:option._passtokenSource.uuid} )
     let address = onlineUser.coinAddress[option.coinType].address
     let tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
     // 查询以太币余额 await api.account.balance(address)
@@ -91,7 +83,7 @@ DAD.api.refreshMyDeposit = async function (option){
   if (!option._passtokenSource.isOnline) {
     return { _state: 'USER_OFFLINE' }
   }
-  let onlineUser = await User.getOne({User: {uuid:option._passtokenSource.uuid}})
+  let onlineUser = await wo.User.findOne({uuid:option._passtokenSource.uuid})
   if (!onlineUser) {
     return { _state: 'USER_NOT_FOUND'}
   }
@@ -127,9 +119,9 @@ DAD.api.refreshMyDeposit = async function (option){
       }else if (txChain.to===address) {
         console.log(`收到 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 从 ${txChain.from}`)
         let txHash = ticCrypto.hash(txChain.hash+option._passtokenSource.uuid)
-        if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash}})) {
+        if (!await DAD.findOne({uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash})) {
           console.log('存入数据库...')
-          let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txGroup:'DEPOSIT_TX', txType:'DEPOSIT_USDT'})
+          let txDB = DAD.create({uuidUser: option._passtokenSource.uuid, txGroup:'DEPOSIT_TX', txType:'DEPOSIT_USDT'})
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
@@ -137,19 +129,19 @@ DAD.api.refreshMyDeposit = async function (option){
           txDB.amount = txDB.amountSource*txDB.exchangeRate
           txDB.json = txChain
           txDB.txHash = txHash
-          if (await txDB.addMe()) {
-            await onlineUser.setMe({User:{
+          if (await txDB.save()) {
+            await wo.User.update({uuid: option._passtokenSource.uuid}, {
               balance: onlineUser.balance+txDB.amount, 
               depositUsdtSum: onlineUser.depositUsdtSum+txDB.amountSource,
               depositLogSum: onlineUser.depositLogSum+txDB.amount
-            }, cond:{uuid: option._passtokenSource.uuid}, excludeSelf:true})
+            })
             depositUsdtNew += txDB.amountSource
             depositLogNew += txDB.amount
           }
         }
       }
     }
-    let txlistDB = await DAD.getAll({Trade:{uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT'}, config: {order: 'txTimeUnix desc', limit:3}})
+    let txlistDB = await DAD.find({where: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT'}, order: {txTimeUnix: 'DESC'}, take:3})
     return { 
       _state: 'SUCCESS', 
       txlist: txlistDB,
@@ -164,10 +156,10 @@ DAD.api.refreshMyDeposit = async function (option){
   }
 }
 
-DAD.api.getMyTradeList = async function (option){
+DAD.api.getMyTradeList = async function (option){ // todo: 需要前后端修改
   option.Trade = option.Trade || {}
   option.Trade.uuidUser = option._passtokenSource.uuid
-  let txlist = await DAD.getAll({Trade:option.Trade, config:option.config})
+  let txlist = await DAD.find(option.Trade)
   if (txlist) {
     return { 
       _state: "SUCCESS", 

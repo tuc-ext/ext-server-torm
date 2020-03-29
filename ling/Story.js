@@ -4,11 +4,11 @@ const to = require('typeorm')
 const DAD = module.exports = class Story extends to.BaseEntity{
 
   static schema = new to.EntitySchema({
-    name: Story.name,
-    target: Story,
+    name: this.name,
+    target: this,
     columns: {
       aiid: { type: Number, primary: true, generated: true },
-      uuid: { type: String, generated: 'uuid', },
+      uuid: { type: String, generated: 'uuid', unique:true },
       image: { type: String, nullable: true },
       text: { type: String, nullable: true },
       owner: { type: String, nullable: true },
