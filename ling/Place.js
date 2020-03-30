@@ -2,6 +2,7 @@
 const Ling = require('so.ling')
 const ticCrypto = require('tic.crypto')
 const DAY_MILLIS = 24*60*60*1000
+const ESTATE_RESTRICT = 100
 
 const Config = require('so.base/Config.js')
 const Story = require('./Story.js')
@@ -43,14 +44,6 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
 }
 
-/****************** 私有属性 (private members) ******************/
-const my = {}
-
-/****************** 实例方法 (instance methods) ******************/
-
-
-/****************** 类方法 (class methods) ******************/
-
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
@@ -67,7 +60,7 @@ DAD.api.getMyPlaceList = async function(option){
 DAD.api.payToCreatePlace = async function(option){
   let creator = await wo.User.getOne({User:{uuid:option._passtokenSource.uuid}})
 
-  if (creator.estateHoldingNumber >= 10){
+  if (creator.estateHoldingNumber >= ESTATE_RESTRICT){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
@@ -129,7 +122,7 @@ DAD.api.payToBuyPlace = async function(option){
 
   let fromTimeUnix = place.buyTimeUnix
 
-  if (buyer.estateHoldingNumber >= 10){
+  if (buyer.estateHoldingNumber >= ESTATE_RESTRICT){
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
