@@ -323,14 +323,14 @@ DAD.api.register = async function(option){
 //        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
 //        let coinAddress = { ... }
 //        await user.setMe({ User:{coinAddress}})
-        let aiid = wo.System.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
+        let aiid = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
         if (aiid > 0) {
           await DAD.getRepository().increment({aiid:aiid}, 'communityNumber', 1)
         }
 
         return { 
           _state: 'REGISTER_SUCCESS',
-          onlineUser: user,
+          onlineUser: user.normalize(),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
@@ -375,7 +375,7 @@ DAD.api.login = async function(option){
         && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
-          onlineUser,
+          onlineUser: onlineUser.normalize(),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,

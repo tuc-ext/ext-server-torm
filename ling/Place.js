@@ -31,6 +31,14 @@ const DAD = module.exports = class Place extends to.BaseEntity { // 构建类
     sellPrice: { type:'real', nullable:true },
     json: { type:'simple-json', default: {} } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
   }
+
+  static getEntitySchema(){
+    return new to.EntitySchema({
+      name: this.name,
+      target: this,
+      columns: this._model
+    })
+  }
 }
 
 /****************** API方法 ******************/
