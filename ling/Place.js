@@ -195,9 +195,11 @@ DAD.api.payToBuyPlace = async function(option){
     
     if (await place.setMe() && await buyer.setMe() && await txBuyer.addMe()){
       if (place.uuidPreowner) {
+        let image = await Story.findOne({image: place.image}) ? null : place.image // 不要提交重复的照片（如果新主人没有更换图片）
+        let text = await Story.findOne({intro: place.intro}) ? null : place.intro
         Story.create({
-          image: Story.findOne({image: place.image}) ? null : place.image, // 不要提交重复的照片（如果新主人没有更换图片）
-          text: Story.findOne({intro: place.intro}) ? null : place.intro, 
+          image: image,
+          text: text,
           owner: place.uuidPreowner, 
           place: place.uuid,
           fromTime: new Date(fromTimeUnix),

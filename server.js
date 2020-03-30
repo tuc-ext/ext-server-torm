@@ -32,11 +32,11 @@ async function initSingle () {
   wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
   wo.Story = await require('./ling/Story.js')
 
-  await to.createConnection({
+  let datastore = await to.createConnection({
     type:'sqlite',
     database: 'data.sqlite/log.sqlite',
-    entities: [ wo.Story.schema ],
-    synchronize: true,
+    entities: [ new to.EntitySchema(wo.Story.schema) ],
+    synchronize: wo.Config.env!=='production'?true:false,
   })
 
   return wo

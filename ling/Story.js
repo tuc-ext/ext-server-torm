@@ -3,7 +3,7 @@ const to = require('typeorm')
 
 const DAD = module.exports = class Story extends to.BaseEntity{
 
-  static schema = new to.EntitySchema({
+  static schema = {
     name: Story.name,
     target: Story,
     columns: {
@@ -17,7 +17,7 @@ const DAD = module.exports = class Story extends to.BaseEntity{
       toTime: { type: Date, nullable: true },
       json: { type: 'simple-json', nullable: true, }
     }
-  })
+  }
 
 }
 
