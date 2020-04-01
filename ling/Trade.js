@@ -103,9 +103,9 @@ DAD.api.refreshMyDeposit = async function (option){
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
       case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address.toLowerCase()
     }
-    tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
+    tokenContract = Config.ETH_TOKEN_INFO['USDT_ON_ETH'].contract
     txlistChain = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
-      .catch(function(err) { console.log(err); return null } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
+      .catch(function(err) { console.log(err); return { _state: 'CHAIN_QUERY_EMPTY' } } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
   }else {
     let acc1 = '0x8900679eefef58d15fc849134e68577a17561155' // 100200 usdt from constractOwner, 99 usdt to acc2
     let acc2 = '0x6c3409625a31d5c5122e4130ebcafecd1487a43a' // 99 usdt from acc1
