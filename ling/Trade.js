@@ -23,14 +23,18 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
   uuid: { default: undefined, sqlite: 'TEXT UNIQUE' },
   uuidUser: { default: undefined, sqlite: 'TEXT', info: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
-  uuidPlace: { default: undefined, sqlite: 'TEXT' },
   uuidOther: { default: undefined, sqlite: 'TEXT' },
+  uuidPlace: { default: undefined, sqlite: 'TEXT' },
   txGroup: { default: undefined, sqlite: 'TEXT' },
   txType: { default: undefined, sqlite: 'TEXT' },
   txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
   txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
   txTime: { default: undefined, sqlite: 'TEXT' },
-  amount: { default: undefined, sqlite: 'REAL' },
+  amount: { default: 0, sqlite: 'REAL' },
+  // amountBuyer: { default: 0, sqlite: 'REAL' },
+  // amountSeller: { default: 0, sqlite: 'REAL' },
+  amountSystem: { default: 0, sqlite: 'REAL' }, // 从这一笔交易里，系统收到的税费
+  amountMining: { default: 0, sqlite: 'REAL' }, // 在这一笔交易里，挖矿产生的LOG。挖矿行为有：USDT投资，注册奖励，拉新奖励
   amountSource: { default: undefined, sqlite: 'REAL' },
   exchangeRate: { default: undefined, sqlite: 'REAL' },
   json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
@@ -46,13 +50,11 @@ const my={}
 DAD.exchangeRate=function({date=new Date(), coin='USDT'}){
   let epoch = new Date(Config.EPOCH)
   let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
-  let exchangeRate = 1000
   switch(coin){
-    case 'USDT': exchangeRate = 1000 - dayNumber; break;
-    default: exchangeRate = 1000 - dayNumber
+    case 'USDT': case 'USDT_ON_ETH': case 'USDT_ON_BTC': return 1000 - dayNumber
+    case 'LOG': return 1
+    default: return null
   }
-  console.log('exchangeRate=', exchangeRate)
-  return exchangeRate
 }
 
 /****************** API方法 ******************/
@@ -112,8 +114,8 @@ DAD.api.refreshMyDeposit = async function (option){
     address = acc1
     tokenContract = Config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
     txlistChain = {"status":"1","message":"OK","result":[
-      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x331e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
-      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x321e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
+//      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x331e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
+//      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x321e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
     ]}
   }
 
@@ -133,8 +135,9 @@ DAD.api.refreshMyDeposit = async function (option){
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
-          txDB.exchangeRate = DAD.exchangeRate({}) // Config.coinSet.USDT_ON_ETH.exchange
+          txDB.exchangeRate = DAD.exchangeRate({coin:'USDT_ON_ETH'}) // Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
+          txDB.amountMining = txDB.amount
           txDB.json = txChain
           txDB.txHash = txHash
           if (await txDB.addMe()) {

@@ -23,7 +23,7 @@ async function initSingle () {
 
   wo.EtherscanApi = require('etherscan-api').init(wo.Config.ETHERSCAN_APIKEY, wo.Config.ETH_NETTYPE, 5000)
 
-  wo.System = require('./System.js')
+  wo.System = require('./ling/System.js')
 
   mylog.info('Loading classes and Creating tables......')
   wo.Ling = require('so.ling')

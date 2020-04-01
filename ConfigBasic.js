@@ -27,11 +27,15 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     }
   },
   EPOCH: '2020-03-25T16:00:00.000Z',
-  coinSet: {
-    USDT_ON_ETH: { name: 'USDT(ERC)', exchangeRate: 1000 },
-//    USDT_ON_BTC: { name: 'USDT(Omni)', exchangeRate: 1000000 },
-//    BTC: { name: 'BTC', exchangeRate: 939 },
-//    ETH: { name: 'ETH', exchangeRate: 15 },
+  depositCoinSet: {
+    USDT_ON_ETH: { name:'USDT', exchangeRate: 1000 },
+    // USDT_ON_BTC: { name:'USDT(BTC)', exchangeRate: 1000 },
+    // BTC: { name:'BTC', exchangeRate: 6000000 },
+    // ETH: { name:'ETH', exchangeRate: 15 },
+  },
+  withdrawCoinSet: {
+    LOG: { name:'LOG', exchangeRate: 1 },
+    USDT_ON_ETH: { name:'USDT', exchangeRate: 1000 }
   },
   COMMUNITY_REWARD: 5,
   PROFIT_RATE: 0.05,

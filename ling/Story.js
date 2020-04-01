@@ -15,6 +15,8 @@ const DAD = module.exports = class Story extends to.BaseEntity{
       place: { type: String, nullable: true },
       fromTime: { type: Date, nullable: true },
       toTime: { type: Date, nullable: true },
+      fromTimeUnix: { type:'int', nullable:true },
+      toTimeUnix: { type:'int', nullable:true },
       json: { type: 'simple-json', nullable: true, }
     }
   }

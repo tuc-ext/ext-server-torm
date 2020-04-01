@@ -46,6 +46,7 @@ MOM._model = { // 数据模型，用来初始化每个对象的数据
   estateFeeSum: { default:0, sqlite: 'REAL' },
   estateTaxSum: { default:0, sqlite: 'REAL' },
   estateHoldingNumber: { default:0, sqlite: 'INTEGER' },
+  estateHoldingCost: { default:0, sqlite:'REAL'},
   estateHoldingValue: { default:0, sqlite:'REAL'},
   estateHoldingProfit: {default:0, sqlite:'REAL'},
   depositUsdtSum: { default:0, sqlite: 'REAL' },
@@ -60,7 +61,7 @@ const my={}
 
 /****************** 实例方法 (instance methods) ******************/
 MOM.normalize=function(){
-  this.regcode = wo.System.aiid2regcode(this.aiid)
+  this.regcode = ticCrypto.aiid2regcode(this.aiid)
   delete this.aiid
   return this
 }
@@ -239,7 +240,7 @@ DAD.api.prepareRegister = async function(option){
     return { _state: 'PASSCODE_EXPIRED'}
   }
   if (/^[0-9a-zA-Z]+$/.test(option.regcode)){
-    let aiid = wo.System.regcode2aiid(option.regcode.toLowerCase())
+    let aiid = ticCrypto.regcode2aiid(option.regcode.toLowerCase())
     if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
 
     }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
@@ -316,9 +317,11 @@ DAD.api.register = DAD.api1.register = async function(option){
       } } )
       let txReward = new wo.Trade({
         uuidUser: option._passtokenSource.uuid,
+        uuidOther: 'SYSTEM',
         txGroup: 'REWARD_TX',
         txType: 'REWARD_REGIST',
         amount: user.balance, // 作为买家，是负数
+        amountMining: user.balance,
         exchangeRate: wo.Trade.exchangeRate({}),
         txTime: user.whenRegister,
         txTimeUnix: new Date(user.whenRegister).valueOf(),
@@ -331,7 +334,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 //        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
 //        let coinAddress = { ... }
 //        await user.setMe({ User:{coinAddress}})
-        let aiid = wo.System.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
+        let aiid = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
         if (aiid > 0) {
           let inviter = await DAD.getOne({User:{aiid:aiid }})
           if (inviter){
@@ -446,7 +449,7 @@ DAD.api.setLang=function(option){
 
 DAD.api.getMyCommunityNumber=async function(option){
   let myself = await DAD.getOne({User:{uuid:option._passtokenSource.uuid}})
-  let myregcode = wo.System.aiid2regcode(myself.aiid)
+  let myregcode = ticCrypto.aiid2regcode(myself.aiid)
   let communityNumber = await DAD.getCount({User: {regcode:myregcode}})
   return { _state: 'SUCCESS', communityNumber }
 }

@@ -74,6 +74,7 @@ DAD.api.payToCreatePlace = async function(option){
     place.uuidOwner = option._passtokenSource.uuid
     place.feeRate = Config.FEE_RATE
     place.taxRate = Config.TAX_RATE
+    place.startPrice = Number(place.startPrice)
     place.buyPrice = place.startPrice
     place.sellPrice = place.buyPrice*(1+place.profitRate)*(1+place.feeRate+place.taxRate)
     place.startTime = new Date(txTimeUnix)
@@ -86,6 +87,7 @@ DAD.api.payToCreatePlace = async function(option){
     creator.balance -= place.startPrice
     // 创建新地产时，不需要交税费
     creator.estateHoldingNumber += 1
+    creator.estateHoldingCost += place.startPrice
     creator.estateHoldingValue += place.startPrice*(1+place.profitRate)
     creator.estateHoldingProfit += place.startPrice*place.profitRate
 
@@ -94,7 +96,7 @@ DAD.api.payToCreatePlace = async function(option){
         uuidPlace: place.uuid,
         uuidUser: creator.uuid,
         uuidOther: 'SYSTEM', // 前任主人就是这次交易的对家
-        amount: -place.sellPrice, // 作为买家，是负数
+        amount: -place.buyPrice, // 作为买家，是负数
         txGroup: 'ESTATE_TX',
         txType: 'ESTATE_CREATE',
         txTimeUnix: txTimeUnix,
@@ -133,17 +135,22 @@ DAD.api.payToBuyPlace = async function(option){
   let txTimeUnix = Date.now()
   if ( place.sellTimeUnix < txTimeUnix ){ // 再次确认，尚未被买走
     buyer.balance -= place.sellPrice
-    buyer.estateFeeSum += place.buyPrice*place.feeRate
-    buyer.estateTaxSum += place.buyPrice*place.taxRate
+    buyer.estateFeeSum += place.buyPrice*(1+place.profitRate)*place.feeRate
+    buyer.estateTaxSum += place.buyPrice*(1+place.profitRate)*place.taxRate
     buyer.estateHoldingNumber += 1
-    buyer.estateHoldingValue += place.sellPrice*(1+place.profitRate)
+    buyer.estateHoldingCost += place.sellPrice
+    buyer.estateHoldingValue += place.sellPrice*(1+place.profitRate) // 包括了buyer买入后的预期盈利，让buyer更高兴
     buyer.estateHoldingProfit += place.sellPrice*place.profitRate
 
     let txBuyer = new wo.Trade({
       uuidPlace: place.uuid,
       uuidUser: buyer.uuid,
-      uuidOther: place.uuidOwner, // 前任主人就是这次交易的对家
+      uuidOther: place.uuidOwner || 'SYSTEM', // 前任主人就是这次交易的对家
       amount: -place.sellPrice, // 作为买家，是负数
+      // amountBuyer: -place.sellPrice,
+      // amountSeller: place.buyPrice*(1+place.profitRate), // 注意不包含税费
+      amountSystem: place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate), // |amountBuyer| = amountSeller+amountSystem
+      // 交易产生的LOG币也是USDT挖矿得到的，交易本身不是挖矿所得  amountMining: place.uuidOwner ? place.sellPrice-place.buyPrice : 0, // place.buyPrice*place.profitRate + place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate), 
       txGroup: 'ESTATE_TX',
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
@@ -157,6 +164,7 @@ DAD.api.payToBuyPlace = async function(option){
       seller.balance += place.buyPrice*(1+place.profitRate)
       seller.estateProfitSum += place.buyPrice*place.profitRate
       seller.estateHoldingNumber -= 1
+      seller.estateHoldingCost -= place.buyPrice
       seller.estateHoldingValue -= place.buyPrice*(1+place.profitRate)
       seller.estateHoldingProfit -= place.buyPrice*place.profitRate
       await seller.setMe()
@@ -197,6 +205,8 @@ DAD.api.payToBuyPlace = async function(option){
           place: place.uuid,
           fromTime: new Date(fromTimeUnix),
           toTime: new Date(txTimeUnix),
+          fromTimeUnix: fromTimeUnix,
+          toTimeUnix: txTimeUnix,
         })
         .save()
       }
