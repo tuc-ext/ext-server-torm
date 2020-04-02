@@ -1,7 +1,7 @@
 # 以'#'开始的行，被视为注释.                                                                                                                          
 node_modules
 data.log/*log*
-data.sqlite/*.sqlite*
+database/*.sqlite*
 .sass-cache
 package-lock.json
 .svn

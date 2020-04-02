@@ -3,7 +3,7 @@ const DAY_MILLIS = 24*60*60*1000
 async function load(){
   global.wo = {}
   wo.Config = { MARK_DELETED: 'MARK_DELETED' }
-  wo.DataStore = await require('so.data/sqlite.js')._init('data.sqlite/log.sqlite')
+  wo.DataStore = await require('so.data/sqlite.js')._init('database/log.sqlite')
 
   wo.Ling = require('so.ling')
   wo.Place = await require('../ling/Place.js')._init(wo.DataStore)
