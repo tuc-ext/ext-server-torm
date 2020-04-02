@@ -34,7 +34,7 @@ async function initSingle () {
 
   let datastore = await to.createConnection({
     type:'sqlite',
-    database: 'datastore/log.sqlite',
+    database: dsName,
     entities: [ new to.EntitySchema(wo.Story.schema) ],
     synchronize: wo.Config.env!=='production'?true:false,
   })
