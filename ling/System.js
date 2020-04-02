@@ -32,22 +32,22 @@ DAD.api.getConfiguration=async function(){
   let result = { 
     depositCoinSet: wo.Config.depositCoinSet,
     withdrawCoinSet: wo.Config.withdrawCoinSet,
-    Place_estateCount : (await wo.Place.getCount()).count,
-    Place_estateBuySum : (await wo.Place.getSum({field:'buyPrice'})).sum,
-    Place_estateSellSum : (await wo.Place.getSum({field:'sellPrice'})).sum,
-    User_estateHoldingCostSum : (await wo.User.getSum({field:'estateHoldingCost'})).sum,
-    User_estateHoldingValueSum : (await wo.User.getSum({field:'estateHoldingValue'})).sum,
-    User_userCount : (await wo.User.getCount()).count,
-    Trade_depositUsdtSum : (await wo.Trade.getSum({field:'amountSource', Trade:{txType:'DEPOSIT_USDT'}})).sum,
-    User_depositUsdtSum : (await wo.User.getSum({field:'depositUsdtSum'})).sum,
-    Trade_depositLogSum : (await wo.Trade.getSum({field:'amount', Trade:{txType:'DEPOSIT_USDT'}})).sum,
-    User_depositLogSum : (await wo.User.getSum({field:'depositLogSum'})).sum,
-    User_systemFeeSum : (await wo.User.getSum({field:'estateFeeSum'})).sum,
-    User_systemTaxSum : (await wo.User.getSum({field:'estateTaxSum'})).sum,
-    Trade_systemFeeAndTax : (await wo.Trade.getSum({field:'amountSystem'})).sum,
-    Trade_systemMining : (await wo.Trade.getSum({field:'amountMining'})).sum,
-    Trade_rewardSum: (await wo.Trade.getSum({field:'amount', Trade:{txType:'REWARD_REGIST'}})).sum,
-    User_userBalanceSum: (await wo.User.getSum({field:'balance'})).sum
+    estateCount : (await wo.Place.getCount()).count,
+    estateBuySum : (await wo.Place.getSum({field:'buyPrice'})).sum,
+    estateSellSum : (await wo.Place.getSum({field:'sellPrice'})).sum,
+    estateHoldingCostSum : (await wo.User.getSum({field:'estateHoldingCost'})).sum,
+    estateHoldingValueSum : (await wo.User.getSum({field:'estateHoldingValue'})).sum,
+    userCount : (await wo.User.getCount()).count,
+    depositUsdtSumByTrades : (await wo.Trade.getSum({field:'amountSource', Trade:{txType:'DEPOSIT_USDT'}})).sum,
+    depositUsdtSumByUsers : (await wo.User.getSum({field:'depositUsdtSum'})).sum,
+    depositLogSumByTrades : (await wo.Trade.getSum({field:'amount', Trade:{txType:'DEPOSIT_USDT'}})).sum,
+    depositLogSumByUsers : (await wo.User.getSum({field:'depositLogSum'})).sum,
+    systemFeeSum : (await wo.User.getSum({field:'estateFeeSum'})).sum,
+    systemTaxSum : (await wo.User.getSum({field:'estateTaxSum'})).sum,
+    systemFeeAndTax : (await wo.Trade.getSum({field:'amountSystem'})).sum,
+    systemMining : (await wo.Trade.getSum({field:'amountMining'})).sum,
+    rewardSum: (await wo.Trade.getSum({field:'amount', Trade:{txType:'REWARD_REGIST'}})).sum,
+    userBalanceSum: (await wo.User.getSum({field:'balance'})).sum
   }
   console.log(result)
   return result
