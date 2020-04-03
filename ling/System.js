@@ -6,19 +6,6 @@ const DAD = module.exports = function System (prop) { // 构建类
   this.setProp(prop)
 }
 
-const MOM = DAD.prototype // 原型对象
-
-/****************** 私有属性 (private members) ******************/
-const my={}
-
-/****************** 实例方法 (instance methods) ******************/
-
-
-/****************** 类方法 (class methods) ******************/
-
-const alphabet = 'e5fcdg3hqa4b1n0pij2rstuv67mwx89klyz'
-const base = 16367
-
 /****************** API方法 ******************/
 DAD.api={}
 
