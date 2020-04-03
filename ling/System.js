@@ -47,7 +47,8 @@ DAD.api.getConfiguration=async function(){
     systemFeeAndTax : (await wo.Trade.getSum({field:'amountSystem'})).sum,
     systemMining : (await wo.Trade.getSum({field:'amountMining'})).sum,
     rewardSum: (await wo.Trade.getSum({field:'amount', Trade:{txType:'REWARD_REGIST'}})).sum,
-    userBalanceSum: (await wo.User.getSum({field:'balance'})).sum
+    userBalanceSum: (await wo.User.getSum({field:'balance'})).sum,
+    userEstateCount: (await wo.User.getSum({field:'estateHoldingNumber'})).sum
   }
   console.log(result)
   return result
