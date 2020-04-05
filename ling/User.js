@@ -61,12 +61,10 @@ const my={}
 
 /****************** 实例方法 (instance methods) ******************/
 MOM.normalize=function(){
-  this.regcode = ticCrypto.aiid2regcode(this.aiid)
+  this.inviterCode = ticCrypto.aiid2regcode(this.aiid)
   delete this.aiid
   return this
 }
-
-/****************** 类方法 (class methods) ******************/
 
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
@@ -240,12 +238,11 @@ DAD.api.prepareRegister = async function(option){
     return { _state: 'PASSCODE_EXPIRED'}
   }
   if (/^[0-9a-zA-Z]+$/.test(option.regcode)){
-    let aiid = ticCrypto.regcode2aiid(option.regcode.toLowerCase())
-    if (aiid===0){ // 第一个用户登录时，需要一个系统默认的邀请码。
-
-    }else if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
+    let aiid = ticCrypto.regcode2aiid(option.regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
+    if (aiid<0 || !Number.isInteger(aiid) || !await DAD.getOne({User:{aiid:aiid}})){
       return { _state: 'REGCODE_USER_NOTEXIST' }
     } 
+    // 允许 aiid>0 或 aiid===0 第一个用户登录时，需要一个系统默认的邀请码。
   }else {
     return { _state: 'REGCODE_MALFORMED' }
   }
@@ -346,7 +343,7 @@ DAD.api.register = DAD.api1.register = async function(option){
 
         return { 
           _state: 'REGISTER_SUCCESS',
-          onlineUser: user,
+          onlineUser: user.normalize(),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
@@ -370,7 +367,7 @@ DAD.api.autologin = async function(option){
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer 
         && onlineUser.phone === option._passtokenSource.phone){
-        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: onlineUser }
+        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: onlineUser.normalize() }
       }else{
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
       }
@@ -391,7 +388,7 @@ DAD.api.login = DAD.api1.login = async function(option){
         && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
-          onlineUser,
+          onlineUser: onlineUser.normalize(),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,

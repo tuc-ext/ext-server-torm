@@ -2,8 +2,17 @@
 const fs = require('fs')
 const path = require('path')
 const to = require('typeorm')
-
+const my = {
+  parseJsonPossible(value){
+    try{ 
+      return JSON.parse(value) 
+    }catch(e){
+      return value
+    }
+  }
+}
 const Config = require('so.base/Config.js')
+
 
 global.mylog = require('so.base/Logger.js')({ root: 'data.log', file: 'log.log' })
 
@@ -90,10 +99,10 @@ function runServer () { // 配置并启动 Web 服务
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
     var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) { // GET 方法传来的参数. 
-      option[key] = wo.Ling.json2obj(req.query[key])
+      option[key] = my.parseJsonPossible(req.query[key])
     }
     for (let key in req.body) { // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
-      option[key] = req.headers["content-type"]==='application/json' ? req.body[key] : wo.Ling.json2obj(req.body[key])
+      option[key] = req.headers["content-type"]==='application/json' ? req.body[key] : my.parseJsonPossible(req.body[key])
     }
     let { _api, _who, _act } = req.params
     console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
@@ -109,25 +118,9 @@ function runServer () { // 配置并启动 Web 服务
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    async function normalize(result){ // 有的实例的normalize 需要session信息，比如 Message 要根据当前用户判断 vote 。所以这个函数定义在这里。
-      if (result && result instanceof wo.Ling){ // 是 Ling 元素
-        await result.normalize(option) // 有的 normalize 需要 option，例如检查当前用户是否投票了某消息
-        // 不进入下一层去递归normalize了。
-      }else if (result && typeof result==='object'){ // 是其他对象或数组
-        for (var i in result){
-          await normalize(result[i])
-        }
-      }else if (typeof result==='undefined'){ // reply.json(undefined 或 nothing) 会导致什么都不输出给前端，可能导致前端默默出错。因此这时返回null。
-        mylog.info('undefined impossible!!!!!!!!!!!!!!!!')
-        result=null
-      }
-      return result
-    }
-
     try {
       if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
         var outdata = await wo[_who][_api][_act](option)
-        await normalize(outdata)
         console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
         console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
         console.log(outdata)
