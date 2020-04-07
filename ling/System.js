@@ -1,42 +1,43 @@
 'use strict'
 
-/****************** 类和原型 *****************/
-const DAD = module.exports = function System (prop) { // 构建类
-  this._class = this.constructor.name
-  this.setProp(prop)
+const Config = require('so.base/Config.js')
+const Trade = require('./Trade.js')
+const Place = require('./Place.js')
+const User = require('./User.js')
+
+const DAD = module.exports = function System () { // 构建类
 }
 
-/****************** API方法 ******************/
 DAD.api={}
 
 DAD.api.getConfiguration=async function(){
-  for (let coin in wo.Config.depositCoinSet){
-    wo.Config.depositCoinSet[coin].exchangeRate = wo.Trade.exchangeRate({coin:coin})
+  for (let coin in Config.depositCoinSet){
+    Config.depositCoinSet[coin].exchangeRate = Trade.exchangeRate({coin:coin})
   }
-  for (let coin in wo.Config.withdrawCoinSet){
-    wo.Config.withdrawCoinSet[coin].exchangeRate = wo.Trade.exchangeRate({coin:coin})
+  for (let coin in Config.withdrawCoinSet){
+    Config.withdrawCoinSet[coin].exchangeRate = Trade.exchangeRate({coin:coin})
   }
-  let result = { 
-    depositCoinSet: wo.Config.depositCoinSet,
-    withdrawCoinSet: wo.Config.withdrawCoinSet,
-    estateCount : (await wo.Place.getCount()).count,
-    estateBuySum : (await wo.Place.getSum({field:'buyPrice'})).sum,
-    estateSellSum : (await wo.Place.getSum({field:'sellPrice'})).sum,
-    estateHoldingCostSum : (await wo.User.getSum({field:'estateHoldingCost'})).sum,
-    estateHoldingValueSum : (await wo.User.getSum({field:'estateHoldingValue'})).sum,
-    userCount : (await wo.User.getCount()).count,
-    depositUsdtSumByTrades : (await wo.Trade.getSum({field:'amountSource', Trade:{txType:'DEPOSIT_USDT'}})).sum,
-    depositUsdtSumByUsers : (await wo.User.getSum({field:'depositUsdtSum'})).sum,
-    depositLogSumByTrades : (await wo.Trade.getSum({field:'amount', Trade:{txType:'DEPOSIT_USDT'}})).sum,
-    depositLogSumByUsers : (await wo.User.getSum({field:'depositLogSum'})).sum,
-    systemFeeSum : (await wo.User.getSum({field:'estateFeeSum'})).sum,
-    systemTaxSum : (await wo.User.getSum({field:'estateTaxSum'})).sum,
-    systemFeeAndTax : (await wo.Trade.getSum({field:'amountSystem'})).sum,
-    systemMining : (await wo.Trade.getSum({field:'amountMining'})).sum,
-    rewardSum: (await wo.Trade.getSum({field:'amount', Trade:{txType:'REWARD_REGIST'}})).sum,
-    userBalanceSum: (await wo.User.getSum({field:'balance'})).sum,
-    userEstateCount: (await wo.User.getSum({field:'estateHoldingNumber'})).sum
+  let result = {
+    depositCoinSet: Config.depositCoinSet,
+    withdrawCoinSet: Config.withdrawCoinSet,
   }
+  result.estateCount = await Place.count(),
+  result.estateBuySum = await Place.sum({field:'buyPrice'}),
+  result.estateSellSum = await Place.sum({field:'sellPrice'}),
+  result.estateHoldingCostSum = await User.sum({field:'estateHoldingCost'}),
+  result.estateHoldingValueSum = await User.sum({field:'estateHoldingValue'}),
+  result.userCount = await User.count(),
+  result.depositUsdtSumByTrades = await Trade.sum({field:'amountSource', where:{txType:'DEPOSIT_USDT'}}),
+  result.depositUsdtSumByUsers = await User.sum({field:'depositUsdtSum'}),
+  result.depositLogSumByTrades = await Trade.sum({field:'amount', where:{txType:'DEPOSIT_USDT'}}),
+  result.depositLogSumByUsers = await User.sum({field:'depositLogSum'}),
+  result.systemFeeSum = await User.sum({field:'estateFeeSum'}),
+  result.systemTaxSum = await User.sum({field:'estateTaxSum'}),
+  result.systemFeeAndTax = await Trade.sum({field:'amountSystem'}),
+  result.systemMining = await Trade.sum({field:'amountMining'}),
+  result.rewardSum = await Trade.sum({field:'amount', where:{txType:'REWARD_REGIST'}}),
+  result.userBalanceSum = await User.sum({field:'balance'}),
+  result.userEstateCount = await User.sum({field:'estateHoldingNumber'})
   console.log(result)
   return result
 }

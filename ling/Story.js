@@ -1,14 +1,15 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 const to = require('typeorm')
+const Ling = require('./Ling.js')
 
-const DAD = module.exports = class Story extends to.BaseEntity{
+const DAD = module.exports = class Story extends Ling{
 
   static schema = {
-    name: Story.name,
-    target: Story,
+    name: this.name,
+    target: this,
     columns: {
-      aiid: { type: Number, primary: true, generated: true },
-      uuid: { type: String, generated: 'uuid', },
+      aiid: { type: 'int', generated: true, primary: true },
+      uuid: { type: String, generated: 'uuid', unique: true },
       image: { type: String, nullable: true },
       text: { type: String, nullable: true },
       owner: { type: String, nullable: true },
@@ -17,7 +18,7 @@ const DAD = module.exports = class Story extends to.BaseEntity{
       toTime: { type: Date, nullable: true },
       fromTimeUnix: { type:'int', nullable:true },
       toTimeUnix: { type:'int', nullable:true },
-      json: { type: 'simple-json', nullable: true, }
+      json: { type: 'simple-json', default: '{}', nullable: true, }
     }
   }
 

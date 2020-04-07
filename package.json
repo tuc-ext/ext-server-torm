@@ -22,7 +22,6 @@
     "serve-favicon": "^2.4.1",
     "so.base": "git+https://git.faronear.org/so/so.base",
     "so.data": "git+https://git.faronear.org/so/so.data",
-    "so.ling": "git+https://git.faronear.org/so/so.ling",
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
     "typeorm": "^0.2.24"
   },

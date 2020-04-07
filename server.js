@@ -13,7 +13,6 @@ const my = {
 }
 const Config = require('so.base/Config.js')
 
-
 global.mylog = require('so.base/Logger.js')({ root: 'data.log', file: 'log.log' })
 
 async function initSingle () {
@@ -26,26 +25,25 @@ async function initSingle () {
   //   .extendMe(require('so.base/User.js'))
 
   mylog.info(`Initializing database ${Config.datastore} ......`)
-  let [dsType, dsName] = wo.Config.datastore.split(':')
+  let [dsType, dsName] = Config.datastore.split(':')
   wo.DataStore = await require('so.data')(dsType)._init(`${dsName}`) // 持久存储
-//  wo.DataCache = await require('so.data')(wo.Config.dbType)._init(wo.Config.dataCacheName) // 临时存储
-
-  wo.EtherscanApi = require('etherscan-api').init(wo.Config.ETHERSCAN_APIKEY, wo.Config.ETH_NETTYPE, 5000)
+//  wo.DataCache = await require('so.data')(Config.dbType)._init(Config.dataCacheName) // 临时存储
 
   wo.System = require('./ling/System.js')
 
   mylog.info('Loading classes and Creating tables......')
-  wo.Ling = require('so.ling')
-  wo.Trade = await require('./ling/Trade.js')._init(wo.DataStore)
-  wo.User = await require('./ling/User.js')._init(wo.DataStore)
-  wo.Place = await require('./ling/Place.js')._init(wo.DataStore)
+
+  wo.Trade = await require('./ling/Trade.js')
+  wo.User = await require('./ling/User.js')
+  wo.Place = await require('./ling/Place.js')
   wo.Story = await require('./ling/Story.js')
 
   let datastore = await to.createConnection({
     type:'sqlite',
     database: dsName,
-    entities: [ new to.EntitySchema(wo.Story.schema) ],
-    synchronize: wo.Config.env!=='production'?true:false,
+//    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
+    entities: [ new to.EntitySchema(wo.Story.schema), new to.EntitySchema(wo.Trade.schema), new to.EntitySchema(wo.User.schema), new to.EntitySchema(wo.Place.schema) ],
+    synchronize: Config.env!=='production'?true:false,
   })
 
   return wo
@@ -79,7 +77,7 @@ function runServer () { // 配置并启动 Web 服务
       },
       filename: function (req, file, cb) { // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
         let ext = file.originalname.replace(/^.*\.(\w+)$/,'$1')
-        let _passtokenSource = webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {}
+        let _passtokenSource = webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {}
         let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
         cb(null, filename)
       }
@@ -97,7 +95,7 @@ function runServer () { // 配置并启动 Web 服务
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) { // GET 方法传来的参数. 
       option[key] = my.parseJsonPossible(req.query[key])
     }
@@ -149,44 +147,44 @@ function runServer () { // 配置并启动 Web 服务
 
   /** * 启动 Web 服务 ***/
   let webServer
-  let portHttp = wo.Config.port || 80
-  let portHttps = wo.Config.port || 443
+  let portHttp = Config.port || 80
+  let portHttps = Config.port || 443
   let ipv4 = require('so.base/Network.js').getMyIp()
-  if (wo.Config.protocol === 'http') { // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
+  if (Config.protocol === 'http') { // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http').createServer(server).listen(portHttp, function (err) {
       if (err) mylog.info(err)
-      else mylog.info(`Web Server listening on ${wo.Config.protocol}://${wo.Config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
+      else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
     })
-  } else if (wo.Config.protocol === 'https') { // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
-    webServer = require('https').createServer(wo.Config.sslType === 'greenlock' ? greenlock.httpsOptions : {
-      key: fs.readFileSync(wo.Config.sslKey),
-      cert: fs.readFileSync(wo.Config.sslCert),
-      // ca: [ fs.readFileSync(wo.Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+  } else if (Config.protocol === 'https') { // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
+    webServer = require('https').createServer(Config.sslType === 'greenlock' ? greenlock.httpsOptions : {
+      key: fs.readFileSync(Config.sslKey),
+      cert: fs.readFileSync(Config.sslCert),
+      // ca: [ fs.readFileSync(Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
     }, server).listen(portHttps, function (err) {
       if (err) mylog.info(err)
-      else mylog.info(`Web Server listening on ${wo.Config.protocol}://${wo.Config.host}:${portHttps} for ${server.settings.env} environment`)
+      else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttps} for ${server.settings.env} environment`)
     })
-  } else if ('httpall' === wo.Config.protocol) {
+  } else if ('httpall' === Config.protocol) {
     portHttp = 80
-    if (wo.Config.sslType === 'greenlock') {
+    if (Config.sslType === 'greenlock') {
       webServer = greenlock.listen(portHttp, portHttps, function (err) {
         if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on [${wo.Config.protocol}] http=>https://${wo.Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
+        else mylog.info(`Web Server listening on [${Config.protocol}] http=>https://${Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
       })
     } else {
       require('http').createServer(server.all('*', function (ask, reply) {
-        reply.redirect(`https://${wo.Config.host}:${portHttps}`)
+        reply.redirect(`https://${Config.host}:${portHttps}`)
       })).listen(portHttp, function(err) {
         if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on [${wo.Config.protocol}] http://${wo.Config.host}:${portHttp} for ${server.settings.env} environment`)  
+        else mylog.info(`Web Server listening on [${Config.protocol}] http://${Config.host}:${portHttp} for ${server.settings.env} environment`)  
       })
       webServer = require('https').createServer({
-        key: fs.readFileSync(wo.Config.sslKey),
-        cert: fs.readFileSync(wo.Config.sslCert),
-        // ca: [ fs.readFileSync(wo.Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+        key: fs.readFileSync(Config.sslKey),
+        cert: fs.readFileSync(Config.sslCert),
+        // ca: [ fs.readFileSync(Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
       }, server).listen(portHttps, function (err) {
         if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on [${wo.Config.protocol}] https://${wo.Config.host}:${portHttps} for ${server.settings.env} environment`)
+        else mylog.info(`Web Server listening on [${Config.protocol}] https://${Config.host}:${portHttps} for ${server.settings.env} environment`)
       })
     }
   }

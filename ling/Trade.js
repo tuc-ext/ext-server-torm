@@ -1,63 +1,54 @@
 'use strict'
-const Ling = require('so.ling')
-const ticCrypto = require('tic.crypto')
-const DAY_MILLIS = 24*60*60*1000
 
-const Story = require('./Story.js')
+const Ling = require('./Ling.js')
+const ticCrypto = require('tic.crypto')
+const to = require('typeorm')
+
 const Config = require('so.base/Config.js')
 const User = require('./User.js')
+const EtherscanApi = require('etherscan-api').init(Config.ETHERSCAN_APIKEY, Config.ETH_NETTYPE, 5000)
+
+const DAY_MILLIS = 24*60*60*1000
 
 /****************** 类和原型 *****************/
 const DAD = module.exports = class Trade extends Ling { // 构建类
-  constructor(prop){
-    super(prop)
-    this._class = this.constructor.name
-    this.setProp(prop)  
+  static schema = {
+    name: this.name,
+    target: this,
+    columns: {
+      aiid: { type: 'int', generated: true, primary: true },
+      uuid: { type: String, generated: 'uuid', unique: true },
+      uuidUser: { type: String, nullable: true, comment: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
+      uuidOther: { type: String, nullable: true },
+      uuidPlace: { type: String, nullable: true },
+      txGroup: { type: String, nullable: true },
+      txType: { type: String, nullable: true },
+      txHash: { type: String, nullable: true },
+      txTimeUnix: { type: 'int', nullable: true },
+      txTime: { type: String, nullable: true },
+      amount: { type: 'real', default: 0, comment: '金额' },
+      // amountBuyer: { default: 0, sqlite: 'REAL' },
+      // amountSeller: { default: 0, sqlite: 'REAL' },
+      amountSystem: { type: 'real', default: 0 }, // 从这一笔交易里，系统收到的税费
+      amountMining: { type: 'real', default: 0 }, // 在这一笔交易里，挖矿产生的LOG。挖矿行为有：USDT投资，注册奖励，拉新奖励
+      amountSource: { type: 'real', nullable: true },
+      exchangeRate: { type: 'real', nullable: true },
+      json: { type: 'simple-json', default: '{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构    
+    }
   }
-}
 
-const MOM = DAD.prototype // 原型对象
-MOM._table = DAD.name
-MOM._tablekey = 'uuid'
-MOM._model = { // 数据模型，用来初始化每个对象的数据
-  aiid: { default: undefined, sqlite: 'INTEGER PRIMARY KEY' },
-  uuid: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  uuidUser: { default: undefined, sqlite: 'TEXT', info: '本次交易记录的主人（即这笔交易记在谁的账户下。' },
-  uuidOther: { default: undefined, sqlite: 'TEXT' },
-  uuidPlace: { default: undefined, sqlite: 'TEXT' },
-  txGroup: { default: undefined, sqlite: 'TEXT' },
-  txType: { default: undefined, sqlite: 'TEXT' },
-  txHash: { default: undefined, sqlite: 'TEXT UNIQUE' },
-  txTimeUnix: { default: undefined, sqlite: 'INTEGER' },
-  txTime: { default: undefined, sqlite: 'TEXT' },
-  amount: { default: 0, sqlite: 'REAL' },
-  // amountBuyer: { default: 0, sqlite: 'REAL' },
-  // amountSeller: { default: 0, sqlite: 'REAL' },
-  amountSystem: { default: 0, sqlite: 'REAL' }, // 从这一笔交易里，系统收到的税费
-  amountMining: { default: 0, sqlite: 'REAL' }, // 在这一笔交易里，挖矿产生的LOG。挖矿行为有：USDT投资，注册奖励，拉新奖励
-  amountSource: { default: undefined, sqlite: 'REAL' },
-  exchangeRate: { default: undefined, sqlite: 'REAL' },
-  json: { default: {}, sqlite: 'TEXT' } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
-}
-
-/****************** 私有属性 (private members) ******************/
-const my={}
-
-/****************** 实例方法 (instance methods) ******************/
-
-
-/****************** 类方法 (class methods) ******************/
-DAD.exchangeRate=function({date=new Date(), coin='USDT'}){
-  let epoch = new Date(Config.EPOCH)
-  let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
-  switch(coin){
-    case 'USDT': case 'USDT_ON_ETH': case 'USDT_ON_BTC': return 1000 - dayNumber
-    case 'LOG': return 1
-    default: return null
+  static exchangeRate({date=new Date(), coin='USDT'}){
+    let epoch = new Date(Config.EPOCH)
+    let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
+    switch(coin){
+      case 'USDT': case 'USDT_ON_ETH': case 'USDT_ON_BTC': return 1000 - dayNumber
+      case 'LOG': return 1
+      default: return null
+    }
   }
+  
 }
 
-/****************** API方法 ******************/
 DAD.api=DAD.api1={}
 
 let startBlock = 6327420 // USDT contract 创建的区块。就算从0起也速度很快，不受影响。
@@ -66,14 +57,17 @@ let pageNumber = 1
 let pageSize = 10
 let sort = 'desc'
 
-DAD.api.getMyTokenBalance = async function (option){
-  if (option && option._passtokenSource && option.coinType){
-    let onlineUser = User.getOne({User: {uuid:option._passtokenSource.uuid}})
-    let address = onlineUser.coinAddress[option.coinType].address
-    let tokenContract = Config.ETH_TOKEN_INFO[option.coinType].contract
+DAD.api.getMyTokenBalance = async function ({coinType, _passtokenSource}={}){
+  if (_passtokenSource && coinType){
+    let onlineUser = await User.findOne({uuid: _passtokenSource.uuid})
+    if (!onlineUser) {
+      return { _state: 'USER_NOT_FOUND'}
+    }
+    let address = onlineUser.coinAddress[coinType].address
+    let tokenContract = Config.ETH_TOKEN_INFO[coinType].contract
     // 查询以太币余额 await api.account.balance(address)
-    let tokenBalanceResult = await wo.EtherscanApi.account.tokenBalanceResult(address, '', tokenContract) // tokenName must be empty '', otherwise it fails, don't know why.
-    console.log(`My ${option.coinType} balance = ${JSON.stringify(tokenBalanceResult)}`) // {"status":"1","message":"OK","result":"116517481000"}
+    let tokenBalanceResult = await EtherscanApi.account.tokenBalanceResult(address, '', tokenContract) // tokenName must be empty '', otherwise it fails, don't know why.
+    console.log(`My ${coinType} balance = ${JSON.stringify(tokenBalanceResult)}`) // {"status":"1","message":"OK","result":"116517481000"}
     if (tokenBalanceResult && tokenBalanceResult.status===1) {
       return {
         _state: 'SMOOTH', 
@@ -89,22 +83,22 @@ DAD.api.getMyTokenBalance = async function (option){
   }
 }
 
-DAD.api.refreshMyDeposit = async function (option){
-  if (!option._passtokenSource.isOnline) {
+DAD.api.refreshMyDeposit = async function ({_passtokenSource, coinType}={}){
+  if (!_passtokenSource.isOnline) {
     return { _state: 'USER_OFFLINE' }
   }
-  let onlineUser = await User.getOne({User: {uuid:option._passtokenSource.uuid}})
+  let onlineUser = await User.findOne({uuid:_passtokenSource.uuid})
   if (!onlineUser) {
     return { _state: 'USER_NOT_FOUND'}
   }
   let address, tokenContract, txlistChain
   if (Config.env==='production'){
-    switch (option.coinType) {
+    switch (coinType) {
       case 'BTC': case 'USDT_ON_BTC': address = onlineUser.coinAddress.BTC.address
       case 'ETH': case 'USDT_ON_ETH': address = onlineUser.coinAddress.ETH.address.toLowerCase()
     }
     tokenContract = Config.ETH_TOKEN_INFO['USDT_ON_ETH'].contract
-    txlistChain = await wo.EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
+    txlistChain = await EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort)
       .catch(function(err) { console.log(err); return { _state: 'CHAIN_QUERY_EMPTY' } } ) // 要做意外处理，因为etherscan-api的实现里，没钱的空账号竟然导致错误 “UnhandledPromiseRejectionWarning: No transactions found”
   }else {
     let acc1 = '0x8900679eefef58d15fc849134e68577a17561155' // 100200 usdt from constractOwner, 99 usdt to acc2
@@ -114,7 +108,7 @@ DAD.api.refreshMyDeposit = async function (option){
     address = acc1
     tokenContract = Config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
     txlistChain = {"status":"1","message":"OK","result":[
-//      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x331e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
+      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x331e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
 //      {"blockNumber":"6327710","timeStamp":"1568814091","hash":"0x321e220380ffa22afb32fb1f7ece8eb4ed17b9026551eb11a54369f4d747dd15","nonce":"9","blockHash":"0xecb630be18d6124da01bbdebfac7d230e07290a1482a885c214b29e644a523b7","from":"0xe72ba549597aec145b2ec62b99928bd8d1d16230","contractAddress":"0xb16815dbeceb459d9e33b8bba45ed717c479ea1c","to":"0x8900679eefef58d15fc849134e68577a17561155","value":"180800000000","tokenName":"USDT","tokenSymbol":"USDT","tokenDecimal":"6","transactionIndex":"17","gas":"55608","gasPrice":"10000000000","gasUsed":"52394","cumulativeGasUsed":"6227960","input":"deprecated","confirmations":"649552"},
     ]}
   }
@@ -128,10 +122,10 @@ DAD.api.refreshMyDeposit = async function (option){
         console.log(`汇出 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 到 ${txChain.to}`)
       }else if (txChain.to===address) {
         console.log(`收到 ${txChain.value/Math.pow(10, txChain.tokenDecimal)} 从 ${txChain.from}`)
-        let txHash = ticCrypto.hash(txChain.hash+option._passtokenSource.uuid)
-        if (!await DAD.getOne({Trade: {uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash}})) {
+        let txHash = ticCrypto.hash(txChain.hash+_passtokenSource.uuid)
+        if (!await DAD.findOne({uuidUser: _passtokenSource.uuid, txType: 'DEPOSIT_USDT', txHash: txHash})) {
           console.log('存入数据库...')
-          let txDB = new DAD({uuidUser: option._passtokenSource.uuid, txGroup:'DEPOSIT_TX', txType:'DEPOSIT_USDT'})
+          let txDB = DAD.create({uuidUser: _passtokenSource.uuid, txGroup:'DEPOSIT_TX', txType:'DEPOSIT_USDT'})
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
@@ -140,21 +134,21 @@ DAD.api.refreshMyDeposit = async function (option){
           txDB.amountMining = txDB.amount
           txDB.json = txChain
           txDB.txHash = txHash
-          if (await txDB.addMe()) {
-            await onlineUser.setMe({User:{
-              balance: onlineUser.balance+txDB.amount, 
-              depositUsdtSum: onlineUser.depositUsdtSum+txDB.amountSource,
-              depositLogSum: onlineUser.depositLogSum+txDB.amount
-            }, cond:{uuid: option._passtokenSource.uuid}, excludeSelf:true})
-            depositUsdtNew += txDB.amountSource
-            depositLogNew += txDB.amount
-          }
+          onlineUser.balance += txDB.amount
+          onlineUser.depositUsdtSum += txDB.amountSource
+          onlineUser.depositLogSum += txDB.amount
+          depositUsdtNew += txDB.amountSource
+          depositLogNew += txDB.amount
+          await to.getManager().transaction(async txman=>{
+            await txman.save(txDB)
+            await txman.save(onlineUser)
+          })
         }
       }
     }
-    let txlistDB = await DAD.getAll({Trade:{uuidUser: option._passtokenSource.uuid, txType: 'DEPOSIT_USDT'}, config: {order: 'txTimeUnix desc', limit:3}})
+    let txlistDB = await DAD.find({where:{uuidUser: _passtokenSource.uuid, txType: 'DEPOSIT_USDT'}, order: {txTimeUnix:'DESC'}, take:3})
     return { 
-      _state: 'SUCCESS', 
+      _state: 'SUCCESS',
       txlist: txlistDB,
       depositUsdtSum: onlineUser.depositUsdtSum,
       depositLogSum: onlineUser.depositLogSum,
@@ -167,10 +161,10 @@ DAD.api.refreshMyDeposit = async function (option){
   }
 }
 
-DAD.api.getMyTradeList = async function (option){
-  option.Trade = option.Trade || {}
-  option.Trade.uuidUser = option._passtokenSource.uuid
-  let txlist = await DAD.getAll({Trade:option.Trade, config:option.config})
+DAD.api.getMyTradeList = async function ({ _passtokenSource, where, order={txTimeUnix:'DESC'}, take=10 } = {}){
+  where.uuidUser = _passtokenSource.uuid
+  where.txTimeUnix = to.LessThan(where.maxtime)
+  let txlist = await DAD.find({where, order, take})
   if (txlist) {
     return { 
       _state: "SUCCESS", 
