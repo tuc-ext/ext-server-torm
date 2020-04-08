@@ -1,6 +1,6 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 const to = require('typeorm')
-const Ling = require('./Ling.js')
+const Ling = require('so.ling/Ling.to.js')
 
 const DAD = module.exports = class Story extends Ling{
 

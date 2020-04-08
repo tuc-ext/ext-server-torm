@@ -24,27 +24,23 @@ async function initSingle () {
   //   .extendMe(require('so.base/Webtoken.js'))
   //   .extendMe(require('so.base/User.js'))
 
-  mylog.info(`Initializing database ${Config.datastore} ......`)
-  let [dsType, dsName] = Config.datastore.split(':')
-  wo.DataStore = await require('so.data')(dsType)._init(`${dsName}`) // 持久存储
-//  wo.DataCache = await require('so.data')(Config.dbType)._init(Config.dataCacheName) // 临时存储
-
+  mylog.info('Loading classes ......')  
   wo.System = require('./ling/System.js')
-
-  mylog.info('Loading classes and Creating tables......')
-
   wo.Trade = await require('./ling/Trade.js')
   wo.User = await require('./ling/User.js')
   wo.Place = await require('./ling/Place.js')
   wo.Story = await require('./ling/Story.js')
 
-  let datastore = await to.createConnection({
-    type:'sqlite',
-    database: dsName,
+  mylog.info(`Initializing datastore ${Config.datastore} ......`)
+  let connectionOptions = Config.datastore
+  if (typeof(Config.datastore)==='string') {
+    connectionOptions = eval(`(${Config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  }
+  let datastore = await to.createConnection(Object.assign(connectionOptions, {
 //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
     entities: [ new to.EntitySchema(wo.Story.schema), new to.EntitySchema(wo.Trade.schema), new to.EntitySchema(wo.User.schema), new to.EntitySchema(wo.Place.schema) ],
     synchronize: Config.env!=='production'?true:false,
-  })
+  }))
 
   return wo
 }

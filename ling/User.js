@@ -1,5 +1,5 @@
 'use strict'
-const Ling = require('./Ling.js')
+const Ling = require('so.ling/Ling.to.js')
 const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')

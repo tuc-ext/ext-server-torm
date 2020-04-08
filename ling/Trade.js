@@ -1,6 +1,6 @@
 'use strict'
 
-const Ling = require('./Ling.js')
+const Ling = require('so.ling/Ling.to.js')
 const ticCrypto = require('tic.crypto')
 const to = require('typeorm')
 
