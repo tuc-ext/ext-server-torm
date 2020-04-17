@@ -13,7 +13,7 @@ const my = {
 }
 const Config = require('so.base/Config.js')
 
-global.mylog = require('so.base/Logger.js')({ root: 'data.log', file: 'log.log' })
+global.mylog = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' })
 
 async function initSingle () {
 
@@ -57,7 +57,7 @@ function runServer () { // 配置并启动 Web 服务
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(server.get('env') === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/data.log', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')(server.get('env') === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())

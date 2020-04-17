@@ -38,12 +38,12 @@
   "scripts": {
     "ssl": "certbot certonly -d server.log.yuanjin.net --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
-    "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,database --inspect-brk -- server.js",
+    "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
-    "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,data.log,database -- server.js",
+    "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database -- server.js",
     "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name log.server.oo",
     "daemon": "cross-env NODE_ENV=production node server.js",
-    "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,data.log,database -- server.js",
+    "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
     "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.oo",
     "certbot": "certbot certonly -d server.log.yuanjin.net"
   },

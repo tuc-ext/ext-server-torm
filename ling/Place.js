@@ -20,14 +20,14 @@ const DAD = module.exports = class Place extends Ling { // 构建类
       pcode: { type: String, nullable: true, unique: true, comment:'人工定义的地区编号，用于防止重复' },
       uuidOwner: { type: String, nullable: true },
       uuidPreowner: { type: String, nullable: true, comment:'交易对手的uuid' },
-      name: { type: 'simple-json', default: '{}', nullable: true },
+      name: { type: 'simple-json', nullable: true },
       intro: { type: String, nullable: true },
       image: { type: String, nullable: true },
       amount: { type: 'int', default: 1 },
       profitRate: { type: 'real', default: 0.05, comment: '卖家盈利，是成本价的一个比例' },
       feeRate: { type: 'real', default: 0.005, comment: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例'},
       taxRate: { type: 'real', default: 0.005, comment: '公共税收，通常是原始销售价格的一个比例'},
-      startTime: { type: String, nullable: true },
+      startTime: { type: Date, nullable: true },
       startPrice: { type: 'real', nullable: true },
       buyTimeUnix: { type: 'int', nullable: true }, // 交易达成的时间
       buyTimeUnixDaily: { type: 'int', nullable: true},
@@ -35,7 +35,7 @@ const DAD = module.exports = class Place extends Ling { // 构建类
       sellTimeUnix: { type: 'int', nullable: true },
       sellTimeUnixDaily: { type: 'int', nullable: true},
       sellPrice: { type: 'real', nullable: true },
-      json: { type: 'simple-json', default: '{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构  
+      json: { type: 'simple-json', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构  
     }
   }
 
@@ -102,24 +102,24 @@ DAD.api.payToCreatePlace = async function(option){
     creator.estateHoldingValue += place.startPrice*(1+place.profitRate)
     creator.estateHoldingProfit += place.startPrice*place.profitRate
 
-    if (await place.save() && await creator.save()) {
-      let txBuyer = wo.Trade.create({
-        uuidPlace: place.uuid,
-        uuidUser: creator.uuid,
-        uuidOther: 'SYSTEM', // 前任主人就是这次交易的对家
-        amount: -place.buyPrice, // 作为买家，是负数
-        txGroup: 'ESTATE_TX',
-        txType: 'ESTATE_CREATE',
-        txTimeUnix: txTimeUnix,
-        txTime: new Date(txTimeUnix),
-        json: { Place:{name: place.name} }
-      })
-      txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
-      if (await txBuyer.save()) {
-        return { _state: 'ESTATE_CREATE_SUCCESS',
-          place,
-          trade: txBuyer
-        }
+    await place.save()
+    await creator.save()
+    let txBuyer = wo.Trade.create({
+      uuidPlace: place.uuid,
+      uuidUser: creator.uuid,
+      uuidOther: 'SYSTEM', // 前任主人就是这次交易的对家
+      amount: -place.buyPrice, // 作为买家，是负数
+      txGroup: 'ESTATE_TX',
+      txType: 'ESTATE_CREATE',
+      txTimeUnix: txTimeUnix,
+      txTime: new Date(txTimeUnix),
+      json: { Place:{name: place.name} }
+    })
+    txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({exclude:['aiid','uuid']}))
+    if (await txBuyer.save()) {
+      return { _state: 'ESTATE_CREATE_SUCCESS',
+        place,
+        trade: txBuyer
       }
     }
 
