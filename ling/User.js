@@ -38,6 +38,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
       whenRegister: { type: String, nullable: true },
       coinAddress: { type: 'simple-json', nullable: true },
       balance: { type: 'real', default: 0 },
+      rewardSum: { type: 'real', default: 0 },
       estateProfitSum: { type: 'real', default: 0 },
       estateFeeSum: { type: 'real', default: 0 },
       estateTaxSum: { type: 'real', default: 0 },
@@ -304,15 +305,16 @@ DAD.api.register = DAD.api1.register = async function(option){
         whenRegister,
         lang: option.lang,
         citizen: option.citizen,
-        balance: 10 * Trade.exchangeRate({})
+        balance: 10 * Trade.exchangeRate({}),
+        rewardSum: 10 * Trade.exchangeRate({})
       } )
       let txReward = Trade.create({
         uuidUser: option._passtokenSource.uuid,
         uuidOther: 'SYSTEM',
         txGroup: 'REWARD_TX',
         txType: 'REWARD_REGIST',
-        amount: user.balance, // 作为买家，是负数
-        amountMining: user.balance,
+        amount: user.balance,
+        amountMining: user.balance,  // 奖金是通过注册行为凭空挖出的
         exchangeRate: Trade.exchangeRate({}),
         txTime: user.whenRegister,
         txTimeUnix: new Date(user.whenRegister).valueOf(),
