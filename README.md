@@ -17,3 +17,8 @@
 
 ## 更多资料
 * 前后端 API 规范:  <https://git.faronear.org/tac/log/log.api.md>
+
+## 部署
+```
+npm run deploy -- 密码
+```

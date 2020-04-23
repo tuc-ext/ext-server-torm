@@ -63,11 +63,5 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   HTTP_BODY_LIMIT: '50mb',
   UPLOAD_LIMIT: 1048576, // 单位: Byte。
   SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
-  // todo: 改名为 DB_*
-  LIMIT_DEFAULT: 12,
-  LIMIT_MAX: 1000,
-  MARK_DELETED: 'MARK_DELETED',
-  MARK_LINKED: 'MARK_LINKED', // 建立了关系（care, know, join 等）
-  MARK_RELEASED: 'MARK_RELEASED', // 解除了关系（care, know, join 等）  
 
 }
