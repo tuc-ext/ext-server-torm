@@ -39,7 +39,7 @@ async function initSingle () {
   let datastore = await to.createConnection(Object.assign(connectionOptions, {
 //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
     entities: [ new to.EntitySchema(wo.Story.schema), new to.EntitySchema(wo.Trade.schema), new to.EntitySchema(wo.User.schema), new to.EntitySchema(wo.Place.schema) ],
-    synchronize: true // Config.env!=='production'?true:false,
+    synchronize: Config.env!=='production'?true:false,
   }))
 
   return wo

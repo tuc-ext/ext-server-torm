@@ -37,7 +37,7 @@ const DAD = module.exports = class Trade extends Ling { // 构建类
     }
   }
 
-  static exchangeRate({date=new Date(), coin='USDT'}){
+  static getExchangeRate({date=new Date(), coin='USDT'}){
     let epoch = new Date(Config.EPOCH)
     let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
     switch(coin){
@@ -129,7 +129,7 @@ DAD.api.refreshMyDeposit = async function ({_passtokenSource, coinType}={}){
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value/Math.pow(10, txChain.tokenDecimal)
-          txDB.exchangeRate = DAD.exchangeRate({coin:'USDT_ON_ETH'}) // Config.coinSet.USDT_ON_ETH.exchange
+          txDB.exchangeRate = DAD.getExchangeRate({coin:'USDT_ON_ETH'}) // Config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource*txDB.exchangeRate
           txDB.amountMining = txDB.amount
           txDB.json = txChain

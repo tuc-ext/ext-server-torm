@@ -5,7 +5,7 @@ const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
-const Trade = require('./Trade.js')
+// const Trade = require('./Trade.js') // 因为 User也require了 Trade，这会造成循环require
 const Place = require('./Place.js')
 const to = require('typeorm')
 
@@ -54,10 +54,11 @@ const DAD = module.exports = class User extends Ling { // 构建类
     }
   }
 
-  normalize(){
-    this.inviterCode = ticCrypto.aiid2regcode(this.aiid)
-    delete this.aiid
-    return this
+  static normalize(user={}){
+    user.inviterCode = ticCrypto.aiid2regcode(user.aiid)
+    delete user.aiid
+    delete user.passwordServer
+    return user
   }
 }
 
@@ -234,7 +235,7 @@ DAD.api.prepareRegister = async function({_passtokenSource, passcode, regcode}={
   }
   if (/^[0-9a-zA-Z]+$/.test(regcode)){
     let aiid = ticCrypto.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
-    if (aiid<0 || !Number.isInteger(aiid) || !await DAD.findOne({aiid:aiid})){
+    if ( aiid<0 || !Number.isInteger(aiid) || aiid > await DAD.count() ){
       return { _state: 'REGCODE_USER_NOTEXIST' }
     } 
     // 允许 aiid>0 或 aiid===0 第一个用户登录时，需要一个系统默认的邀请码。
@@ -295,7 +296,19 @@ DAD.api.register = DAD.api1.register = async function(option){
           address: ticCrypto.secword2account(Config.secword, {coin: 'ETH', path: pathETH}).address
         }
       }
-      let user = await DAD.save( { 
+      let txReward = wo.Trade.create({
+        uuidUser: option._passtokenSource.uuid,
+        uuidOther: 'SYSTEM',
+        txGroup: 'REWARD_TX',
+        txType: 'REWARD_REGIST',
+        amount: 10 * wo.Trade.getExchangeRate({}),
+        amountMining: 10 * wo.Trade.getExchangeRate({}),  // 奖金是通过注册行为凭空挖出的
+        exchangeRate: wo.Trade.getExchangeRate({}),
+        txTime: whenRegister,
+        txTimeUnix: new Date(whenRegister).valueOf(),
+      })
+      txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
+      let user = DAD.create( { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
         passwordServer, 
@@ -305,36 +318,21 @@ DAD.api.register = DAD.api1.register = async function(option){
         whenRegister,
         lang: option.lang,
         citizen: option.citizen,
-        balance: 10 * Trade.exchangeRate({}),
-        rewardSum: 10 * Trade.exchangeRate({})
+        balance: 10 * wo.Trade.getExchangeRate({}),
+        rewardSum: 10 * wo.Trade.getExchangeRate({})
       } )
-      let txReward = Trade.create({
-        uuidUser: option._passtokenSource.uuid,
-        uuidOther: 'SYSTEM',
-        txGroup: 'REWARD_TX',
-        txType: 'REWARD_REGIST',
-        amount: user.balance,
-        amountMining: user.balance,  // 奖金是通过注册行为凭空挖出的
-        exchangeRate: Trade.exchangeRate({}),
-        txTime: user.whenRegister,
-        txTimeUnix: new Date(user.whenRegister).valueOf(),
-      })
-      txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
-      let reward = await txReward.save()
-      if (user) {
-// 或者严格按照 BIP44 的规范，代价是，需要先加入数据库获得用户aiid后才能确定路径
-//        let pathBTC = `m/44'/0'/${user.aiid}'/0/0`
-//        let pathETH = `m/44'/60'/${user.aiid}'/0/0`
-//        let coinAddress = { ... }
-//        await user.setMe({ User:{coinAddress}})
-        let aiid = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
-        if (aiid > 0) {
-          DAD.increment({aiid:aiid}, 'communityNumber', 1)
+      let aiidInviter = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
+      await to.getManager().transaction(async txman=>{
+        await txman.save(txReward)
+        await txman.save(user)
+        if (aiidInviter > 0) {
+          txman.increment(DAD, {aiid:aiidInviter}, 'communityNumber', 1)
         }
-
+      })
+      if (user) {
         return { 
           _state: 'REGISTER_SUCCESS',
-          onlineUser: user.normalize(),
+          onlineUser: DAD.normalize(user),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
@@ -358,7 +356,7 @@ DAD.api.autologin = async function(option){
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer 
         && onlineUser.phone === option._passtokenSource.phone){
-        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: onlineUser.normalize() }
+        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: DAD.normalize(onlineUser) }
       }else{
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
       }
@@ -379,7 +377,7 @@ DAD.api.login = DAD.api1.login = async function(option){
         && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
-          onlineUser: onlineUser.normalize(),
+          onlineUser: DAD.normalize(onlineUser),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,

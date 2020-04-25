@@ -12,10 +12,10 @@ DAD.api={}
 
 DAD.api.getConfiguration=async function(){
   for (let coin in Config.depositCoinSet){
-    Config.depositCoinSet[coin].exchangeRate = Trade.exchangeRate({coin:coin})
+    Config.depositCoinSet[coin].exchangeRate = Trade.getExchangeRate({coin:coin})
   }
   for (let coin in Config.withdrawCoinSet){
-    Config.withdrawCoinSet[coin].exchangeRate = Trade.exchangeRate({coin:coin})
+    Config.withdrawCoinSet[coin].exchangeRate = Trade.getExchangeRate({coin:coin})
   }
   let result = {
     depositCoinSet: Config.depositCoinSet,
