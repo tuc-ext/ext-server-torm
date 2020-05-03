@@ -10,9 +10,10 @@
 ## 更多资料
 * 前后端 API 规范:  <https://git.faronear.org/tac/log/log.api.md>
 
-## 系统运维
+## 网络地址
 * 应用后台主机: `server.log.yuanjin.net`
-* 部署:
-    ```
-    npm run deploy -- 密码
-    ```
+
+## 系统部署
+```
+npm run deploy -- 密码
+```
