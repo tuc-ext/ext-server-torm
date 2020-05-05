@@ -14,6 +14,6 @@ expect {
   "Password:"
 #  {send "[lindex $argv 1]\n"}
 #  "密码："
-  {send "[lindex $argv 1]\ncd /faronear/tac/log.server.oo && git pull && npx pm2 restart all\nexit\nexit\n"}
+  {send "[lindex $argv 1]\ncd /faronear/tac/log.server.oo && git pull && npx pm2 restart all && npx pm2 log\n"}
 }
 interact
