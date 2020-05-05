@@ -7,9 +7,7 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
     ['host', '-H, --host <string>', 'Host ip or domain name.'],
     ['protocol', '-P, --protocol <string>', 'Web Server protocol: http|https|httpall.'],
     ['port', '-p, --port <number>', 'HTTP port number.'],
-    ['sslCert', '--sslCert <string>', 'SSL certificate file.'],
-    ['sslKey', '--sslKey <string>', 'SSL private key file.'],
-    ['sslType', '--sslType <string>', 'SSL provider type: file|greenlock.'],
+    ['ssl', '--ssl <string>', 'SSL options in JSON string.'],
   ],
 
   protocol: 'http', // http|https|httpall
@@ -45,10 +43,14 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
   production: {
     protocol: 'https',
     host: 'server.log.yuanjin.net',
-    sslType: 'file', // file|greenlock
-    sslKey: '/etc/letsencrypt/live/server.log.yuanjin.net/privkey.pem', // ssl key file,
-    sslCert: '/etc/letsencrypt/live/server.log.yuanjin.net/fullchain.pem', // ssl cert file,
-    sslCA: '', // ssl ca file,
+    ssl: {
+      type: 'file', // file|greenlock
+      file: {
+        key: 'ssl/privkey.pem', // ssl key file,
+        cert: 'ssl/fullchain.pem', // ssl cert file,
+        ca: '', // ssl ca file,
+      }
+    },
 
     ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
     ETH_NETTYPE: undefined,

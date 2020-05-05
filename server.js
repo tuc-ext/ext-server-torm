@@ -12,6 +12,9 @@ const my = {
   }
 }
 const Config = require('so.base/Config.js')
+if (typeof(Config.ssl)==='string') {
+  Config.ssl = eval(`(${Config.ssl})`)
+}
 
 global.mylog = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' })
 
@@ -51,7 +54,7 @@ function runServer () { // 配置并启动 Web 服务
   const server = require('express')()
   const webToken = require('so.base/Webtoken')
 
-  const greenlock = Config.sslType==='greenlock' 
+  const greenlock = Config.ssl.type==='greenlock' 
      ? require('greenlock-express').create(Object.assign(Config.ssl.greenlockOptions, {app: server}))
      : null
 
@@ -152,17 +155,17 @@ function runServer () { // 配置并启动 Web 服务
       else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
     })
   } else if (Config.protocol === 'https') { // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
-    webServer = require('https').createServer(Config.sslType === 'greenlock' ? greenlock.httpsOptions : {
-      key: fs.readFileSync(Config.sslKey),
-      cert: fs.readFileSync(Config.sslCert),
-      // ca: [ fs.readFileSync(Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+    webServer = require('https').createServer(Config.ssl.type === 'greenlock' ? greenlock.httpsOptions : {
+      key: fs.readFileSync(Config.ssl.file.key),
+      cert: fs.readFileSync(Config.ssl.file.cert),
+      // ca: [ fs.readFileSync(Config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
     }, server).listen(portHttps, function (err) {
       if (err) mylog.info(err)
       else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttps} for ${server.settings.env} environment`)
     })
   } else if ('httpall' === Config.protocol) {
     portHttp = 80
-    if (Config.sslType === 'greenlock') {
+    if (Config.ssl.type === 'greenlock') {
       webServer = greenlock.listen(portHttp, portHttps, function (err) {
         if (err) mylog.info(err)
         else mylog.info(`Web Server listening on [${Config.protocol}] http=>https://${Config.host}:${portHttp}=>${portHttps} for ${server.settings.env} environment`)
@@ -175,9 +178,9 @@ function runServer () { // 配置并启动 Web 服务
         else mylog.info(`Web Server listening on [${Config.protocol}] http://${Config.host}:${portHttp} for ${server.settings.env} environment`)  
       })
       webServer = require('https').createServer({
-        key: fs.readFileSync(Config.sslKey),
-        cert: fs.readFileSync(Config.sslCert),
-        // ca: [ fs.readFileSync(Config.sslCA) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+        key: fs.readFileSync(Config.ssl.file.key),
+        cert: fs.readFileSync(Config.ssl.file.cert),
+        // ca: [ fs.readFileSync(Config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
       }, server).listen(portHttps, function (err) {
         if (err) mylog.info(err)
         else mylog.info(`Web Server listening on [${Config.protocol}] https://${Config.host}:${portHttps} for ${server.settings.env} environment`)
