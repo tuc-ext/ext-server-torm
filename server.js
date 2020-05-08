@@ -54,7 +54,7 @@ function runServer () { // 配置并启动 Web 服务
   const server = require('express')()
   const webToken = require('so.base/Webtoken')
 
-  const greenlock = Config.ssl.type==='greenlock' 
+  const greenlock = (Config.ssl && Config.ssl.type==='greenlock') 
      ? require('greenlock-express').create(Object.assign(Config.ssl.greenlockOptions, {app: server}))
      : null
 
