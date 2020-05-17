@@ -20,6 +20,7 @@ const DAD = module.exports = class Place extends Ling { // 构建类
       pcode: { type: String, nullable: true, unique: true, comment:'人工定义的地区编号，用于防止重复' },
       uuidOwner: { type: String, nullable: true },
       uuidPreowner: { type: String, nullable: true, comment:'交易对手的uuid' },
+      uuidCreator: { type: String, nullable: true },
       name: { type: 'simple-json', nullable: true },
       intro: { type: String, nullable: true },
       image: { type: String, nullable: true },
@@ -82,6 +83,7 @@ DAD.api.payToCreatePlace = async function(option){
   let txTimeUnix = Date.now()
   if (option.Place.name && option.Place.profitRate) {
     let place = DAD.create(option.Place)
+    place.uuidCreator = option._passtokenSource.uuid
     place.uuidOwner = option._passtokenSource.uuid
     place.feeRate = Config.FEE_RATE
     place.taxRate = Config.TAX_RATE

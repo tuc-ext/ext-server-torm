@@ -29,10 +29,12 @@ async function initSingle () {
 
   mylog.info('Loading classes ......')  
   wo.System = require('./ling/System.js')
-  wo.Trade = await require('./ling/Trade.js')
-  wo.User = await require('./ling/User.js')
-  wo.Place = await require('./ling/Place.js')
-  wo.Story = await require('./ling/Story.js')
+  wo.Trade = require('./ling/Trade.js')
+  wo.User = require('./ling/User.js')
+  wo.Place = require('./ling/Place.js')
+  wo.Story = require('./ling/Story.js')
+  wo.ExPoster = require('./ling/ExPoster.js')
+  wo.ExOrder = require('./ling/ExOrder.js')
 
   mylog.info(`Initializing datastore ${Config.datastore} ......`)
   let connectionOptions = Config.datastore
@@ -41,7 +43,14 @@ async function initSingle () {
   }
   let datastore = await to.createConnection(Object.assign(connectionOptions, {
 //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
-    entities: [ new to.EntitySchema(wo.Story.schema), new to.EntitySchema(wo.Trade.schema), new to.EntitySchema(wo.User.schema), new to.EntitySchema(wo.Place.schema) ],
+    entities: [ 
+      new to.EntitySchema(wo.Story.schema), 
+      new to.EntitySchema(wo.Trade.schema), 
+      new to.EntitySchema(wo.User.schema), 
+      new to.EntitySchema(wo.Place.schema), 
+      new to.EntitySchema(wo.ExPoster.schema),
+      new to.EntitySchema(wo.ExOrder.schema)
+    ],
     synchronize: Config.env!=='production'?true:false,
   }))
 

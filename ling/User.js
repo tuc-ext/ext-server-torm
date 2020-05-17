@@ -37,6 +37,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
       idCardSelfie: { type: String, nullable: true },
       whenRegister: { type: String, nullable: true },
       coinAddress: { type: 'simple-json', nullable: true },
+      payChannel: { type: 'simple-json', default: '{}' },
       balance: { type: 'real', default: 0 },
       rewardSum: { type: 'real', default: 0 },
       estateProfitSum: { type: 'real', default: 0 },
