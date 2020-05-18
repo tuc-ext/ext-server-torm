@@ -37,7 +37,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
       idCardSelfie: { type: String, nullable: true },
       whenRegister: { type: String, nullable: true },
       coinAddress: { type: 'simple-json', nullable: true },
-      payChannel: { type: 'simple-json', default: '{}' },
+      payChannel: { type: 'simple-json', default: null },
       balance: { type: 'real', default: 0 },
       rewardSum: { type: 'real', default: 0 },
       estateProfitSum: { type: 'real', default: 0 },
@@ -432,4 +432,15 @@ DAD.api.setLang= async function(option){
       let result = DAD.findOne({uuid:option._passtokenSource.uuid})
       return result?true:false
     }
+}
+
+DAD.api.updatePayChannel= async ({channel, _passtokenSource}={})=>{
+  if (channel && _passtokenSource){
+    let me = await DAD.findOne({uuid: _passtokenSource.uuid})
+    if (!me.payChannel) me.payChannel = {}
+    me.payChannel[channel.type] = channel
+    await DAD.update({uuid: _passtokenSource.uuid},{payChannel:me.payChannel})
+    return { _state: 'SUCCESS'}
+  }
+  return { _state: 'FAILED'}
 }

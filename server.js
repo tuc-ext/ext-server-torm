@@ -142,7 +142,7 @@ function runServer () { // 配置并启动 Web 服务
   })
 
   server.all('*', function (req, res) { /* 错误的API调用进入这里。 */
-    res.json(null)
+    res.json({_state:'UNKNOWN_API'})
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
