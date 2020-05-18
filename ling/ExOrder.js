@@ -18,7 +18,7 @@ const DAD = module.exports = class ExOrder extends Ling{
       startTime: { type: Date, default: null },
       status: { type: String, default: null },
       notes: { type: String, default: null },
-      poster: { type: String, default: null }
+      poster: { type: 'simple-json', default: null }
     }
   }
 
@@ -32,9 +32,9 @@ DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
     ExOrder.owner = _passtokenSource.uuid
     ExOrder.startTime = new Date()
     ExOrder.status = 'WAITING_PAY'
-    let poster = await wo.ExPoster.findOne({uuid: ExOrder.poster})
-    ExOrder.type = poster.type==='BUY' ? 'SELL' : 'BUY'
-    ExOrder.price = poster.price
+    ExOrder.poster = await wo.ExPoster.findOne({uuid: ExOrder.posterUuid})
+    ExOrder.type = ExOrder.poster.type==='BUY' ? 'SELL' : 'BUY'
+    ExOrder.price = ExOrder.poster.price
     let order = await DAD.create(ExOrder).save()
     return { 
       _state:'SUCCESS',

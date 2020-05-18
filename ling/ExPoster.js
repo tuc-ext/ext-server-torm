@@ -15,6 +15,7 @@ const DAD = module.exports = class ExPoster extends Ling{
       type: { type: String, default: null },
       amount: { type: 'real', default: 0 },
       price: { type: 'real', default: 1 },
+      payChannel: {type: 'simple-json', default:null },
       startTime: { type: Date, default: null },
       notes: { type: String, default: null }
     }
