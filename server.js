@@ -197,6 +197,26 @@ function runServer () { // 配置并启动 Web 服务
     }
   }
 
+  // 启动socket服务
+  const WebSocket = require('ws')
+  wo.appSocketServer = new WebSocket.Server({ server: webServer })
+  mylog.info(`App Socket Server attached to web server.`)
+  wo.appSocketServer.on('connection', (socket, req) => {
+    mylog.info(`A socket from App Client is connected from ${req.connection.remoteAddress}:${req.connection.remotePort}.`)
+    // socket.isAlive = true
+    // socket.on('pong', function() { console.log('👈 ASS: on Pong'); this.isAlive = true })
+    socket.on('message', (data) => {
+      console.log('App Socket Client message: ', data)
+    })
+  })
+  wo.appSocketServer.sendAll = function (data) {
+    this.clients.forEach((socket)=>{
+      if (socket.readyState===socket.OPEN) {
+        socket.send(JSON.stringify(data))
+      }
+    })
+  }
+  
   return webServer
 }
 

@@ -11,7 +11,7 @@ const DAD = module.exports = class ExPoster extends Ling{
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
       json: { type: 'simple-json', nullable: true, },
-      owner: { type: String, default: null },
+      ownerUuid: { type: String, default: null },
       type: { type: String, default: null },
       amount: { type: 'real', default: 0 },
       price: { type: 'real', default: 1 },
@@ -26,8 +26,8 @@ const DAD = module.exports = class ExPoster extends Ling{
 DAD.api = {}
 
 DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
-  if (_passtokenSource && _passtokenSource.isOnline && ExPoster ) {
-    ExPoster.owner = _passtokenSource.uuid
+  if (_passtokenSource && _passtokenSource.uuid && ExPoster ) {
+    ExPoster.ownerUuid = _passtokenSource.uuid
     ExPoster.startTime = new Date()
     let poster = await DAD.create(ExPoster).save()
     return { 
@@ -50,9 +50,21 @@ DAD.api.getSellPosterList = async ({ take=10 }={})=>{
 
 DAD.api.getMyPosterList = async ({ _passtokenSource, take=10 }={})=>{
   if ( _passtokenSource && _passtokenSource.uuid ){
-    let myPosterList = await DAD.find({where:{owner:_passtokenSource.uuid}, take})
+    let myPosterList = await DAD.find({where:{ownerUuid:_passtokenSource.uuid}, take})
     return { _state:'SUCCESS', myPosterList }
   }else {
     return { _state:'INVALID_INPUT' }
+  }
+}
+
+DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, take=10 }={} )=>{
+  if (posterUuid && _passtokenSource && _passtokenSource.uuid){
+    let poster = await DAD.findOne({uuid:posterUuid})
+    if (poster && poster.ownerUuid === _passtokenSource.uuid) {
+      let suborderList = await wo.ExOrder.find({where:{posterUuid:posterUuid}, take})
+      return { _state: 'SUCCESS', suborderList }
+    }else{
+      return { _state: 'Unauthorized'}
+    }
   }
 }

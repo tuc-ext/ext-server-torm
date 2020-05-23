@@ -24,7 +24,8 @@
     "so.ling": "git+https://git.faronear.org/so/so.ling",
     "sqlite3": "^4.1.1",
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
-    "typeorm": "^0.2.24"
+    "typeorm": "^0.2.24",
+    "ws": "^7.3.0"
   },
   "devDependencies": {
     "cross-env": "^5.1.3",
