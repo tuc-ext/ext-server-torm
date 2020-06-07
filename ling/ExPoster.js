@@ -29,10 +29,15 @@ DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid && ExPoster ) {
     ExPoster.ownerUuid = _passtokenSource.uuid
     ExPoster.startTime = new Date()
-    let poster = await DAD.create(ExPoster).save()
-    return { 
-      _state:'SUCCESS',
-      poster
+    let myOrder = await wo.ExOrder.findOne({ ownerUuid: _passtokenSource.uuid, status:to.Not('ORDER_COMPLETED') })
+    if (!myOrder){
+      let poster = await DAD.create(ExPoster).save()
+      return { 
+        _state:'SUCCESS',
+        poster
+      }
+    }else{
+      return { _state: 'ORDER_INCOMPLETE' }
     }
   }
   return { 
@@ -42,6 +47,13 @@ DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
 
 DAD.api.getSellPosterList = async ({ take=10 }={})=>{
   let posterList = await DAD.find({where:{type:'SELL'}, take})
+  if (posterList) {
+    return { _state:'SUCCESS', posterList }
+  }
+  return { _state:'FAILED' }
+}
+DAD.api.getBuyPosterList = async ({ take=10 }={})=>{
+  let posterList = await DAD.find({where:{type:'BUY'}, take})
   if (posterList) {
     return { _state:'SUCCESS', posterList }
   }
@@ -57,14 +69,19 @@ DAD.api.getMyPosterList = async ({ _passtokenSource, take=10 }={})=>{
   }
 }
 
-DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, take=10 }={} )=>{
+DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, order, take=10 }={} )=>{
   if (posterUuid && _passtokenSource && _passtokenSource.uuid){
     let poster = await DAD.findOne({uuid:posterUuid})
     if (poster && poster.ownerUuid === _passtokenSource.uuid) {
-      let suborderList = await wo.ExOrder.find({where:{posterUuid:posterUuid}, take})
+      let suborderList = await wo.ExOrder.find({where:{posterUuid:posterUuid}, take, order})
       return { _state: 'SUCCESS', suborderList }
     }else{
       return { _state: 'Unauthorized'}
     }
   }
+}
+
+DAD.api.getMyOrder = async ( { _passtokenSource, posterUuid, type }={} ) => {
+  let myOrder = await wo.ExOrder.findOne({ posterUuid: posterUuid, ownerUuid: _passtokenSource.uuid, type: type, status: to.Not('ORDER_COMPLETED') })
+  return { _state: 'SUCCESS', myOrder }
 }

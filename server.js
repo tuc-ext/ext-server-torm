@@ -103,7 +103,7 @@ function runServer () { // 配置并启动 Web 服务
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    var option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    let option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) { // GET 方法传来的参数. 
       option[key] = my.parseJsonPossible(req.query[key])
     }
@@ -198,24 +198,8 @@ function runServer () { // 配置并启动 Web 服务
   }
 
   // 启动socket服务
-  const WebSocket = require('ws')
-  wo.appSocketServer = new WebSocket.Server({ server: webServer })
-  mylog.info(`App Socket Server attached to web server.`)
-  wo.appSocketServer.on('connection', (socket, req) => {
-    mylog.info(`A socket from App Client is connected from ${req.connection.remoteAddress}:${req.connection.remotePort}.`)
-    // socket.isAlive = true
-    // socket.on('pong', function() { console.log('👈 ASS: on Pong'); this.isAlive = true })
-    socket.on('message', (data) => {
-      console.log('App Socket Client message: ', data)
-    })
-  })
-  wo.appSocketServer.sendAll = function (data) {
-    this.clients.forEach((socket)=>{
-      if (socket.readyState===socket.OPEN) {
-        socket.send(JSON.stringify(data))
-      }
-    })
-  }
+  wo.appSocket = require('./ling/appsocket.js')
+  wo.appSocket.initSocket(webServer)
   
   return webServer
 }

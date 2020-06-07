@@ -35,10 +35,11 @@ const DAD = module.exports = class User extends Ling { // 构建类
       idCardCover: { type: String, nullable: true },
       idCardBack: { type: String, nullable: true },
       idCardSelfie: { type: String, nullable: true },
-      whenRegister: { type: String, nullable: true },
+      whenRegister: { type: Date, default: null },
       coinAddress: { type: 'simple-json', nullable: true },
       payChannel: { type: 'simple-json', default: null },
       balance: { type: 'real', default: 0 },
+      frozenBalance: { type: 'real', default: 0},
       rewardSum: { type: 'real', default: 0 },
       estateProfitSum: { type: 'real', default: 0 },
       estateFeeSum: { type: 'real', default: 0 },
@@ -306,7 +307,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         amountMining: 10 * wo.Trade.getExchangeRate({}),  // 奖金是通过注册行为凭空挖出的
         exchangeRate: wo.Trade.getExchangeRate({}),
         txTime: whenRegister,
-        txTimeUnix: new Date(whenRegister).valueOf(),
+        txTimeUnix: whenRegister.valueOf(),
       })
       txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
       let user = DAD.create( { 
@@ -327,7 +328,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         await txman.save(txReward)
         await txman.save(user)
         if (aiidInviter > 0) {
-          txman.increment(DAD, {aiid:aiidInviter}, 'communityNumber', 1)
+          await txman.increment(DAD, {aiid:aiidInviter}, 'communityNumber', 1)
         }
       })
       if (user) {
@@ -350,13 +351,13 @@ DAD.api.register = DAD.api1.register = async function(option){
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.autologin = async function(option){
-  if (option._passtokenSource && option._passtokenSource.isOnline && option._passtokenSource.uuid && option._passtokenSource.passwordClient){
-    let passwordServer = ticCrypto.hash(option._passtokenSource.passwordClient+option._passtokenSource.uuid)
-    let onlineUser = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+DAD.api.autologin = async function({_passtokenSource}={}){
+  if (_passtokenSource && _passtokenSource.isOnline && _passtokenSource.uuid && _passtokenSource.passwordClient){
+    let passwordServer = ticCrypto.hash(_passtokenSource.passwordClient+_passtokenSource.uuid)
+    let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer 
-        && onlineUser.phone === option._passtokenSource.phone){
+        && onlineUser.phone === _passtokenSource.phone){
         return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: DAD.normalize(onlineUser) }
       }else{
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
@@ -368,21 +369,21 @@ DAD.api.autologin = async function(option){
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.login = DAD.api1.login = async function(option){
-  if (option.passwordClient && option.phone 
-    && option._passtokenSource && option._passtokenSource.uuid) {
-    let passwordServer = ticCrypto.hash(option.passwordClient+option._passtokenSource.uuid)
-    let onlineUser = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+DAD.api.login = DAD.api1.login = async function({passwordClient, phone, _passtokenSource}={}){
+  if (passwordClient && phone 
+    && _passtokenSource && _passtokenSource.uuid) {
+    let passwordServer = ticCrypto.hash(passwordClient+_passtokenSource.uuid)
+    let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer
-        && onlineUser.phone === option.phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
+        && onlineUser.phone === phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
           onlineUser: DAD.normalize(onlineUser),
           _passtoken: Webtoken.createToken({
-            uuid: option._passtokenSource.uuid,
-            phone: option.phone,
-            passwordClient: option.passwordClient,
+            uuid: _passtokenSource.uuid,
+            phone: phone,
+            passwordClient: passwordClient,
             isOnline: 'ONLINE',
             onlineSince: new Date,
             onlineExpireAt: new Date(Date.now()+30*24*60*60*1000)
@@ -402,7 +403,9 @@ DAD.api.login = DAD.api1.login = async function(option){
   return { _state: 'INPUT_MALFORMED'}
 }
 
-DAD.api.logout = async function(option){ // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
+DAD.api.logout = async function({_passtokenSource}){ // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
+  wo.appSocket.removeUserSocket(_passtokenSource.uuid)
+
   return { _state: 'INPUT_MALFORMED' }
 }
 
@@ -425,11 +428,11 @@ DAD.api.resetPassword = async function(option){
 
 }
 
-DAD.api.setLang= async function(option){
-  if (option && option.User && option.User.lang
-    && option._passtokenSource && option._passtokenSource.isOnline){
-      await DAD.update({uuid:option._passtokenSource.uuid}, {lang:option.User.lang})
-      let result = DAD.findOne({uuid:option._passtokenSource.uuid})
+DAD.api.setLang= async function({User, _passtokenSource}={}){
+  if (User && User.lang
+    && _passtokenSource && _passtokenSource.isOnline){
+      await DAD.update({uuid:_passtokenSource.uuid}, {lang:User.lang})
+      let result = DAD.findOne({uuid:_passtokenSource.uuid})
       return result?true:false
     }
 }
