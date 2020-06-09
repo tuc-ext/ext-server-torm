@@ -17,7 +17,8 @@ const DAD = module.exports = class ExPoster extends Ling{
       price: { type: 'real', default: 1 },
       payChannel: {type: 'simple-json', default:null },
       startTime: { type: Date, default: null },
-      notes: { type: String, default: null }
+      notes: { type: String, default: null },
+      status: { type: String, default: null },
     }
   }
 
@@ -45,24 +46,29 @@ DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   }
 }
 
-DAD.api.getSellPosterList = async ({ take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'SELL'}, take})
+DAD.api.cancelPoster = async ({ExPoster:{uuid}})=>{
+  await DAD.update({uuid:uuid}, {status:'CANCELED'})
+  return { _state: 'SUCCESS' }
+}
+
+DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
+  let posterList = await DAD.find({where:{type:'SELL'}, take, order})
   if (posterList) {
     return { _state:'SUCCESS', posterList }
   }
   return { _state:'FAILED' }
 }
-DAD.api.getBuyPosterList = async ({ take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'BUY'}, take})
+DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10 }={})=>{
+  let posterList = await DAD.find({where:{type:'BUY'}, take, order})
   if (posterList) {
     return { _state:'SUCCESS', posterList }
   }
   return { _state:'FAILED' }
 }
 
-DAD.api.getMyPosterList = async ({ _passtokenSource, take=10 }={})=>{
+DAD.api.getMyPosterList = async ({ _passtokenSource, take=10, order={startTime:'DESC'} }={})=>{
   if ( _passtokenSource && _passtokenSource.uuid ){
-    let myPosterList = await DAD.find({where:{ownerUuid:_passtokenSource.uuid}, take})
+    let myPosterList = await DAD.find({where:{ownerUuid:_passtokenSource.uuid}, take, order})
     return { _state:'SUCCESS', myPosterList }
   }else {
     return { _state:'INVALID_INPUT' }
@@ -81,7 +87,7 @@ DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, order, take=10
   }
 }
 
-DAD.api.getMyOrder = async ( { _passtokenSource, posterUuid, type }={} ) => {
+DAD.api.getMyOrder = async ( { _passtokenSource, posterUuid, type }={} ) => { // 一个广告下，我只能有一个正在进行中的订单。
   let myOrder = await wo.ExOrder.findOne({ posterUuid: posterUuid, ownerUuid: _passtokenSource.uuid, type: type, status: to.Not('ORDER_COMPLETED') })
   return { _state: 'SUCCESS', myOrder }
 }
