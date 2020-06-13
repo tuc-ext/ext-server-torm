@@ -22,7 +22,7 @@
     "serve-favicon": "^2.4.1",
     "so.base": "git+https://git.faronear.org/so/so.base",
     "so.ling": "git+https://git.faronear.org/so/so.ling",
-    "sqlite3": "^4.1.1",
+    "sqlite3": "^4.2.0",
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
     "typeorm": "^0.2.24",
     "ws": "^7.3.0"

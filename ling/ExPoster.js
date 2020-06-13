@@ -14,11 +14,12 @@ const DAD = module.exports = class ExPoster extends Ling{
       ownerUuid: { type: String, default: null },
       type: { type: String, default: null },
       amount: { type: 'real', default: 0 },
+      frozenAmount: { type: 'real', default: 0 },
       price: { type: 'real', default: 1 },
       payChannel: {type: 'simple-json', default:null },
       startTime: { type: Date, default: null },
       notes: { type: String, default: null },
-      status: { type: String, default: null },
+      status: { type: String, default: 'ACTIVE', nullable:true },
     }
   }
 
@@ -30,15 +31,18 @@ DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid && ExPoster ) {
     ExPoster.ownerUuid = _passtokenSource.uuid
     ExPoster.startTime = new Date()
-    let myOrder = await wo.ExOrder.findOne({ ownerUuid: _passtokenSource.uuid, status:to.Not('ORDER_COMPLETED') })
-    if (!myOrder){
-      let poster = await DAD.create(ExPoster).save()
-      return { 
-        _state:'SUCCESS',
-        poster
+    ExPoster.amount = Number(ExPoster.amount) || 0
+    if (ExPoster.type==='SELL'){
+      let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
+      if (onlineUser.balance<ExPoster.amount){
+        return { _state: 'BALANCE_NOT_ENOUGH' }
       }
-    }else{
-      return { _state: 'ORDER_INCOMPLETE' }
+      await onlineUser.constructor.update({uuid:_passtokenSource.uuid}, {balance: onlineUser.balance - ExPoster.amount, frozenBalance: onlineUser.frozenBalance + ExPoster.amount })
+    }
+    let poster = await DAD.create(ExPoster).save()
+    return { 
+      _state:'SUCCESS',
+      poster
     }
   }
   return { 
@@ -46,20 +50,40 @@ DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   }
 }
 
-DAD.api.cancelPoster = async ({ExPoster:{uuid}})=>{
-  await DAD.update({uuid:uuid}, {status:'CANCELED'})
-  return { _state: 'SUCCESS' }
+DAD.api.cancelPoster = async ({ExPoster:{uuid}={}, _passtokenSource}={})=>{
+  let poster = await wo.ExPoster.findOne({uuid:uuid})
+  if (poster && _passtokenSource.uuid === poster.ownerUuid){
+
+    // 如果本广告还有进行中的订单，就不能撤销。
+    let suborderCount = await wo.ExOrder.count({where:{posterUuid:uuid, status:to.Not('ORDER_COMPLETED')}})
+    if (suborderCount>0){
+      return { _state: 'ORDER_IN_PROCESS' }
+    }
+
+    await to.getManager().transaction(async txman=>{
+      if (poster.type === 'SELL') {
+        let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
+        await txman.update(wo.User, {uuid:poster.ownerUuid}, {
+          balance: onlineUser.balance + poster.amount, 
+          frozenBalance: onlineUser.frozenBalance - poster.amount
+        })
+      }
+      await txman.update(DAD, {uuid:uuid}, {status:'CANCELED'})
+    })
+    return { _state: 'SUCCESS' }
+
+  }
 }
 
 DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'SELL'}, take, order})
+  let posterList = await DAD.find({where:{type:'SELL', status:to.Not('CANCELED') }, take, order})
   if (posterList) {
     return { _state:'SUCCESS', posterList }
   }
   return { _state:'FAILED' }
 }
 DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'BUY'}, take, order})
+  let posterList = await DAD.find({where:{type:'BUY', status:to.Not('CANCELED') }, take, order})
   if (posterList) {
     return { _state:'SUCCESS', posterList }
   }
@@ -75,7 +99,7 @@ DAD.api.getMyPosterList = async ({ _passtokenSource, take=10, order={startTime:'
   }
 }
 
-DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, order, take=10 }={} )=>{
+DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, order={startTime:'DESC'}, take=10 }={} )=>{
   if (posterUuid && _passtokenSource && _passtokenSource.uuid){
     let poster = await DAD.findOne({uuid:posterUuid})
     if (poster && poster.ownerUuid === _passtokenSource.uuid) {
