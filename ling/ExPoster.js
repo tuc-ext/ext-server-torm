@@ -78,6 +78,10 @@ DAD.api.cancelPoster = async ({ExPoster:{uuid}={}, _passtokenSource}={})=>{
 DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
   let posterList = await DAD.find({where:{type:'SELL', status:to.Not('CANCELED') }, take, order})
   if (posterList) {
+    for (let poster of posterList){
+      let owner = await wo.User.findOne({uuid: poster.ownerUuid})
+      poster.ownerName = owner.nickname
+    }
     return { _state:'SUCCESS', posterList }
   }
   return { _state:'FAILED' }
@@ -85,6 +89,10 @@ DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
 DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10 }={})=>{
   let posterList = await DAD.find({where:{type:'BUY', status:to.Not('CANCELED') }, take, order})
   if (posterList) {
+    for (let poster of posterList){
+      let owner = await wo.User.findOne({uuid: poster.ownerUuid})
+      poster.ownerName = owner.nickname
+    }
     return { _state:'SUCCESS', posterList }
   }
   return { _state:'FAILED' }

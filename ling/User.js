@@ -310,12 +310,13 @@ DAD.api.register = DAD.api1.register = async function(option){
         txTimeUnix: whenRegister.valueOf(),
       })
       txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
+      let nickname = `****${option.phone.substr(-4)}`
       let user = DAD.create( { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
         passwordServer, 
         regcode: option._passtokenSource.regcode.toLowerCase(),
-        nickname: option.phone,
+        nickname: nickname,
         coinAddress,
         whenRegister,
         lang: option.lang,
@@ -446,4 +447,12 @@ DAD.api.updatePayChannel= async ({channel, _passtokenSource}={})=>{
     return { _state: 'SUCCESS'}
   }
   return { _state: 'FAILED'}
+}
+
+DAD.api.changeNickname = async ({nickname, _passtokenSource={}}={})=>{
+  if (nickname && _passtokenSource.uuid){
+    await DAD.update({uuid:_passtokenSource.uuid}, {nickname})
+    return { _state: 'SUCCESS', nickname }
+  }
+  return { _state: 'FAIL' }
 }
