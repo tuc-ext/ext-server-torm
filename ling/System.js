@@ -23,6 +23,7 @@ DAD.api.getConfiguration=async function(){
   }
   result.estateCount = await Place.count(),
   result.estateBuySum = await Place.sum({field:'buyPrice'}),
+  result.estateStartSum = await Place.sum({field:'startPrice'}),
   result.estateSellSum = await Place.sum({field:'sellPrice'}),
   result.estateHoldingCostSum = await User.sum({field:'estateHoldingCost'}),
   result.estateHoldingValueSum = await User.sum({field:'estateHoldingValue'}),

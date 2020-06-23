@@ -161,9 +161,9 @@ DAD.api.refreshMyDeposit = async function ({_passtokenSource, coinType}={}){
   }
 }
 
-DAD.api.getMyTradeList = async function ({ _passtokenSource, where, order={txTimeUnix:'DESC'}, take=10 } = {}){
+DAD.api.getMyTradeList = async function ({ _passtokenSource, maxtime, where={}, order={txTimeUnix:'DESC'}, take=10 } = {}){
   where.uuidUser = _passtokenSource.uuid
-  where.txTimeUnix = to.LessThan(where.maxtime)
+  where.txTimeUnix = to.LessThan(maxtime)
   let txlist = await DAD.find({where, order, take})
   if (txlist) {
     return { 

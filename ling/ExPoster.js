@@ -81,6 +81,7 @@ DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
     for (let poster of posterList){
       let owner = await wo.User.findOne({uuid: poster.ownerUuid})
       poster.ownerName = owner.nickname
+      poster.ownerPortrait = owner.portrait
     }
     return { _state:'SUCCESS', posterList }
   }
@@ -92,6 +93,7 @@ DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10 }={})=>{
     for (let poster of posterList){
       let owner = await wo.User.findOne({uuid: poster.ownerUuid})
       poster.ownerName = owner.nickname
+      poster.ownerPortrait = owner.portrait
     }
     return { _state:'SUCCESS', posterList }
   }
