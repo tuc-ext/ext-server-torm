@@ -36,7 +36,7 @@ const DAD = module.exports = class Place extends Ling { // 构建类
       sellTimeUnix: { type: 'int', nullable: true },
       sellTimeUnixDaily: { type: 'int', nullable: true},
       sellPrice: { type: 'real', nullable: true },
-      json: { type: 'simple-json', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构  
+      json: { type: 'simple-json', default:'{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构  
     }
   }
 

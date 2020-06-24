@@ -16,7 +16,7 @@ const DAD = module.exports = class ExPoster extends Ling{
       amount: { type: 'real', default: 0 },
       frozenAmount: { type: 'real', default: 0 },
       price: { type: 'real', default: 1 },
-      payChannel: {type: 'simple-json', default:null },
+      payChannel: {type: 'simple-json', default:'{}' },
       startTime: { type: Date, default: null },
       notes: { type: String, default: null },
       status: { type: String, default: 'ACTIVE', nullable:true },
@@ -114,6 +114,14 @@ DAD.api.getSuborderList = async ( { _passtokenSource, posterUuid, order={startTi
     let poster = await DAD.findOne({uuid:posterUuid})
     if (poster && poster.ownerUuid === _passtokenSource.uuid) {
       let suborderList = await wo.ExOrder.find({where:{posterUuid:posterUuid}, take, order})
+      for (let order of suborderList){
+        let seller = await wo.User.findOne({uuid: order.sellerUuid})
+        order.sellerName = seller.nickname
+        order.sellerPortrait = seller.portrait
+        let buyer = await wo.User.findOne({uuid: order.buyerUuid})
+        order.buyerName = buyer.nickname
+        order.buyerPortrait = buyer.portrait
+      }
       return { _state: 'SUCCESS', suborderList }
     }else{
       return { _state: 'Unauthorized'}

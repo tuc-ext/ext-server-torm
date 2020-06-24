@@ -23,7 +23,7 @@ const DAD = module.exports = class ExOrder extends Ling{
       status: { type: String, default: null },
       notes: { type: String, default: null },
       posterUuid: { type: String, default: null },
-      poster: { type: 'simple-json', default: null },
+      poster: { type: 'simple-json', default: '{}' },
     }
   }
 

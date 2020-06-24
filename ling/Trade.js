@@ -33,7 +33,7 @@ const DAD = module.exports = class Trade extends Ling { // 构建类
       amountMining: { type: 'real', default: 0 }, // 在这一笔交易里，挖矿产生的LOG。挖矿行为有：USDT投资，注册奖励，拉新奖励
       amountSource: { type: 'real', nullable: true },
       exchangeRate: { type: 'real', nullable: true },
-      json: { type: 'simple-json', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构    
+      json: { type: 'simple-json', default:'{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构    
     }
   }
 

@@ -36,8 +36,8 @@ const DAD = module.exports = class User extends Ling { // 构建类
       idCardBack: { type: String, nullable: true },
       idCardSelfie: { type: String, nullable: true },
       whenRegister: { type: Date, default: null },
-      coinAddress: { type: 'simple-json', nullable: true },
-      payChannel: { type: 'simple-json', default: null },
+      coinAddress: { type: 'simple-json', default: '{}' },
+      payChannel: { type: 'simple-json', default: '{}', nullable:true},
       balance: { type: 'real', default: 0 },
       frozenBalance: { type: 'real', default: 0},
       rewardSum: { type: 'real', default: 0 },
@@ -52,7 +52,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
       depositLogSum: { type: 'real', default: 0 },
       communityNumber: { type: 'int', default: 0 },
       communityRewardSum: { type: 'real', default: 0 },
-      json: { type: 'simple-json', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+      json: { type: 'simple-json', default:'{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     }
   }
 
