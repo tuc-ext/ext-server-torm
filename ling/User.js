@@ -310,7 +310,7 @@ DAD.api.register = DAD.api1.register = async function(option){
         txTimeUnix: whenRegister.valueOf(),
       })
       txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
-      let nickname = `****${option.phone.substr(-4)}`
+      let nickname = `----${option.phone.substr(-4)}`
       let user = DAD.create( { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
