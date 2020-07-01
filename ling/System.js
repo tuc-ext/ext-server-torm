@@ -13,7 +13,7 @@ const DAD = module.exports = class System extends Ling { // 构建类
     target: this,
     columns:{
       aiid: { type: 'int', generated: true, primary: true },
-      log2cny: { type: Number, default:null },
+      usd2cny: { type: Number, default:null },
       when: { type: Date, nullable:true }
     }
   }
@@ -25,9 +25,9 @@ DAD.api={}
 DAD.api.getLog2Cny = async function(){
   let data = await DAD.findOne()
   if (data) {
-    return data.log2cny
+    return data.usd2cny
   }
-  DAD.save({log2cny:7, when: new Date()})
+  DAD.save({usd2cny:7, when: new Date()})
   return 7
 }
 
