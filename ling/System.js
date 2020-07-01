@@ -4,11 +4,32 @@ const Config = require('so.base/Config.js')
 const Trade = require('./Trade.js')
 const Place = require('./Place.js')
 const User = require('./User.js')
+const Ling = require('so.ling/Ling.to.js')
 
-const DAD = module.exports = function System () { // 构建类
+const DAD = module.exports = class System extends Ling { // 构建类
+
+  static schema = {
+    name: this.name,
+    target: this,
+    columns:{
+      aiid: { type: 'int', generated: true, primary: true },
+      log2cny: { type: Number, default:null },
+      when: { type: Date, nullable:true }
+    }
+  }
+
 }
 
 DAD.api={}
+
+DAD.api.getLog2Cny = async function(){
+  let data = await DAD.findOne()
+  if (data) {
+    return data.log2cny
+  }
+  DAD.save({log2cny:7, when: new Date()})
+  return 7
+}
 
 DAD.api.getConfiguration=async function(){
   for (let coin in Config.depositCoinSet){
