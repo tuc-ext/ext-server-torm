@@ -116,7 +116,7 @@ DAD.api.updateKycL1 = async function(option) {
 DAD.api.updateKycL2 = async function(option) {
   let user = await DAD.findOne({uuid:option._passtokenSource.uuid})
   if (user && user.idCardCover && user.idCardBack){
-    await user.save({kycStateL2: 'SUBMITTED'})
+    await DAD.update({uuid: option._passtokenSource.uuid }, {kycStateL2: 'SUBMITTED'})
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }
@@ -126,7 +126,7 @@ DAD.api.updateKycL2 = async function(option) {
 DAD.api.updateKycL3 = async function(option) {
   let user = await DAD.findOne({uuid:option._passtokenSource.uuid})
   if (user && user.idCardSelfie){
-    await user.save({kycStateL3: 'SUBMITTED'})
+    await DAD.update({uuid: option._passtokenSource.uuid }, {kycStateL3: 'SUBMITTED'})
     return { _state: 'SUBMITTED' }
   }else {
     return { _state: 'INPUT_MALFORMED' }

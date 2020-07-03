@@ -256,7 +256,7 @@ DAD.api.changeImage=async function(option){
     if (place && place.uuidOwner === option._passtokenSource.uuid) {
       let file = option._req.file
       if (file && /^image\//.test(file.mimetype)) {
-        await place.save({image:option._req.file.filename})
+        await DAD.update({uuid:option.Place.uuid}, {image:option._req.file.filename})
         return Object.assign(file, { _state: 'SUCCESS'})
       }else{
         return { _state: 'FILE_NOT_IMAGE'}
@@ -274,7 +274,7 @@ DAD.api.changeIntro=async function(option){
     && option.Place && option.Place.uuid && option.Place.intro) {
       let place = await DAD.findOne({uuid:option.Place.uuid})
       if (place && place.uuidOwner === option._passtokenSource.uuid) {
-        place.save({intro:option.Place.intro})
+        await DAD.update({uuid:option.Place.uuid}, {intro:option.Place.intro})
         return { _state: 'SUCCESS' }
       }else {
         return { _state: 'NOT_ESTATE_OWNER' }

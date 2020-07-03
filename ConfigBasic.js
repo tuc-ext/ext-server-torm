@@ -24,7 +24,7 @@ module.exports = { // 全大写字母的，代表系统常量，不要在 userCo
       owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
     }
   },
-  EPOCH: '2020-03-25T16:00:00.000Z',
+  EPOCH: '2020-05-25T16:00:00.000Z',  // 原为3/25
   depositCoinSet: {
     USDT_ON_ETH: { name:'USDT', exchangeRate: 1000 },
     // USDT_ON_BTC: { name:'USDT(BTC)', exchangeRate: 1000 },
