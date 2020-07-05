@@ -56,8 +56,9 @@ const DAD = module.exports = class User extends Ling { // 构建类
     }
   }
 
-  static normalize(user={}){
-    user.inviterCode = ticCrypto.aiid2regcode(user.aiid)
+  static async normalize(user={}){
+    user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码
+    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'})
     delete user.aiid
     delete user.passwordServer
     return user
@@ -67,11 +68,11 @@ const DAD = module.exports = class User extends Ling { // 构建类
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
 
-DAD.api.changePortrait = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline) {
-    let file = option._req.file
+DAD.api.changePortrait = async function ({_passtokenSource, _req}={}) {
+  if (_passtokenSource && _passtokenSource.isOnline) {
+    let file = _req.file
     if (file && /^image\//.test(file.mimetype)) {
-      await DAD.update({uuid: option._passtokenSource.uuid}, {portrait:option._req.file.filename})
+      await DAD.update({uuid: _passtokenSource.uuid}, {portrait:file.filename})
       return Object.assign(file, { _state: 'SUCCESS'})
     }else{
       return { _state: 'FILE_NOT_IMAGE'}
@@ -335,7 +336,7 @@ DAD.api.register = DAD.api1.register = async function(option){
       if (user) {
         return { 
           _state: 'REGISTER_SUCCESS',
-          onlineUser: DAD.normalize(user),
+          onlineUser: await DAD.normalize(user),
           _passtoken: Webtoken.createToken({
             uuid: option._passtokenSource.uuid,
             phone: option.phone,
@@ -359,7 +360,7 @@ DAD.api.autologin = async function({_passtokenSource}={}){
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer 
         && onlineUser.phone === _passtokenSource.phone){
-        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: DAD.normalize(onlineUser) }
+        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: await DAD.normalize(onlineUser) }
       }else{
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
       }
@@ -380,7 +381,7 @@ DAD.api.login = DAD.api1.login = async function({passwordClient, phone, _passtok
         && onlineUser.phone === phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
-          onlineUser: DAD.normalize(onlineUser),
+          onlineUser: await DAD.normalize(onlineUser),
           _passtoken: Webtoken.createToken({
             uuid: _passtokenSource.uuid,
             phone: phone,
