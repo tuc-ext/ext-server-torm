@@ -58,7 +58,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
 
   static async normalize(user={}){
     user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码
-    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'})
+    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
     delete user.passwordServer
     return user
