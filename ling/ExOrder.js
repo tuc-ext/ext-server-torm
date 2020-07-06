@@ -34,7 +34,11 @@ DAD.api = {}
 DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid 
     && ExOrder && ExOrder.posterUuid) {
-
+    let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
+    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PaSSED'){
+      return { _state: 'USER_NOT_KYC' }
+    }
+      
     // 一个人在一个广告下，只能同时有一个进行中的订单
     let myOrder = await DAD.findOne({ ownerUuid: _passtokenSource.uuid, status:to.Not('ORDER_COMPLETED') })
     if (myOrder){

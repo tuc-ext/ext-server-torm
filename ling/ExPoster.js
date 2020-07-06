@@ -29,11 +29,14 @@ DAD.api = {}
 
 DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid && ExPoster ) {
+    let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
+    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PaSSED'){
+      return { _state: 'USER_NOT_KYC' }
+    }
     ExPoster.ownerUuid = _passtokenSource.uuid
     ExPoster.startTime = new Date()
     ExPoster.amount = Number(ExPoster.amount) || 0
     if (ExPoster.type==='SELL'){
-      let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
       if (onlineUser.balance<ExPoster.amount){
         return { _state: 'BALANCE_NOT_ENOUGH' }
       }
