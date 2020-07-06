@@ -30,7 +30,7 @@ DAD.api = {}
 DAD.api.createPoster = async ({ExPoster, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid && ExPoster ) {
     let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
-    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PaSSED'){
+    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PASSED'){
       return { _state: 'USER_NOT_KYC' }
     }
     ExPoster.ownerUuid = _passtokenSource.uuid

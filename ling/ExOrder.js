@@ -35,7 +35,7 @@ DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
   if (_passtokenSource && _passtokenSource.uuid 
     && ExOrder && ExOrder.posterUuid) {
     let onlineUser = await wo.User.findOne({uuid:_passtokenSource.uuid})
-    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PaSSED'){
+    if (onlineUser.kycStateL1!=='PASSED' || onlineUser.kycStateL2!=='PASSED'){
       return { _state: 'USER_NOT_KYC' }
     }
       
@@ -67,6 +67,9 @@ DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
       // 把订单出售数量从卖主广告里冻结
       await wo.ExPoster.update({uuid: ExOrder.posterUuid}, {amount: ExOrder.poster.amount - ExOrder.amount, frozenAmount: ExOrder.poster.frozenAmount + ExOrder.amount})
       let order = await DAD.create(ExOrder).save(); order.poster = ExOrder.poster // 严重注意, 直接 DAD.save(ExOrder) 后，ExOrder的json字段会变空，导致 order.poster = ExOrder.poster 不起作用。解法1: DAD.create(ExOrder).save() 就可以了
+      let seller = await wo.User.findOne({uuid: order.sellerUuid})
+      order.sellerName = seller.nickname
+      order.sellerPortrait = seller.portrait
       wo.appSocket.sendToOne({skevent: 'SELL_ORDER_CREATED', order}, order.poster.ownerUuid) // 通知卖家
       return { _state:'SUCCESS', order }
     }else if (ExOrder.poster.type==='SELL'){
@@ -76,6 +79,9 @@ DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
       // 把订单购买数量从卖家广告里冻结
       await wo.ExPoster.update({uuid: ExOrder.posterUuid}, {amount: ExOrder.poster.amount - ExOrder.amount, frozenAmount: ExOrder.poster.frozenAmount + ExOrder.amount})
       let order = await DAD.create(ExOrder).save(); order.poster = ExOrder.poster
+      let buyer = await wo.User.findOne({uuid: order.buyerUuid})
+      order.buyerName = buyer.nickname
+      order.buyerPortrait = buyer.portrait
       wo.appSocket.sendToOne({skevent: 'BUY_ORDER_CREATED', order}, order.poster.ownerUuid) // 通知卖家
       return { _state:'SUCCESS', order }
     }
@@ -88,7 +94,7 @@ DAD.api.createOrder = async ({ExOrder, _passtokenSource}={})=>{
 
 DAD.api.getMyOrderList = async ({_passtokenSource, order={startTime: 'DESC'}, take=10}={})=>{
   if ( _passtokenSource && _passtokenSource.uuid ){
-    let myOrderList = await DAD.find({where:{ownerUuid:_passtokenSource.uuid}, take})
+    let myOrderList = await DAD.find({where:{ownerUuid:_passtokenSource.uuid}, order, take})
     return { _state:'SUCCESS', myOrderList }
   }else {
     return { _state:'INVALID_INPUT' }
