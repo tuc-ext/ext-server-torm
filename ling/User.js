@@ -149,7 +149,7 @@ DAD.sysapi.passKycL2 = async function({User}){
     let reward = rate * 5
     let passTime = new Date()
     let txReward = wo.Trade.create({
-      uuidUser: User.uuid,
+      uuidUser: inviter.uuid,
       uuidOther: 'SYSTEM',
       txGroup: 'REWARD_TX',
       txType: 'REWARD_INVITE',
