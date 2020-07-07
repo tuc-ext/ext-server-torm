@@ -51,6 +51,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
       depositUsdtSum: { type: 'real', default: 0 },
       depositLogSum: { type: 'real', default: 0 },
       communityNumber: { type: 'int', default: 0 },
+      communityNumberKyc: { type: 'int', default: 0 },
       communityRewardSum: { type: 'real', default: 0 },
       json: { type: 'simple-json', default:'{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     }
@@ -58,7 +59,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
 
   static async normalize(user={}){
     user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码
-    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
+//    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
     delete user.passwordServer
     return user
@@ -67,6 +68,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
 
 /****************** API方法 ******************/
 DAD.api=DAD.api1={}
+DAD.sysapi={}
 
 DAD.api.changePortrait = async function ({_passtokenSource, _req}={}) {
   if (_passtokenSource && _passtokenSource.isOnline) {
@@ -113,7 +115,22 @@ DAD.api.updateKycL1 = async function(option) {
     return { _state: 'INPUT_MALFORMED' }
   }
 }
-
+DAD.sysapi.passKycL1 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL1: 'PASSED'})
+    result._state = 'SUCCESS'
+  })
+  return result
+}
+DAD.sysapi.rejectKycL1 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL1: 'REJECTED'})
+    result._state = 'SUCCESS'
+  })
+  return result
+}
 DAD.api.updateKycL2 = async function(option) {
   let user = await DAD.findOne({uuid:option._passtokenSource.uuid})
   if (user && user.idCardCover && user.idCardBack){
@@ -122,6 +139,43 @@ DAD.api.updateKycL2 = async function(option) {
   }else {
     return { _state: 'INPUT_MALFORMED' }
   }
+}
+DAD.sysapi.passKycL2 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    let user = await DAD.findOne({uuid: User.uuid})
+    let inviter = await DAD.findOne({aiid: ticCrypto.regcode2aiid(user.regcode)})
+    let rate = wo.Trade.getExchangeRate()
+    let reward = rate * 5
+    let passTime = new Date()
+    let txReward = wo.Trade.create({
+      uuidUser: User.uuid,
+      uuidOther: 'SYSTEM',
+      txGroup: 'REWARD_TX',
+      txType: 'REWARD_INVITE',
+      amount: reward,
+      amountMining: reward,  // 奖金是通过注册行为凭空挖出的
+      exchangeRate: rate,
+      txTime: passTime,
+      txTimeUnix: passTime.valueOf(),
+    })
+    txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
+  
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL2:'PASSED' })
+    await txman.increment(DAD, {aiid: inviter.aiid}, 'communityNumberKyc', 1)
+    await txman.increment(DAD, {aiid: inviter.aiid}, 'communityRewardSum', reward)
+    await txman.save(txReward)
+    result._state = 'SUCCESS'
+  })
+  return result
+}
+DAD.sysapi.rejectKycL2 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL2: 'REJECTED'})
+    result._state = 'SUCCESS'
+  })
+  return result
 }
 
 DAD.api.updateKycL3 = async function(option) {
@@ -132,6 +186,22 @@ DAD.api.updateKycL3 = async function(option) {
   }else {
     return { _state: 'INPUT_MALFORMED' }
   }
+}
+DAD.sysapi.passKycL3 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL3: 'PASSED'})
+    result._state = 'SUCCESS'
+  })
+  return result
+}
+DAD.sysapi.rejectKycL3 = async function({User}){
+  let result = { _state: 'ERROR' }
+  await to.getManager().transaction(async txman=>{
+    await txman.update(DAD, {uuid:User.uuid}, { kycStateL3: 'REJECTED'})
+    result._state = 'SUCCESS'
+  })
+  return result
 }
 
 DAD.api.identify = DAD.api1.identify = async function({phone}={}){
@@ -311,7 +381,6 @@ DAD.api.register = DAD.api1.register = async function(option){
         txTimeUnix: whenRegister.valueOf(),
       })
       txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
-      let nickname = `----${option.phone.substr(-4)}`
       let user = DAD.create( { 
         uuid: option._passtokenSource.uuid,
         phone: option.phone,
@@ -456,4 +525,9 @@ DAD.api.changeNickname = async ({nickname, _passtokenSource={}}={})=>{
     return { _state: 'SUCCESS', nickname }
   }
   return { _state: 'FAIL' }
+}
+
+DAD.sysapi.getUserArray = async ({where, take=10, order={aiid:'ASC'}, skip=0})=>{
+  let [userArray, count] = await DAD.findAndCount({where, take, order, skip})
+  return { _state: 'SUCCESS', userArray, count }
 }

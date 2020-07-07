@@ -37,7 +37,7 @@ const DAD = module.exports = class Trade extends Ling { // 构建类
     }
   }
 
-  static getExchangeRate({date=new Date(), coin='USDT'}){
+  static getExchangeRate({date=new Date(), coin='USDT'}={}){
     let epoch = new Date(Config.EPOCH)
     let dayNumber = date>epoch ? parseInt((date - epoch)/DAY_MILLIS) : 0
     switch(coin){
