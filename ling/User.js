@@ -162,8 +162,12 @@ DAD.sysapi.passKycL2 = async function({User}){
     txReward.txHash = ticCrypto.hash(txReward.getJson({exclude:['aiid','uuid']}))
   
     await txman.update(DAD, {uuid:User.uuid}, { kycStateL2:'PASSED' })
-    await txman.increment(DAD, {aiid: inviter.aiid}, 'communityNumberKyc', 1)
-    await txman.increment(DAD, {aiid: inviter.aiid}, 'communityRewardSum', reward)
+    await txman.update(DAD, {uuid: inviter.uuid}, {
+      balance: inviter.balance + reward, 
+      communityNumberKyc: inviter.communityNumberKyc + 1, 
+      communityRewardSum: inviter.communityRewardSum + reward,
+      rewardSum: inviter.rewardSum + reward
+    })
     await txman.save(txReward)
     result._state = 'SUCCESS'
   })
