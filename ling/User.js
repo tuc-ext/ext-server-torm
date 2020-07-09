@@ -58,7 +58,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
   }
 
   static async normalize(user={}){
-    user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码
+    user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码 // 只给onlineUser
 //    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
     delete user.passwordServer
@@ -534,4 +534,23 @@ DAD.api.changeNickname = async ({nickname, _passtokenSource={}}={})=>{
 DAD.sysapi.getUserArray = async ({where, take=10, order={aiid:'ASC'}, skip=0})=>{
   let [userArray, count] = await DAD.findAndCount({where, take, order, skip})
   return { _state: 'SUCCESS', userArray, count }
+}
+
+DAD.api.getCommunityMembers = async ({_passtokenSource={}, order={whenRegister:'DESC'}, skip=0, take=10}={}) => {
+  let result = { _state: 'ERROR' }
+  if (_passtokenSource.uuid){
+    let me = await DAD.findOne({uuid: _passtokenSource.uuid})
+    let [memberArray, count] = await DAD.findAndCount({where:{regcode: ticCrypto.aiid2regcode(me.aiid)}, order, skip, take})
+    if (Array.isArray(memberArray)) {
+      for (let member of memberArray){
+        delete member.aiid
+        delete member.passwordServer
+      }
+      result.memberArray = memberArray
+      result.count = count
+      result._state = 'SUCCESS'
+      return result
+    }
+  }
+  return result
 }

@@ -78,27 +78,27 @@ DAD.api.cancelPoster = async ({ExPoster:{uuid}={}, _passtokenSource}={})=>{
   }
 }
 
-DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'SELL', status:to.Not('CANCELED') }, take, order})
+DAD.api.getSellPosterList = async ({ order={price:'ASC'}, take=10, skip=0 }={})=>{
+  let [posterList, count] = await DAD.findAndCount({where:{type:'SELL', status:to.Not('CANCELED') }, take, order, skip})
   if (posterList) {
     for (let poster of posterList){
       let owner = await wo.User.findOne({uuid: poster.ownerUuid})
       poster.ownerName = owner.nickname
       poster.ownerPortrait = owner.portrait
     }
-    return { _state:'SUCCESS', posterList }
+    return { _state:'SUCCESS', posterList, count }
   }
   return { _state:'FAILED' }
 }
-DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10 }={})=>{
-  let posterList = await DAD.find({where:{type:'BUY', status:to.Not('CANCELED') }, take, order})
+DAD.api.getBuyPosterList = async ({ order={price:'DESC'}, take=10, skip=0 }={})=>{
+  let [posterList, count] = await DAD.findAndCount({where:{type:'BUY', status:to.Not('CANCELED') }, take, order, skip})
   if (posterList) {
     for (let poster of posterList){
       let owner = await wo.User.findOne({uuid: poster.ownerUuid})
       poster.ownerName = owner.nickname
       poster.ownerPortrait = owner.portrait
     }
-    return { _state:'SUCCESS', posterList }
+    return { _state:'SUCCESS', posterList, count }
   }
   return { _state:'FAILED' }
 }
