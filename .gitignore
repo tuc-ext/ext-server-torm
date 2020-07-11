@@ -13,3 +13,4 @@ ConfigSecret.js
 *.db
 *.rdb
 upload/*/*_*
+ConfigDynamic.js
