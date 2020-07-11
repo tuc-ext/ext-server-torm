@@ -22,13 +22,23 @@ const DAD = module.exports = class System extends Ling { // 构建类
 
 DAD.api={}
 
-DAD.api.getLog2Cny = async function(){
-  let data = await DAD.findOne()
-  if (data) {
-    return data.usd2cny
-  }
-  DAD.save({usd2cny:7, when: new Date()})
-  return 7
+DAD.api.getUsd2Cny = async function(){
+  delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
+  let result = require('../ConfigDynamic.js')
+  return { _state: 'SUCCESS', usd2cny: result.usd2cny }
+  // 另一个方案：从数据库里读取
+  // let data = await DAD.findOne()
+  // if (data) {
+  //   return data.usd2cny
+  // }
+  // DAD.save({usd2cny:7, when: new Date()}) // 如果数据库里还不存在第一条数据
+  // return 7
+}
+
+DAD.api.getLinks = async ()=>{
+  delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
+  let result = require('../ConfigDynamic.js')
+  return { _state: 'SUCCESS', weixingroup: result.weixingroup }
 }
 
 DAD.api.getConfiguration=async function(){
