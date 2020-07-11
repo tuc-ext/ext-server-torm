@@ -22,7 +22,7 @@ const DAD = module.exports = class System extends Ling { // 构建类
 
 DAD.api={}
 
-DAD.api.getUsd2Cny = async function(){
+DAD.api.getUsd2Cny = DAD.api.getLog2Cny = async function(){
   delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
   let result = require('../ConfigDynamic.js')
   return { _state: 'SUCCESS', usd2cny: result.usd2cny }
