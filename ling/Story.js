@@ -2,7 +2,7 @@
 const to = require('typeorm')
 const Ling = require('so.ling/Ling.to.js')
 
-const DAD = module.exports = class Story extends Ling{
+const DAD = module.exports = class Story extends Ling {
 
   static schema = {
     name: this.name,
@@ -16,9 +16,9 @@ const DAD = module.exports = class Story extends Ling{
       place: { type: String, nullable: true },
       fromTime: { type: Date, nullable: true },
       toTime: { type: Date, nullable: true },
-      fromTimeUnix: { type:'int', nullable:true },
-      toTimeUnix: { type:'int', nullable:true },
-      json: { type: 'simple-json', default:'{}', nullable: true, }
+      fromTimeUnix: { type: 'int', nullable: true },
+      toTimeUnix: { type: 'int', nullable: true },
+      json: { type: 'simple-json', default: '{}', nullable: true, }
     }
   }
 
@@ -26,7 +26,7 @@ const DAD = module.exports = class Story extends Ling{
 
 DAD.api = {}
 DAD.api.getStoryList = async ({ Place } = {}) => {
-  let [ list, count ] = await DAD.findAndCount({ where: {place: Place.uuid}, skip: 0, take: 10, order: {aiid: 'DESC'} })
+  let [list, count] = await DAD.findAndCount({ where: { place: Place.uuid }, skip: 0, take: 10, order: { aiid: 'DESC' } })
   return { _state: 'SUCCESS', list, count }
 }
 
