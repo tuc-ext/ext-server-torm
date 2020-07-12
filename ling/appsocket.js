@@ -8,7 +8,7 @@ const my = {
 }
 
 module.exports = {
-  initSocket (webServer) {
+  initSocket(webServer) {
     my.appSocketServer = new WebSocket.Server({ server: webServer })
     console.info('App Socket Server attached to web server.')
 
@@ -58,11 +58,11 @@ module.exports = {
     return my.appSocketServer
   },
 
-  removeUserSocket (uuid) {
+  removeUserSocket(uuid) {
     delete my.socketPool[uuid]
   },
 
-  addListener (skevent, listener) {
+  addListener(skevent, listener) {
     if (
       Array.isArray(my.listeners[skevent]) &&
       typeof listener === 'function'
@@ -74,7 +74,7 @@ module.exports = {
     return this
   },
 
-  sendToAll (dataObj) {
+  sendToAll(dataObj) {
     my.appSocketServer.clients.forEach(socket => {
       if (socket.readyState === socket.OPEN) {
         socket.send(
@@ -86,7 +86,7 @@ module.exports = {
     })
   },
 
-  sendToOne (dataObj, uuid) {
+  sendToOne(dataObj, uuid) {
     const socket = my.socketPool[uuid]
     if (socket && socket.readyState === socket.OPEN) {
       socket.send(

@@ -7,7 +7,6 @@ const User = require('./User.js')
 const Ling = require('so.ling/Ling.to.js')
 
 const DAD = (module.exports = class System extends Ling {
-  // 构建类
 
   static schema = {
     name: this.name,
@@ -87,4 +86,3 @@ DAD.api.getConfiguration = async function () {
   return result
 }
 
-DAD.api.test = () => {}

@@ -44,7 +44,7 @@ const DAD = module.exports = class Trade extends Ling { // 构建类
       case 'USDT': case 'USDT_ON_ETH': case 'USDT_ON_BTC': return 1000 - dayNumber
       case 'LOG': return 1
       default: return null
-    } 
+    }
   }
 
 }
