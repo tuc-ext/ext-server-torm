@@ -6,7 +6,7 @@ const Place = require('./Place.js')
 const User = require('./User.js')
 const Ling = require('so.ling/Ling.to.js')
 
-const DAD = (module.exports = class System extends Ling {
+const DAD = module.exports = class System extends Ling {
 
   static schema = {
     name: this.name,
@@ -17,7 +17,7 @@ const DAD = (module.exports = class System extends Ling {
       when: { type: Date, nullable: true }
     }
   }
-})
+}
 
 DAD.api = {}
 
