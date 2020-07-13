@@ -83,6 +83,18 @@ DAD.api.changePortrait = async function ({ _passtokenSource, _req } = {}) {
     return { _state: 'USER_NOT_ONLINE' }
   }
 }
+DAD.api.changePortrait2Cloud = async ({ _passtokenSource, User: { portrait } = {} } = {}) => {
+  if (_passtokenSource && _passtokenSource.isOnline) {
+    if (portrait) {
+      await DAD.update({ uuid: _passtokenSource.uuid }, { portrait: portrait })
+      return { _state: 'SUCCESS' }
+    } else {
+      return { _state: 'FILE_NOT_EXIST' }
+    }
+  } else {
+    return { _state: 'USER_NOT_ONLINE' }
+  }
+}
 
 DAD.api.uploadIdCard = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline) {

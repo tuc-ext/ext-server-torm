@@ -269,6 +269,20 @@ DAD.api.changeImage = async function (option) {
     return { _state: 'USER_NOT_ONLINE' }
   }
 }
+DAD.api.changeImage2Cloud = async function (option) {
+  if (option._passtokenSource && option._passtokenSource.isOnline
+    && option.Place && option.Place.uuid && option.Place.image) {
+    let place = await DAD.findOne({ uuid: option.Place.uuid })
+    if (place && place.uuidOwner === option._passtokenSource.uuid) {
+      await DAD.update({ uuid: option.Place.uuid }, { image: option.Place.image })
+      return Object.assign({ _state: 'SUCCESS' })
+    } else {
+      return { _state: 'NOT_ESTATE_OWNER' }
+    }
+  } else {
+    return { _state: 'FAIL' }
+  }
+}
 
 DAD.api.changeIntro = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline
