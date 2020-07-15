@@ -12,7 +12,8 @@ const to = require('typeorm')
 const Config = require('so.base/Config.js')
 
 /****************** 类和原型 *****************/
-const DAD = module.exports = class User extends Ling { // 构建类
+const DAD = (module.exports = class User extends Ling {
+  // 构建类
   static schema = {
     name: this.name,
     target: this,
@@ -53,8 +54,8 @@ const DAD = module.exports = class User extends Ling { // 构建类
       communityNumber: { type: 'int', default: 0 },
       communityNumberKyc: { type: 'int', default: 0 },
       communityRewardSum: { type: 'real', default: 0 },
-      json: { type: 'simple-json', default: '{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
-    }
+      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+    },
   }
 
   static async normalize(user = {}) {
@@ -64,7 +65,7 @@ const DAD = module.exports = class User extends Ling { // 构建类
     delete user.passwordServer
     return user
   }
-}
+})
 
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
@@ -129,7 +130,7 @@ DAD.api.updateKycL1 = async function (option) {
 }
 DAD.sysapi.passKycL1 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL1: 'PASSED' })
     result._state = 'SUCCESS'
   })
@@ -137,7 +138,7 @@ DAD.sysapi.passKycL1 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL1 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL1: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -154,7 +155,7 @@ DAD.api.updateKycL2 = async function (option) {
 }
 DAD.sysapi.passKycL2 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     let user = await DAD.findOne({ uuid: User.uuid })
     let inviter = await DAD.findOne({ aiid: ticCrypto.regcode2aiid(user.regcode) })
     let rate = wo.Trade.getExchangeRate()
@@ -166,7 +167,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
       txGroup: 'REWARD_TX',
       txType: 'REWARD_INVITE',
       amount: reward,
-      amountMining: reward,  // 奖金是通过注册行为凭空挖出的
+      amountMining: reward, // 奖金是通过注册行为凭空挖出的
       exchangeRate: rate,
       txTime: passTime,
       txTimeUnix: passTime.valueOf(),
@@ -174,12 +175,16 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
     txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
 
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL2: 'PASSED' })
-    await txman.update(DAD, { uuid: inviter.uuid }, {
-      balance: inviter.balance + reward,
-      communityNumberKyc: inviter.communityNumberKyc + 1,
-      communityRewardSum: inviter.communityRewardSum + reward,
-      rewardSum: inviter.rewardSum + reward
-    })
+    await txman.update(
+      DAD,
+      { uuid: inviter.uuid },
+      {
+        balance: inviter.balance + reward,
+        communityNumberKyc: inviter.communityNumberKyc + 1,
+        communityRewardSum: inviter.communityRewardSum + reward,
+        rewardSum: inviter.rewardSum + reward,
+      }
+    )
     await txman.save(txReward)
     result._state = 'SUCCESS'
   })
@@ -187,7 +192,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL2 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL2: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -205,7 +210,7 @@ DAD.api.updateKycL3 = async function (option) {
 }
 DAD.sysapi.passKycL3 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL3: 'PASSED' })
     result._state = 'SUCCESS'
   })
@@ -213,7 +218,7 @@ DAD.sysapi.passKycL3 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL3 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async txman => {
+  await to.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL3: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -228,8 +233,8 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
       uuid = user.uuid
       _state = 'OLD_USER'
     } else {
-      uuid = `${Uuid.v4()}`,
-        _state = 'NEW_USER'
+      uuid = `${Uuid.v4()}`
+      _state = 'NEW_USER'
     }
     mylog.info(`identify::::::: uuid = ${uuid}`)
     return {
@@ -238,8 +243,8 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
       _passtoken: Webtoken.createToken({
         phone,
         uuid,
-        identifyState: _state
-      })
+        identifyState: _state,
+      }),
     }
   }
   return { _state: 'INPUT_MALFORMED' }
@@ -258,15 +263,12 @@ DAD.api.sendPasscode = async function (option) {
   // send SMS
   let sendResult
   if (process.env.NODE_ENV === 'production') {
-    sendResult = await Messenger.sendSms(
-      option._passtokenSource.phone,
-      {
-        vendor: 'aliyun',
-        msgParam: { code: passcode },
-        templateCode: 'SMS_142465215',
-        signName: 'LOG'
-      }
-    )
+    sendResult = await Messenger.sendSms(option._passtokenSource.phone, {
+      vendor: 'aliyun',
+      msgParam: { code: passcode },
+      templateCode: 'SMS_142465215',
+      signName: 'LOG',
+    })
   } else {
     sendResult = { state: 'DONE' }
   }
@@ -280,18 +282,18 @@ DAD.api.sendPasscode = async function (option) {
       passcodeHash,
       passcodeSentAt,
       passcodeExpireAt,
-      _passtoken: Webtoken.createToken(Object.assign(
-        option._passtokenSource, {
-        passcodeHash,
-        passcodeState: _state,
-        passcodeSentAt,
-        passcodeExpireAt,
-      }
-      ))
+      _passtoken: Webtoken.createToken(
+        Object.assign(option._passtokenSource, {
+          passcodeHash,
+          passcodeState: _state,
+          passcodeSentAt,
+          passcodeExpireAt,
+        })
+      ),
     }
   } else {
     return {
-      _state: 'PASSCODE_UNSENT'
+      _state: 'PASSCODE_UNSENT',
     }
   }
 }
@@ -304,12 +306,11 @@ DAD.api.verifyPasscode = async function (option) {
     if (ticCrypto.hash(option.passcode + option._passtokenSource.uuid) === option._passtokenSource.passcodeHash) {
       return {
         _state: 'VERIFY_SUCCESS',
-        _passtoken: Webtoken.createToken(Object.assign(
-          option._passtokenSource,
-          {
-            verifyState: 'VERIFY_SUCCESS'
-          }
-        ))
+        _passtoken: Webtoken.createToken(
+          Object.assign(option._passtokenSource, {
+            verifyState: 'VERIFY_SUCCESS',
+          })
+        ),
       }
     } else {
       return { _state: 'VERIFY_FAILED' }
@@ -325,7 +326,7 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
   }
   if (/^[0-9a-zA-Z]+$/.test(regcode)) {
     let aiid = ticCrypto.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
-    if (aiid < 0 || !Number.isInteger(aiid) || aiid > await DAD.count()) {
+    if (aiid < 0 || !Number.isInteger(aiid) || aiid > (await DAD.count())) {
       return { _state: 'REGCODE_USER_NOTEXIST' }
     }
     // 允许 aiid>0 或 aiid===0 第一个用户登录时，需要一个系统默认的邀请码。
@@ -336,13 +337,12 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
     if (ticCrypto.hash(passcode + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
       return {
         _state: 'VERIFY_SUCCESS',
-        _passtoken: Webtoken.createToken(Object.assign(
-          _passtokenSource,
-          {
+        _passtoken: Webtoken.createToken(
+          Object.assign(_passtokenSource, {
             regcode: regcode,
-            verifyState: 'VERIFY_SUCCESS'
-          }
-        ))
+            verifyState: 'VERIFY_SUCCESS',
+          })
+        ),
       }
     } else {
       return { _state: 'VERIFY_FAILED' }
@@ -355,11 +355,15 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
 DAD.api.register = DAD.api1.register = async function (option) {
   mylog.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
   mylog.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
-  if (option._passtokenSource
-    && option._passtokenSource.identifyState === 'NEW_USER'
-    && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
-    && option.phone && option.phone === option._passtokenSource.phone
-    && option._passtokenSource.uuid && option.passwordClient) {
+  if (
+    option._passtokenSource &&
+    option._passtokenSource.identifyState === 'NEW_USER' &&
+    option._passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    option.phone &&
+    option.phone === option._passtokenSource.phone &&
+    option._passtokenSource.uuid &&
+    option.passwordClient
+  ) {
     let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
     let whenRegister = new Date()
     // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
@@ -379,12 +383,12 @@ DAD.api.register = DAD.api1.register = async function (option) {
     let coinAddress = {
       BTC: {
         path: pathBTC,
-        address: ticCrypto.secword2account(Config.secword, { coin: 'BTC', path: pathBTC }).address
+        address: ticCrypto.secword2account(Config.secword, { coin: 'BTC', path: pathBTC }).address,
       },
       ETH: {
         path: pathETH,
-        address: ticCrypto.secword2account(Config.secword, { coin: 'ETH', path: pathETH }).address
-      }
+        address: ticCrypto.secword2account(Config.secword, { coin: 'ETH', path: pathETH }).address,
+      },
     }
     let txReward = wo.Trade.create({
       uuidUser: option._passtokenSource.uuid,
@@ -392,7 +396,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
       txGroup: 'REWARD_TX',
       txType: 'REWARD_REGIST',
       amount: 10 * wo.Trade.getExchangeRate({}),
-      amountMining: 10 * wo.Trade.getExchangeRate({}),  // 奖金是通过注册行为凭空挖出的
+      amountMining: 10 * wo.Trade.getExchangeRate({}), // 奖金是通过注册行为凭空挖出的
       exchangeRate: wo.Trade.getExchangeRate({}),
       txTime: whenRegister,
       txTimeUnix: whenRegister.valueOf(),
@@ -409,10 +413,10 @@ DAD.api.register = DAD.api1.register = async function (option) {
       lang: option.lang,
       citizen: option.citizen,
       balance: 10 * wo.Trade.getExchangeRate({}),
-      rewardSum: 10 * wo.Trade.getExchangeRate({})
+      rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
     let aiidInviter = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
-    await to.getManager().transaction(async txman => {
+    await to.getManager().transaction(async (txman) => {
       await txman.save(txReward)
       await txman.save(user)
       if (aiidInviter > 0) {
@@ -428,9 +432,9 @@ DAD.api.register = DAD.api1.register = async function (option) {
           phone: option.phone,
           passwordClient: option.passwordClient,
           isOnline: 'ONLINE',
-          onlineSince: new Date,
-          onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        })
+          onlineSince: new Date(),
+          onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }),
       }
     } else {
       return { _state: 'REGISTER_FAILED' }
@@ -444,8 +448,7 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
     let passwordServer = ticCrypto.hash(_passtokenSource.passwordClient + _passtokenSource.uuid)
     let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
-      if (onlineUser.passwordServer === passwordServer
-        && onlineUser.phone === _passtokenSource.phone) {
+      if (onlineUser.passwordServer === passwordServer && onlineUser.phone === _passtokenSource.phone) {
         return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: await DAD.normalize(onlineUser) }
       } else {
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
@@ -458,13 +461,12 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
 }
 
 DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passtokenSource } = {}) {
-  if (passwordClient && phone
-    && _passtokenSource && _passtokenSource.uuid) {
+  if (passwordClient && phone && _passtokenSource && _passtokenSource.uuid) {
     let passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
     let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
-      if (onlineUser.passwordServer === passwordServer
-        && onlineUser.phone === phone) { // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
+      if (onlineUser.passwordServer === passwordServer && onlineUser.phone === phone) {
+        // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
         return {
           _state: 'LOGIN_SUCCESS',
           onlineUser: await DAD.normalize(onlineUser),
@@ -473,36 +475,41 @@ DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passt
             phone: phone,
             passwordClient: passwordClient,
             isOnline: 'ONLINE',
-            onlineSince: new Date,
-            onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          })
+            onlineSince: new Date(),
+            onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          }),
         }
       } else {
         return {
-          _state: 'LOGIN_FAILED_WRONG_PASSWORD'
+          _state: 'LOGIN_FAILED_WRONG_PASSWORD',
         }
       }
     } else {
       return {
-        _state: 'LOGIN_FAILED_USER_NOTEXIST'
+        _state: 'LOGIN_FAILED_USER_NOTEXIST',
       }
     }
   }
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.logout = async function ({ _passtokenSource }) { // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
+DAD.api.logout = async function ({ _passtokenSource }) {
+  // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
   wo.appSocket.removeUserSocket(_passtokenSource.uuid)
 
   return { _state: 'INPUT_MALFORMED' }
 }
 
 DAD.api.resetPassword = async function (option) {
-  if (option._passtokenSource
-    && option._passtokenSource.identifyState === 'OLD_USER'
-    && option._passtokenSource.verifyState === 'VERIFY_SUCCESS'
-    && option.phone && option.phone === option._passtokenSource.phone
-    && option._passtokenSource.uuid && option.passwordClient) {
+  if (
+    option._passtokenSource &&
+    option._passtokenSource.identifyState === 'OLD_USER' &&
+    option._passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    option.phone &&
+    option.phone === option._passtokenSource.phone &&
+    option._passtokenSource.uuid &&
+    option.passwordClient
+  ) {
     await DAD.update({ uuid: option._passtokenSource.uuid }, { passwordServer: ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid) })
     let updated = DAD.findOne({ uuid: option._passtokenSource.uuid })
     if (updated) {
@@ -513,12 +520,10 @@ DAD.api.resetPassword = async function (option) {
   } else {
     return { _state: 'INPUT_MALFORMED' }
   }
-
 }
 
 DAD.api.setLang = async function ({ User, _passtokenSource } = {}) {
-  if (User && User.lang
-    && _passtokenSource && _passtokenSource.isOnline) {
+  if (User && User.lang && _passtokenSource && _passtokenSource.isOnline) {
     await DAD.update({ uuid: _passtokenSource.uuid }, { lang: User.lang })
     let result = DAD.findOne({ uuid: _passtokenSource.uuid })
     return result ? true : false

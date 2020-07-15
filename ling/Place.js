@@ -9,7 +9,8 @@ const DAY_MILLIS = 24 * 60 * 60 * 1000
 const ESTATE_RESTRICT = 100
 
 /****************** 类和原型 *****************/
-const DAD = module.exports = class Place extends Ling { // 构建类
+const DAD = (module.exports = class Place extends Ling {
+  // 构建类
 
   static schema = {
     name: this.name,
@@ -36,25 +37,27 @@ const DAD = module.exports = class Place extends Ling { // 构建类
       sellTimeUnix: { type: 'int', nullable: true },
       sellTimeUnixDaily: { type: 'int', nullable: true },
       sellPrice: { type: 'real', nullable: true },
-      json: { type: 'simple-json', default: '{}', nullable: true } // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构  
-    }
+      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+    },
   }
-
-}
-
+})
 
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
 DAD.api.getPlaceList = async function ({ from, to, length, order = { sellTimeUnixDaily: 'ASC' }, take = 10 } = {}) {
   let fromWhere
-  if (length > 0)
-    fromWhere = TO.MoreThan
-  else
-    fromWhere = TO.MoreThanOrEqual
+  if (length > 0) fromWhere = TO.MoreThan
+  else fromWhere = TO.MoreThanOrEqual
   let result
   if (from < to) {
-    result = await DAD.createQueryBuilder().select().where({ sellTimeUnixDaily: fromWhere(from) }).andWhere({ sellTimeUnixDaily: TO.LessThan(to) }).orderBy(order).limit(take).getMany()
+    result = await DAD.createQueryBuilder()
+      .select()
+      .where({ sellTimeUnixDaily: fromWhere(from) })
+      .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
+      .orderBy(order)
+      .limit(take)
+      .getMany()
   } else {
     result = await DAD.find({ where: [{ sellTimeUnixDaily: fromWhere(from) }, { sellTimeUnixDaily: TO.LessThan(to) }], order, take })
   }
@@ -63,8 +66,7 @@ DAD.api.getPlaceList = async function ({ from, to, length, order = { sellTimeUni
 
 DAD.api.getMyPlaceList = async function ({ _passtokenSource, maxtime, order = { buyTimeUnix: 'DESC' }, take = 10 } = {}) {
   let where = { uuidOwner: _passtokenSource.uuid }
-  if (maxtime)
-    where.buyTimeUnix = TO.LessThan(maxtime)
+  if (maxtime) where.buyTimeUnix = TO.LessThan(maxtime)
   let result = await DAD.find({ where, order, take })
   return result
 }
@@ -115,19 +117,19 @@ DAD.api.payToCreatePlace = async function (option) {
       txType: 'ESTATE_CREATE',
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
-      json: { Place: { name: place.name } }
+      json: { Place: { name: place.name } },
     })
     txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({ exclude: ['aiid', 'uuid'] }))
     if (await txBuyer.save()) {
       return {
         _state: 'ESTATE_CREATE_SUCCESS',
         place,
-        trade: txBuyer
+        trade: txBuyer,
       }
     }
 
     return {
-      _state: 'ESTATE_CREATE_FAILED'
+      _state: 'ESTATE_CREATE_FAILED',
     }
   }
 }
@@ -147,7 +149,8 @@ DAD.api.payToBuyPlace = async function (option) {
   }
 
   let txTimeUnix = Date.now()
-  if (place.sellTimeUnix < txTimeUnix) { // 再次确认，尚未被买走
+  if (place.sellTimeUnix < txTimeUnix) {
+    // 再次确认，尚未被买走
     buyer.balance -= place.sellPrice
     buyer.estateFeeSum += place.buyPrice * (1 + place.profitRate) * place.feeRate
     buyer.estateTaxSum += place.buyPrice * (1 + place.profitRate) * place.taxRate
@@ -164,17 +167,18 @@ DAD.api.payToBuyPlace = async function (option) {
       // amountBuyer: -place.sellPrice,
       // amountSeller: place.buyPrice*(1+place.profitRate), // 注意不包含税费
       amountSystem: place.buyPrice * (1 + place.profitRate) * (place.feeRate + place.taxRate), // |amountBuyer| = amountSeller+amountSystem
-      // 交易产生的LOG币也是USDT挖矿得到的，交易本身不是挖矿所得  amountMining: place.uuidOwner ? place.sellPrice-place.buyPrice : 0, // place.buyPrice*place.profitRate + place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate), 
+      // 交易产生的LOG币也是USDT挖矿得到的，交易本身不是挖矿所得  amountMining: place.uuidOwner ? place.sellPrice-place.buyPrice : 0, // place.buyPrice*place.profitRate + place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate),
       txGroup: 'ESTATE_TX',
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
       txTime: new Date(txTimeUnix),
-      json: { Place: { name: place.name } }
+      json: { Place: { name: place.name } },
     })
     let json = txBuyer.getJson({ exclude: ['aiid', 'uuid'] })
     txBuyer.txHash = ticCrypto.hash(json)
 
-    if (place.uuidOwner) { // 如果有前任主人。（如果没有，就是系统初始化状态）
+    if (place.uuidOwner) {
+      // 如果有前任主人。（如果没有，就是系统初始化状态）
       let seller = await wo.User.findOne({ uuid: place.uuidOwner })
       seller.balance += place.buyPrice * (1 + place.profitRate)
       seller.estateProfitSum += place.buyPrice * place.profitRate
@@ -193,7 +197,7 @@ DAD.api.payToBuyPlace = async function (option) {
         txType: 'ESTATE_SELLOUT',
         txTimeUnix: txTimeUnix,
         txTime: new Date(txTimeUnix),
-        json: { Place: { name: place.name } }
+        json: { Place: { name: place.name } },
       })
       txSeller.txHash = ticCrypto.hash(txSeller.getJson({ exclude: ['aiid', 'uuid'] }))
       await txSeller.save()
@@ -209,10 +213,10 @@ DAD.api.payToBuyPlace = async function (option) {
     if (Config.env !== 'production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS / 24 // 开发测试环境下，每1小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
 
-    if (await place.save() && await buyer.save() && await txBuyer.save()) {
+    if ((await place.save()) && (await buyer.save()) && (await txBuyer.save())) {
       if (place.uuidPreowner) {
-        let image = await Story.findOne({ image: place.image }) ? null : place.image // 不要提交重复的照片（如果新主人没有更换图片）
-        let text = await Story.findOne({ intro: place.intro }) ? null : place.intro
+        let image = (await Story.findOne({ image: place.image })) ? null : place.image // 不要提交重复的照片（如果新主人没有更换图片）
+        let text = (await Story.findOne({ intro: place.intro })) ? null : place.intro
         Story.create({
           image: image,
           text: text,
@@ -222,22 +226,22 @@ DAD.api.payToBuyPlace = async function (option) {
           toTime: new Date(txTimeUnix),
           fromTimeUnix: fromTimeUnix,
           toTimeUnix: txTimeUnix,
-        })
-          .save()
+        }).save()
       }
       return {
         _state: 'ESTATE_BUYIN_SUCCESS',
         place,
-        trade: txBuyer
+        trade: txBuyer,
       }
     }
   }
   return {
-    _state: 'ESTATE_BUYIN_FAILED'
+    _state: 'ESTATE_BUYIN_FAILED',
   }
 }
 
-DAD.api.uploadImage = async function (option) { // Estate 尚未存入数据库，只是上传图片，不修改数据库
+DAD.api.uploadImage = async function (option) {
+  // Estate 尚未存入数据库，只是上传图片，不修改数据库
   if (option._passtokenSource && option._passtokenSource.isOnline) {
     let file = option._req.file
     if (file && /^image\//.test(file.mimetype)) {
@@ -251,8 +255,7 @@ DAD.api.uploadImage = async function (option) { // Estate 尚未存入数据库�
 }
 
 DAD.api.changeImage = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline
-    && option.Place && option.Place.uuid) {
+  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
     if (place && place.uuidOwner === option._passtokenSource.uuid) {
       let file = option._req.file
@@ -270,8 +273,7 @@ DAD.api.changeImage = async function (option) {
   }
 }
 DAD.api.changeImage2Cloud = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline
-    && option.Place && option.Place.uuid && option.Place.image) {
+  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.image) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
     if (place && place.uuidOwner === option._passtokenSource.uuid) {
       await DAD.update({ uuid: option.Place.uuid }, { image: option.Place.image })
@@ -285,8 +287,7 @@ DAD.api.changeImage2Cloud = async function (option) {
 }
 
 DAD.api.changeIntro = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline
-    && option.Place && option.Place.uuid && option.Place.intro) {
+  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.intro) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
     if (place && place.uuidOwner === option._passtokenSource.uuid) {
       await DAD.update({ uuid: option.Place.uuid }, { intro: option.Place.intro })
