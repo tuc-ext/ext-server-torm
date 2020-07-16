@@ -97,19 +97,13 @@ DAD.api.changePortrait2Cloud = async ({ _passtokenSource, User: { portrait } = {
   }
 }
 
-DAD.api.uploadIdCard = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline) {
-    let file = option._req.file
+DAD.api.uploadIdCard = async function ({ _passtokenSource, side, _req }) {
+  if (_passtokenSource && _passtokenSource.isOnline && ['Cover', 'Back', 'Selfie'].indexOf(side)) {
+    let file = _req.file
     if (file && /^image\//.test(file.mimetype)) {
-      let obj
-      if (option.side === 'Cover') {
-        obj = { idCardCover: option._req.file.filename }
-      } else if (option.side === 'Back') {
-        obj = { idCardBack: option._req.file.filename }
-      } else if (option.side === 'Selfie') {
-        obj = { idCardSelfie: option._req.file.filename }
-      }
-      await DAD.update({ uuid: option._passtokenSource.uuid }, obj)
+      let obj = {}
+      obj[`idCard${side}`] = _req.file.filename
+      await DAD.update({ uuid: _passtokenSource.uuid }, obj)
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
       return { _state: 'FILE_NOT_IMAGE' }
@@ -144,10 +138,10 @@ DAD.sysapi.rejectKycL1 = async function ({ User }) {
   })
   return result
 }
-DAD.api.updateKycL2 = async function (option) {
-  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
-  if (user && user.idCardCover && user.idCardBack) {
-    await DAD.update({ uuid: option._passtokenSource.uuid }, { kycStateL2: 'SUBMITTED' })
+DAD.api.updateKycL2 = async function ({ _passtokenSource, User }) {
+  //  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+  if (User.idCardCover && User.idCardBack) {
+    await DAD.update({ uuid: _passtokenSource.uuid }, Object.assign(User, { kycStateL2: 'SUBMITTED' }))
     return { _state: 'SUBMITTED' }
   } else {
     return { _state: 'INPUT_MALFORMED' }
@@ -199,10 +193,10 @@ DAD.sysapi.rejectKycL2 = async function ({ User }) {
   return result
 }
 
-DAD.api.updateKycL3 = async function (option) {
-  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
-  if (user && user.idCardSelfie) {
-    await DAD.update({ uuid: option._passtokenSource.uuid }, { kycStateL3: 'SUBMITTED' })
+DAD.api.updateKycL3 = async function ({ _passtokenSource, User }) {
+  //  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+  if (User.idCardSelfie) {
+    await DAD.update({ uuid: _passtokenSource.uuid }, { idCardSelfie: User.idCardSelfie, kycStateL3: 'SUBMITTED' })
     return { _state: 'SUBMITTED' }
   } else {
     return { _state: 'INPUT_MALFORMED' }
@@ -500,18 +494,18 @@ DAD.api.logout = async function ({ _passtokenSource }) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.resetPassword = async function (option) {
+DAD.api.resetPassword = async function ({ _passtokenSource, phone, passwordClient }) {
   if (
-    option._passtokenSource &&
-    option._passtokenSource.identifyState === 'OLD_USER' &&
-    option._passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
-    option.phone &&
-    option.phone === option._passtokenSource.phone &&
-    option._passtokenSource.uuid &&
-    option.passwordClient
+    _passtokenSource &&
+    _passtokenSource.identifyState === 'OLD_USER' &&
+    _passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    phone &&
+    phone === _passtokenSource.phone &&
+    _passtokenSource.uuid &&
+    passwordClient
   ) {
-    await DAD.update({ uuid: option._passtokenSource.uuid }, { passwordServer: ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid) })
-    let updated = DAD.findOne({ uuid: option._passtokenSource.uuid })
+    await DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticCrypto.hash(passwordClient + _passtokenSource.uuid) })
+    let updated = DAD.findOne({ uuid: _passtokenSource.uuid })
     if (updated) {
       return { _state: 'RESET_SUCCESS' }
     } else {
@@ -520,6 +514,25 @@ DAD.api.resetPassword = async function (option) {
   } else {
     return { _state: 'INPUT_MALFORMED' }
   }
+}
+
+DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewClient }) => {
+  let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
+  if (onlineUser.passwordServer === ticCrypto.hash(passwordClient + _passtokenSource.uuid)) {
+    DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticCrypto.hash(passwordNewClient + _passtokenSource.uuid) })
+    return {
+      _state: 'SUCCESS',
+      _passtoken: Webtoken.createToken({
+        uuid: _passtokenSource.uuid,
+        phone: onlineUser.phone,
+        passwordClient: passwordNewClient,
+        isOnline: 'ONLINE',
+        onlineSince: new Date(),
+        onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      }),
+    }
+  }
+  return { _state: 'PASSWORD_UNMATCH' }
 }
 
 DAD.api.setLang = async function ({ User, _passtokenSource } = {}) {
