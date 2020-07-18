@@ -247,7 +247,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
 DAD.api.sendPasscode = async function (option) {
   let passcode = ticCrypto.randomNumber({ length: 6 })
   mylog.info('passcode = ' + passcode)
-  let passcodeHash = ticCrypto.hash(passcode + option._passtokenSource.uuid)
+  let passcodeHash = ticCrypto.hash(passcode + option._passtokenSource.phone + option._passtokenSource.uuid)
   mylog.info('uuid = ' + option._passtokenSource.uuid)
   mylog.info('phone = ' + option._passtokenSource.phone)
   mylog.info('passcodeHash = ' + passcodeHash)
@@ -292,7 +292,7 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
   if (/^\d{6}$/.test(passcode)) {
-    if (ticCrypto.hash(passcode + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
+    if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
       return {
         _state: 'VERIFY_SUCCESS',
         _passtoken: Webtoken.createToken(
@@ -323,7 +323,7 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
     return { _state: 'REGCODE_MALFORMED' }
   }
   if (/^\d{6}$/.test(passcode)) {
-    if (ticCrypto.hash(passcode + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
+    if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
       return {
         _state: 'VERIFY_SUCCESS',
         _passtoken: Webtoken.createToken(
