@@ -245,13 +245,12 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
 }
 
 DAD.api.sendPasscode = async function (option) {
-  let _state
   let passcode = ticCrypto.randomNumber({ length: 6 })
   mylog.info('passcode = ' + passcode)
   let passcodeHash = ticCrypto.hash(passcode + option._passtokenSource.uuid)
   mylog.info('uuid = ' + option._passtokenSource.uuid)
-  mylog.info('passcodeHash = ' + passcodeHash)
   mylog.info('phone = ' + option._passtokenSource.phone)
+  mylog.info('passcodeHash = ' + passcodeHash)
   let passcodeSentAt = undefined
   let passcodeExpireAt = undefined
   // send SMS
@@ -268,40 +267,36 @@ DAD.api.sendPasscode = async function (option) {
   }
 
   if (sendResult.state === 'DONE') {
-    _state = 'PASSCODE_SENT'
     passcodeSentAt = new Date()
     passcodeExpireAt = new Date(Date.now() + 5 * 60 * 1000)
     return {
-      _state,
+      _state: 'PASSCODE_SENT',
       passcodeHash,
       passcodeSentAt,
       passcodeExpireAt,
       _passtoken: Webtoken.createToken(
         Object.assign(option._passtokenSource, {
           passcodeHash,
-          passcodeState: _state,
+          passcodeState: 'PASSCODE_SENT',
           passcodeSentAt,
           passcodeExpireAt,
         })
       ),
     }
-  } else {
-    return {
-      _state: 'PASSCODE_UNSENT',
-    }
   }
+  return { _state: 'PASSCODE_UNSENT' }
 }
 
-DAD.api.verifyPasscode = async function (option) {
-  if (option._passtokenSource && Date.now() > new Date(option._passtokenSource.passcodeExpireAt)) {
+DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
+  if (_passtokenSource && Date.now() > new Date(_passtokenSource.passcodeExpireAt)) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  if (/^\d{6}$/.test(option.passcode)) {
-    if (ticCrypto.hash(option.passcode + option._passtokenSource.uuid) === option._passtokenSource.passcodeHash) {
+  if (/^\d{6}$/.test(passcode)) {
+    if (ticCrypto.hash(passcode + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
       return {
         _state: 'VERIFY_SUCCESS',
         _passtoken: Webtoken.createToken(
-          Object.assign(option._passtokenSource, {
+          Object.assign(_passtokenSource, {
             verifyState: 'VERIFY_SUCCESS',
           })
         ),
@@ -401,7 +396,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
       phone: option.phone,
       passwordServer,
       regcode: option._passtokenSource.regcode.toLowerCase(),
-      nickname: nickname,
+      nickname: `----${option.phone.substr(-4)}`,
       coinAddress,
       whenRegister,
       lang: option.lang,
