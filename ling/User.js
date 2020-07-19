@@ -245,6 +245,15 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
 }
 
 DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
+  if (phone && Internation.validatePhone({ phone })) {
+    // 用户在更换新手机
+    if (phone === _passtokenSource.phone) {
+      return { _state: 'NEWPHONE_IS_OLD' }
+    } else if ((await DAD.count({ phone: phone })) >= 1) {
+      return { _state: 'NEWPHONE_EXISTED' }
+    }
+  }
+
   let passcode = ticCrypto.randomNumber({ length: 6 })
   let passcodePhone = Internation.validatePhone({ phone }) ? phone : _passtokenSource.phone
   let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
@@ -292,24 +301,26 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  if (/^\d{6}$/.test(passcode) && _passtokenSource.phone === _passtokenSource.passcodePhone) {
-    if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
-      let expire = Date.now() + 5 * 60 * 1000
-      return {
-        _state: 'VERIFY_SUCCESS',
-        verifyExpireAt: expire,
-        _passtoken: Webtoken.createToken(
-          Object.assign(_passtokenSource, {
-            verifyState: 'VERIFY_SUCCESS',
-            verifyExpireAt: expire,
-          })
-        ),
-      }
-    } else {
-      return { _state: 'VERIFY_FAILED' }
+  if (!/^\d{6}$/.test(passcode)) {
+    return { _state: 'PASSCODE_MALFORMED' }
+  }
+  if (
+    _passtokenSource.phone === _passtokenSource.passcodePhone &&
+    ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash
+  ) {
+    let expire = Date.now() + 5 * 60 * 1000
+    return {
+      _state: 'VERIFY_SUCCESS',
+      verifyExpireAt: expire,
+      _passtoken: Webtoken.createToken(
+        Object.assign(_passtokenSource, {
+          verifyState: 'VERIFY_SUCCESS',
+          verifyExpireAt: expire,
+        })
+      ),
     }
   } else {
-    return { _state: 'PASSCODE_MALFORMED' }
+    return { _state: 'VERIFY_FAILED' }
   }
 }
 
@@ -317,24 +328,30 @@ DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  if (/^\d{6}$/.test(passcode)) {
-    if (ticCrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
-      let expire = Date.now() + 5 * 60 * 1000
-      return {
-        _state: 'VERIFY_NEWPHONE_SUCCESS',
-        verifyExpireAt: expire,
-        _passtoken: Webtoken.createToken(
-          Object.assign(_passtokenSource, {
-            verifyState: 'VERIFY_NEWPHONE_SUCCESS',
-            verifyExpireAt: expire,
-          })
-        ),
-      }
-    } else {
-      return { _state: 'VERIFY_FAILED' }
-    }
-  } else {
+  if (!/^\d{6}$/.test(passcode)) {
     return { _state: 'PASSCODE_MALFORMED' }
+  }
+  if (ticCrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
+    return { _state: 'VERIFY_FAILED' }
+  }
+  if (_passtokenSource.phone === _passtokenSource.passcodePhone) {
+    return { _state: 'NEWPHONE_IS_OLD' }
+  }
+  if ((await DAD.count({ phone: _passtokenSource.passcodePhone })) >= 1) {
+    return { _state: 'NEWPHONE_EXISTED' }
+  }
+
+  let expire = Date.now() + 5 * 60 * 1000
+  await DAD.update({ uuid: _passtokenSource.uuid }, { phone: _passtokenSource.passcodePhone })
+  return {
+    _state: 'SUCCESS',
+    verifyExpireAt: expire,
+    phone: _passtokenSource.passcodePhone,
+    _passtoken: Webtoken.createToken(
+      Object.assign(_passtokenSource, {
+        phone: _passtokenSource.passcodePhone,
+      })
+    ),
   }
 }
 
