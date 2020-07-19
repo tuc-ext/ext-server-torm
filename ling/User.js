@@ -244,19 +244,18 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.sendPasscode = async function (option) {
+DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   let passcode = ticCrypto.randomNumber({ length: 6 })
+  let passcodePhone = Internation.validatePhone({ phone }) ? phone : _passtokenSource.phone
+  let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
   mylog.info('passcode = ' + passcode)
-  let passcodeHash = ticCrypto.hash(passcode + option._passtokenSource.phone + option._passtokenSource.uuid)
-  mylog.info('uuid = ' + option._passtokenSource.uuid)
-  mylog.info('phone = ' + option._passtokenSource.phone)
+  mylog.info('uuid = ' + _passtokenSource.uuid)
+  mylog.info('phone = ' + passcodePhone)
   mylog.info('passcodeHash = ' + passcodeHash)
-  let passcodeSentAt = undefined
-  let passcodeExpireAt = undefined
   // send SMS
   let sendResult
   if (process.env.NODE_ENV === 'production') {
-    sendResult = await Messenger.sendSms(option._passtokenSource.phone, {
+    sendResult = await Messenger.sendSms(passcodePhone, {
       vendor: 'aliyun',
       msgParam: { code: passcode },
       templateCode: 'SMS_142465215',
@@ -267,15 +266,17 @@ DAD.api.sendPasscode = async function (option) {
   }
 
   if (sendResult.state === 'DONE') {
-    passcodeSentAt = new Date()
-    passcodeExpireAt = new Date(Date.now() + 5 * 60 * 1000)
+    let passcodeSentAt = Date.now()
+    let passcodeExpireAt = Date.now() + 5 * 60 * 1000
     return {
       _state: 'PASSCODE_SENT',
       passcodeHash,
+      passcodePhone,
       passcodeSentAt,
       passcodeExpireAt,
       _passtoken: Webtoken.createToken(
-        Object.assign(option._passtokenSource, {
+        Object.assign(_passtokenSource, {
+          passcodePhone,
           passcodeHash,
           passcodeState: 'PASSCODE_SENT',
           passcodeSentAt,
@@ -288,16 +289,44 @@ DAD.api.sendPasscode = async function (option) {
 }
 
 DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
-  if (_passtokenSource && Date.now() > new Date(_passtokenSource.passcodeExpireAt)) {
+  if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  if (/^\d{6}$/.test(passcode)) {
+  if (/^\d{6}$/.test(passcode) && _passtokenSource.phone === _passtokenSource.passcodePhone) {
     if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
+      let expire = Date.now() + 5 * 60 * 1000
       return {
         _state: 'VERIFY_SUCCESS',
+        verifyExpireAt: expire,
         _passtoken: Webtoken.createToken(
           Object.assign(_passtokenSource, {
             verifyState: 'VERIFY_SUCCESS',
+            verifyExpireAt: expire,
+          })
+        ),
+      }
+    } else {
+      return { _state: 'VERIFY_FAILED' }
+    }
+  } else {
+    return { _state: 'PASSCODE_MALFORMED' }
+  }
+}
+
+DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
+  if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
+    return { _state: 'PASSCODE_EXPIRED' }
+  }
+  if (/^\d{6}$/.test(passcode)) {
+    if (ticCrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
+      let expire = Date.now() + 5 * 60 * 1000
+      return {
+        _state: 'VERIFY_NEWPHONE_SUCCESS',
+        verifyExpireAt: expire,
+        _passtoken: Webtoken.createToken(
+          Object.assign(_passtokenSource, {
+            verifyState: 'VERIFY_NEWPHONE_SUCCESS',
+            verifyExpireAt: expire,
           })
         ),
       }
@@ -310,7 +339,7 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
 }
 
 DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode } = {}) {
-  if (_passtokenSource && Date.now() > new Date(_passtokenSource.passcodeExpireAt)) {
+  if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
   if (/^[0-9a-zA-Z]+$/.test(regcode)) {
@@ -322,14 +351,17 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
   } else {
     return { _state: 'REGCODE_MALFORMED' }
   }
-  if (/^\d{6}$/.test(passcode)) {
+  if (/^\d{6}$/.test(passcode) && _passtokenSource.phone === _passtokenSource.passcodePhone) {
     if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
+      let expire = Date.now() + 5 * 60 * 1000
       return {
         _state: 'VERIFY_SUCCESS',
+        verifyExpireAt: expire,
         _passtoken: Webtoken.createToken(
           Object.assign(_passtokenSource, {
             regcode: regcode,
             verifyState: 'VERIFY_SUCCESS',
+            verifyExpireAt: expire,
           })
         ),
       }
@@ -348,6 +380,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
     option._passtokenSource &&
     option._passtokenSource.identifyState === 'NEW_USER' &&
     option._passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    option._passtokenSource.verifyExpireAt > Date.now() &&
     option.phone &&
     option.phone === option._passtokenSource.phone &&
     option._passtokenSource.uuid &&
@@ -422,7 +455,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
           passwordClient: option.passwordClient,
           isOnline: 'ONLINE',
           onlineSince: new Date(),
-          onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
         }),
       }
     } else {
@@ -464,8 +497,8 @@ DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passt
             phone: phone,
             passwordClient: passwordClient,
             isOnline: 'ONLINE',
-            onlineSince: new Date(),
-            onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            onlineSince: Date.now(),
+            onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
           }),
         }
       } else {
@@ -494,6 +527,7 @@ DAD.api.resetPassword = async function ({ _passtokenSource, phone, passwordClien
     _passtokenSource &&
     _passtokenSource.identifyState === 'OLD_USER' &&
     _passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    _passtokenSource.verifyExpireAt > Date.now() &&
     phone &&
     phone === _passtokenSource.phone &&
     _passtokenSource.uuid &&
@@ -522,8 +556,8 @@ DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewC
         phone: onlineUser.phone,
         passwordClient: passwordNewClient,
         isOnline: 'ONLINE',
-        onlineSince: new Date(),
-        onlineExpireAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        onlineSince: Date.now(),
+        onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       }),
     }
   }
