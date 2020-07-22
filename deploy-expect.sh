@@ -1,19 +1,17 @@
 #!/usr/bin/expect
 
-## Usage: expect this.sh [hostname] [password]
+## Usage: expect this.sh
 
 set timeout 30
-spawn ssh adot@[lindex $argv 0]
+spawn ssh adot@server.log.yuanjin.net
 expect {
   "(yes/no)?"
   {send "yes\n";exp_continue}
   "password:"
-  {send "[lindex $argv 1]\n"}
+  {send "yuan&jin52O\n"}
   ":~]"
   {send "su\n";exp_continue}
   "Password:"
-#  {send "[lindex $argv 1]\n"}
-#  "密码："
-  {send "[lindex $argv 1]\ncd /faronear/tac/log.server.oo && git pull && npx pm2 restart all && npx pm2 log\n"}
+  {send "yuan&jin52O\ncd /faronear/tac/log.server.oo && git pull && npx pm2 restart all && npx pm2 log\n"}
 }
 interact

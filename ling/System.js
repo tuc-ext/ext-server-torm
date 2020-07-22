@@ -50,9 +50,13 @@ DAD.api.getConfiguration = async function () {
       coin: coin,
     })
   }
+  delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
+  let configDynamic = require('../ConfigDynamic.js')
+
   let result = {
     depositCoinSet: Config.depositCoinSet,
     withdrawCoinSet: Config.withdrawCoinSet,
+    configDynamic: configDynamic,
   }
   result.estateCount = await Place.count()
   result.estateBuySum = await Place.sum({ field: 'buyPrice' })
