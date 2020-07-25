@@ -150,37 +150,43 @@ DAD.api.updateKycL2 = async function ({ _passtokenSource, User }) {
 DAD.sysapi.passKycL2 = async function ({ User }) {
   let result = { _state: 'ERROR' }
   await to.getManager().transaction(async (txman) => {
-    let user = await DAD.findOne({ uuid: User.uuid })
-    let inviter = await DAD.findOne({ aiid: ticCrypto.regcode2aiid(user.regcode) })
-    let rate = wo.Trade.getExchangeRate()
-    let reward = rate * 5
-    let passTime = new Date()
-    let txReward = wo.Trade.create({
-      uuidUser: inviter.uuid,
-      uuidOther: 'SYSTEM',
-      txGroup: 'REWARD_TX',
-      txType: 'REWARD_INVITE',
-      amount: reward,
-      amountMining: reward, // 奖金是通过注册行为凭空挖出的
-      exchangeRate: rate,
-      txTime: passTime,
-      txTimeUnix: passTime.valueOf(),
-    })
-    txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
-
+    // 先更新本人的状态
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL2: 'PASSED' })
-    await txman.update(
-      DAD,
-      { uuid: inviter.uuid },
-      {
-        balance: inviter.balance + reward,
-        communityNumberKyc: inviter.communityNumberKyc + 1,
-        communityRewardSum: inviter.communityRewardSum + reward,
-        rewardSum: inviter.rewardSum + reward,
-      }
-    )
-    await txman.save(txReward)
     result._state = 'SUCCESS'
+
+    // 再检查推荐人
+    let user = await DAD.findOne({ uuid: User.uuid })
+    let inviterAiid = ticCrypto.regcode2aiid(user.regcode)
+    if (inviterAiid > 0) {
+      let inviter = await DAD.findOne({ aiid: ticCrypto.regcode2aiid(user.regcode) })
+      let rate = wo.Trade.getExchangeRate()
+      let reward = rate * 5
+      let passTime = new Date()
+      let txReward = wo.Trade.create({
+        uuidUser: inviter.uuid,
+        uuidOther: 'SYSTEM',
+        txGroup: 'REWARD_TX',
+        txType: 'REWARD_INVITE',
+        amount: reward,
+        amountMining: reward, // 奖金是通过注册行为凭空挖出的
+        exchangeRate: rate,
+        txTime: passTime,
+        txTimeUnix: passTime.valueOf(),
+      })
+      txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
+      await txman.save(txReward)
+
+      await txman.update(
+        DAD,
+        { uuid: inviter.uuid },
+        {
+          balance: inviter.balance + reward,
+          communityNumberKyc: inviter.communityNumberKyc + 1,
+          communityRewardSum: inviter.communityRewardSum + reward,
+          rewardSum: inviter.rewardSum + reward,
+        }
+      )
+    }
   })
   return result
 }

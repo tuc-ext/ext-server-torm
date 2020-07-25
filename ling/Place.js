@@ -138,8 +138,6 @@ DAD.api.payToBuyPlace = async function (option) {
   let place = await DAD.findOne({ uuid: option.Place.uuid })
   let buyer = await wo.User.findOne({ uuid: option._passtokenSource.uuid })
 
-  let fromTimeUnix = place.buyTimeUnix
-
   if (buyer.estateHoldingNumber >= ESTATE_RESTRICT) {
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
@@ -177,9 +175,10 @@ DAD.api.payToBuyPlace = async function (option) {
     let json = txBuyer.getJson({ exclude: ['aiid', 'uuid'] })
     txBuyer.txHash = ticCrypto.hash(json)
 
+    let seller
     if (place.uuidOwner) {
       // 如果有前任主人。（如果没有，就是系统初始化状态）
-      let seller = await wo.User.findOne({ uuid: place.uuidOwner })
+      seller = await wo.User.findOne({ uuid: place.uuidOwner })
       seller.balance += place.buyPrice * (1 + place.profitRate)
       seller.estateProfitSum += place.buyPrice * place.profitRate
       seller.estateHoldingNumber -= 1
@@ -203,6 +202,8 @@ DAD.api.payToBuyPlace = async function (option) {
       await txSeller.save()
     }
 
+    let originalBuyTimeUnix = place.buyTimeUnix
+
     place.uuidPreowner = place.uuidOwner
     place.uuidOwner = buyer.uuid
     place.buyPrice = place.sellPrice
@@ -213,26 +214,14 @@ DAD.api.payToBuyPlace = async function (option) {
     if (Config.env !== 'production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS / 24 // 开发测试环境下，每1小时到期
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
 
-    if ((await place.save()) && (await buyer.save()) && (await txBuyer.save())) {
-      if (place.uuidPreowner) {
-        let image = (await Story.findOne({ image: place.image })) ? null : place.image // 不要提交重复的照片（如果新主人没有更换图片）
-        let text = (await Story.findOne({ intro: place.intro })) ? null : place.intro
-        Story.create({
-          image: image,
-          text: text,
-          owner: place.uuidPreowner,
-          place: place.uuid,
-          fromTime: new Date(fromTimeUnix),
-          toTime: new Date(txTimeUnix),
-          fromTimeUnix: fromTimeUnix,
-          toTimeUnix: txTimeUnix,
-        }).save()
-      }
-      return {
-        _state: 'ESTATE_BUYIN_SUCCESS',
-        place,
-        trade: txBuyer,
-      }
+    await place.save()
+    await buyer.save()
+    await txBuyer.save()
+
+    return {
+      _state: 'ESTATE_BUYIN_SUCCESS',
+      place,
+      trade: txBuyer,
     }
   }
   return {
