@@ -24,10 +24,21 @@ DAD.api.getStoryList = async ({ placeUuid } = {}) => {
   return { _state: 'SUCCESS', storyList: list, count }
 }
 
-DAD.api.publish = async ({ _passtokenSource, author, placeUuid, storyContent }) => {
+DAD.api.publish = async ({ _passtokenSource, story: { author, placeUuid, storyContent, uuid } = {} }) => {
   if (_passtokenSource && author && _passtokenSource.uuid === author.uuid) {
-    await DAD.save({ placeUuid, author, storyContent, editTimeUnix: Date.now() })
-    return { _state: 'SUCCESS' }
+    if (uuid) {
+      let story = await DAD.findOne({ uuid: uuid, placeUuid: placeUuid })
+      if (story && story.author && story.author.uuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
+        await DAD.update({ uuid: uuid }, { placeUuid, author, storyContent, editTimeUnix: Date.now() })
+        return { _state: 'SUCCESS', story: { uuid: uuid } }
+      } else {
+        return { _state: 'UNMATCHED_STORY' }
+      }
+    } else {
+      let createTimeUnix = Date.now()
+      let story = await DAD.save({ placeUuid, author, storyContent, createTimeUnix, editTimeUnix: createTimeUnix })
+      return { _state: 'SUCCESS', story: { uuid: story.uuid } }
+    }
   }
   return { _state: 'UNAUTHORIZED_AUTHOR' }
 }
