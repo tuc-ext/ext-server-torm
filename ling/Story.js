@@ -25,7 +25,7 @@ DAD.api.getStoryList = async ({ placeUuid } = {}) => {
 }
 
 DAD.api.publish = async ({ _passtokenSource, story: { author, placeUuid, storyContent, uuid } = {} }) => {
-  if (_passtokenSource && author && _passtokenSource.uuid === author.uuid) {
+  if (_passtokenSource && author && placeUuid && _passtokenSource.uuid === author.uuid) {
     let nowTimeUnix = Date.now()
     if (uuid) {
       let story = await DAD.findOne({ uuid: uuid })
