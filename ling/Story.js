@@ -24,6 +24,17 @@ DAD.api.getStoryList = async ({ placeUuid } = {}) => {
   return { _state: 'SUCCESS', storyList: list, count }
 }
 
+DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid } = {} }) => {
+  if (uuid) {
+    let story = await DAD.findOne({ uuid: uuid })
+    if (story && story.author && story.author.uuid === _passtokenSource.uuid) {
+      await DAD.delete({ uuid: uuid })
+      return { _state: 'SUCCESS', story: { uuid: uuid } }
+    }
+  }
+  return { _state: 'FAIL' }
+}
+
 DAD.api.publish = async ({ _passtokenSource, story: { author, placeUuid, storyContent, uuid } = {} }) => {
   if (_passtokenSource && author && placeUuid && _passtokenSource.uuid === author.uuid) {
     let nowTimeUnix = Date.now()
