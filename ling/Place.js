@@ -45,23 +45,33 @@ const DAD = (module.exports = class Place extends Ling {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.getPlaceList = async function ({ from, to, length, order = { sellTimeUnixDaily: 'ASC' }, take = 10 } = {}) {
-  let fromWhere
-  if (length > 0) fromWhere = TO.MoreThan
-  else fromWhere = TO.MoreThanOrEqual
-  let result
+DAD.api.getPlaceList = async function ({ from, to, skip, order = { sellPrice: 'ASC' }, take = 10 } = {}) {
   if (from < to) {
-    result = await DAD.createQueryBuilder()
+    let placeList = await DAD.createQueryBuilder()
       .select()
-      .where({ sellTimeUnixDaily: fromWhere(from) })
+      .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
       .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
       .orderBy(order)
-      .limit(take)
+      .take(take)
+      .skip(skip)
       .getMany()
+    let { count } = await DAD.createQueryBuilder()
+      .select('SUM(uuid)', 'count')
+      .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
+      .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
+      .getRawOne()
+    return { _state: 'SUCCESS', placeList, count }
   } else {
-    result = await DAD.find({ where: [{ sellTimeUnixDaily: fromWhere(from) }, { sellTimeUnixDaily: TO.LessThan(to) }], order, take })
+    // 跨 24:00 时，from > to
+    let [placeList, count] = await DAD.findAndCount({
+      where: [{ sellTimeUnixDaily: TO.MoreThanOrEqual(from) }, { sellTimeUnixDaily: TO.LessThan(to) }],
+      skip,
+      order,
+      take,
+    })
+    return { _state: 'SUCCESS', placeList, count }
   }
-  return result
+  return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
 DAD.api.getMyPlaceList = async function ({ _passtokenSource, maxtime, order = { buyTimeUnix: 'DESC' }, take = 10 } = {}) {
