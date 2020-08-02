@@ -74,11 +74,10 @@ DAD.api.getPlaceList = async function ({ from, to, skip, order = { sellPrice: 'A
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
-DAD.api.getMyPlaceList = async function ({ _passtokenSource, maxtime, order = { buyTimeUnix: 'DESC' }, take = 10 } = {}) {
+DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip, take = 10 } = {}) {
   let where = { uuidOwner: _passtokenSource.uuid }
-  if (maxtime) where.buyTimeUnix = TO.LessThan(maxtime)
-  let result = await DAD.find({ where, order, take })
-  return result
+  let [estateList, count] = await DAD.findAndCount({ where, order, skip, take })
+  return { _state: 'SUCCESS', estateList, count }
 }
 
 DAD.api.payToCreatePlace = async function (option) {
