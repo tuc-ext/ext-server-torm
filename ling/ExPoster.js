@@ -106,10 +106,10 @@ DAD.api.getBuyPosterList = async ({ order = { price: 'DESC' }, take = 10, skip =
   return { _state: 'FAILED' }
 }
 
-DAD.api.getMyPosterList = async ({ _passtokenSource, take = 10, order = { startTime: 'DESC' } } = {}) => {
+DAD.api.getMyPosterList = async ({ _passtokenSource, skip = 0, take = 10, order = { startTime: 'DESC' } } = {}) => {
   if (_passtokenSource && _passtokenSource.uuid) {
-    let myPosterList = await DAD.find({ where: { ownerUuid: _passtokenSource.uuid }, take, order })
-    return { _state: 'SUCCESS', myPosterList }
+    let [myPosterList, count] = await DAD.findAndCount({ where: { ownerUuid: _passtokenSource.uuid }, skip, take, order })
+    return { _state: 'SUCCESS', myPosterList, count }
   } else {
     return { _state: 'INVALID_INPUT' }
   }
