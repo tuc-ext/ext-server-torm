@@ -100,10 +100,10 @@ DAD.api.createOrder = async ({ ExOrder, _passtokenSource } = {}) => {
   }
 }
 
-DAD.api.getMyOrderList = async ({ _passtokenSource, order = { startTime: 'DESC' }, take = 10 } = {}) => {
+DAD.api.getMyOrderList = async ({ _passtokenSource, order = { startTime: 'DESC' }, skip = 0, take = 10 } = {}) => {
   if (_passtokenSource && _passtokenSource.uuid) {
-    let myOrderList = await DAD.find({ where: { ownerUuid: _passtokenSource.uuid }, order, take })
-    return { _state: 'SUCCESS', myOrderList }
+    let [myOrderList, count] = await DAD.findAndCount({ where: { ownerUuid: _passtokenSource.uuid }, skip, order, take })
+    return { _state: 'SUCCESS', myOrderList, count }
   } else {
     return { _state: 'INVALID_INPUT' }
   }
