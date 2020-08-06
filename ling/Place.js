@@ -2,7 +2,6 @@
 const Config = require('so.base/Config.js')
 const ticCrypto = require('tic.crypto')
 const Ling = require('so.ling/Ling.to.js')
-const Story = require('./Story.js')
 const TO = require('typeorm')
 
 const DAY_MILLIS = 24 * 60 * 60 * 1000

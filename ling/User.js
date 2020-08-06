@@ -5,8 +5,7 @@ const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
-// const Trade = require('./Trade.js') // 因为 User也require了 Trade，这会造成循环require
-const Place = require('./Place.js')
+// const Trade = require('./Trade.js') // 这会造成循环require
 const to = require('typeorm')
 
 const Config = require('so.base/Config.js')
