@@ -5,6 +5,7 @@ const Ling = require('so.ling/Ling.to.js')
 const TO = require('typeorm')
 
 const DAY_MILLIS = 24 * 60 * 60 * 1000
+const FROZEN_MILLIS = 60 * 60 * 1000 // 购入后，冻结多久
 const ESTATE_RESTRICT = 100
 
 /****************** 类和原型 *****************/
@@ -44,32 +45,34 @@ const DAD = (module.exports = class Place extends Ling {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.getPlaceList = async function ({ from, to, skip, order = { sellPrice: 'ASC' }, take = 10 } = {}) {
-  if (from < to) {
-    let placeList = await DAD.createQueryBuilder()
-      .select()
-      .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
-      .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
-      .orderBy(order)
-      .take(take)
-      .skip(skip)
-      .getMany()
-    let { count } = await DAD.createQueryBuilder()
-      .select('SUM(uuid)', 'count')
-      .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
-      .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
-      .getRawOne()
-    return { _state: 'SUCCESS', placeList, count }
-  } else {
-    // 跨 24:00 时，from > to
-    let [placeList, count] = await DAD.findAndCount({
-      where: [{ sellTimeUnixDaily: TO.MoreThanOrEqual(from) }, { sellTimeUnixDaily: TO.LessThan(to) }],
-      skip,
-      order,
-      take,
-    })
-    return { _state: 'SUCCESS', placeList, count }
-  }
+DAD.api.getPlaceList = async function ({ skip = 0, order = { sellPrice: 'ASC' }, take = 10 } = {}) {
+  // if (from < to) {
+  //   let placeList = await DAD.createQueryBuilder()
+  //     .select()
+  //     .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
+  //     .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
+  //     .orderBy(order)
+  //     .take(take)
+  //     .skip(skip)
+  //     .getMany()
+  //   let { count } = await DAD.createQueryBuilder()
+  //     .select('SUM(uuid)', 'count')
+  //     .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
+  //     .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
+  //     .getRawOne()
+  //   return { _state: 'SUCCESS', placeList, count }
+  // } else {
+  //   // 跨 24:00 时，from > to
+  //   let [placeList, count] = await DAD.findAndCount({
+  //     where: [{ sellTimeUnixDaily: TO.MoreThanOrEqual(from) }, { sellTimeUnixDaily: TO.LessThan(to) }],
+  //     skip,
+  //     order,
+  //     take,
+  //   })
+  //   return { _state: 'SUCCESS', placeList, count }
+  // }
+  let [placeList, count] = await DAD.findAndCount({ skip, take, order })
+  return { _state: 'SUCCESS', placeList, count }
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
@@ -103,8 +106,7 @@ DAD.api.payToCreatePlace = async function (option) {
     place.startTime = new Date(txTimeUnix)
     place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
-    place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
-    if (Config.env !== 'production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS / 6 // 开发测试环境下，每4小时到期
+    place.sellTimeUnix = place.buyTimeUnix + FROZEN_MILLIS
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
 
     creator.balance -= place.startPrice
@@ -218,8 +220,7 @@ DAD.api.payToBuyPlace = async function (option) {
     place.sellPrice = place.buyPrice * (1 + place.profitRate) * (1 + place.feeRate + place.taxRate)
     place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
-    place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS
-    if (Config.env !== 'production') place.sellTimeUnix = place.buyTimeUnix + DAY_MILLIS / 24 // 开发测试环境下，每1小时到期
+    place.sellTimeUnix = place.buyTimeUnix + FROZEN_MILLIS
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
 
     await place.save()
