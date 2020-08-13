@@ -25,6 +25,7 @@ const DAD = (module.exports = class Place extends Ling {
       name: { type: 'simple-json', nullable: true },
       intro: { type: String, nullable: true },
       image: { type: String, nullable: true },
+      video: { type: String, nullable: true },
       amount: { type: 'int', default: 1 },
       profitRate: { type: 'real', default: 0.05, comment: '卖家盈利，是成本价的一个比例' },
       feeRate: { type: 'real', default: 0.005, comment: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例' },
