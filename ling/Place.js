@@ -45,7 +45,7 @@ const DAD = (module.exports = class Place extends Ling {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.getPlaceList = async function ({ skip = 0, order = { sellPrice: 'ASC' }, take = 10 } = {}) {
+DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }, take = 10 } = {}) {
   // if (from < to) {
   //   let placeList = await DAD.createQueryBuilder()
   //     .select()
