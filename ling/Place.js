@@ -47,33 +47,17 @@ const DAD = (module.exports = class Place extends Ling {
 DAD.api = DAD.api1 = {}
 
 DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }, take = 10 } = {}) {
-  // if (from < to) {
-  //   let placeList = await DAD.createQueryBuilder()
-  //     .select()
-  //     .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
-  //     .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
-  //     .orderBy(order)
-  //     .take(take)
-  //     .skip(skip)
-  //     .getMany()
-  //   let { count } = await DAD.createQueryBuilder()
-  //     .select('SUM(uuid)', 'count')
-  //     .where({ sellTimeUnixDaily: TO.MoreThanOrEqual(from) })
-  //     .andWhere({ sellTimeUnixDaily: TO.LessThan(to) })
-  //     .getRawOne()
-  //   return { _state: 'SUCCESS', placeList, count }
-  // } else {
-  //   // 跨 24:00 时，from > to
-  //   let [placeList, count] = await DAD.findAndCount({
-  //     where: [{ sellTimeUnixDaily: TO.MoreThanOrEqual(from) }, { sellTimeUnixDaily: TO.LessThan(to) }],
-  //     skip,
-  //     order,
-  //     take,
-  //   })
-  //   return { _state: 'SUCCESS', placeList, count }
-  // }
-  let [placeList, count] = await DAD.findAndCount({ skip, take, order })
-  return { _state: 'SUCCESS', placeList, count }
+  // let [placeList, count] = await DAD.findAndCount({ skip, take, order })
+
+  let placeList = await DAD.createQueryBuilder('place')
+    .select(['place.*', 'owner.portrait', 'owner.nickname'])
+    .leftJoinAndSelect(wo.User, 'owner', 'place.uuidOwner=owner.uuid')
+    .offset(skip)
+    .limit(take)
+    .orderBy(order)
+    .getRawMany()
+  let count = await DAD.count()
+  if (placeList) return { _state: 'SUCCESS', placeList, count }
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
