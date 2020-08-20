@@ -29,7 +29,7 @@ DAD.api.getStoryList = async ({ placeUuid, skip = 0, take = 10, order = { aiid: 
     .limit(take)
     .orderBy(order)
     .getRawMany()
-  storyList.forEach((story) => {
+  storyList.forEach((story, index) => {
     story.storyContent = JSON.parse(story.storyContent)
   })
   let count = await DAD.count({ placeUuid })

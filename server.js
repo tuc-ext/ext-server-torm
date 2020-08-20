@@ -50,7 +50,6 @@ async function initSingle() {
         new to.EntitySchema(wo.Place.schema),
         new to.EntitySchema(wo.ExPoster.schema),
         new to.EntitySchema(wo.ExOrder.schema),
-        new to.EntitySchema(wo.System.schema),
       ],
       synchronize: true, //Config.env!=='production'?true:false,
     })

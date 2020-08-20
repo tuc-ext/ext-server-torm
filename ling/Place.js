@@ -19,13 +19,16 @@ const DAD = (module.exports = class Place extends Ling {
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
       pcode: { type: String, nullable: true, unique: true, comment: '人工定义的地区编号，用于防止重复' },
-      uuidOwner: { type: String, nullable: true },
-      uuidPreowner: { type: String, nullable: true, comment: '交易对手的uuid' },
-      uuidCreator: { type: String, nullable: true },
-      name: { type: 'simple-json', nullable: true },
+      ownerUuid: { type: String, nullable: true },
+      preownerUuid: { type: String, nullable: true, comment: '交易对手的uuid' },
+      creatorUuid: { type: String, nullable: true },
+      name: { type: String, nullable: true },
       intro: { type: String, nullable: true },
       image: { type: String, nullable: true },
       video: { type: String, nullable: true },
+      address: { type: 'simple-json', default: '{}', nullable: true },
+      geoposition: { type: 'simple-json', default: '{}', nullable: true },
+      tagList: { type: 'simple-json', default: '[]', nullable: true },
       amount: { type: 'int', default: 1 },
       profitRate: { type: 'real', default: 0.05, comment: '卖家盈利，是成本价的一个比例' },
       feeRate: { type: 'real', default: 0.005, comment: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例' },
@@ -51,18 +54,26 @@ DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }
 
   let placeList = await DAD.createQueryBuilder('place')
     .select(['place.*', 'owner.portrait', 'owner.nickname'])
-    .leftJoinAndSelect(wo.User, 'owner', 'place.uuidOwner=owner.uuid')
+    .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid=owner.uuid')
     .offset(skip)
     .limit(take)
     .orderBy(order)
     .getRawMany()
   let count = await DAD.count()
-  if (placeList) return { _state: 'SUCCESS', placeList, count }
+  if (Array.isArray(placeList)) {
+    placeList.forEach((place, index) => {
+      place.json = JSON.parse(place.json)
+      place.geoposition = JSON.parse(place.geoposition)
+      place.address = JSON.parse(place.address)
+      place.tagList = JSON.parse(place.tagList)
+    })
+    return { _state: 'SUCCESS', placeList, count }
+  }
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
 DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip, take = 10 } = {}) {
-  let where = { uuidOwner: _passtokenSource.uuid }
+  let where = { ownerUuid: _passtokenSource.uuid }
   let [estateList, count] = await DAD.findAndCount({ where, order, skip, take })
   return { _state: 'SUCCESS', estateList, count }
 }
@@ -81,8 +92,8 @@ DAD.api.payToCreatePlace = async function (option) {
   let txTimeUnix = Date.now()
   if (option.Place.name && option.Place.profitRate) {
     let place = DAD.create(option.Place)
-    place.uuidCreator = option._passtokenSource.uuid
-    place.uuidOwner = option._passtokenSource.uuid
+    place.creatorUuid = option._passtokenSource.uuid
+    place.ownerUuid = option._passtokenSource.uuid
     place.feeRate = Config.FEE_RATE
     place.taxRate = Config.TAX_RATE
     place.startPrice = Number(place.startPrice)
@@ -155,12 +166,12 @@ DAD.api.payToBuyPlace = async function (option) {
     let txBuyer = wo.Trade.create({
       uuidPlace: place.uuid,
       uuidUser: buyer.uuid,
-      uuidOther: place.uuidOwner || 'SYSTEM', // 前任主人就是这次交易的对家
+      uuidOther: place.ownerUuid || 'SYSTEM', // 前任主人就是这次交易的对家
       amount: -place.sellPrice, // 作为买家，是负数
       // amountBuyer: -place.sellPrice,
       // amountSeller: place.buyPrice*(1+place.profitRate), // 注意不包含税费
       amountSystem: place.buyPrice * (1 + place.profitRate) * (place.feeRate + place.taxRate), // |amountBuyer| = amountSeller+amountSystem
-      // 交易产生的LOG币也是USDT挖矿得到的，交易本身不是挖矿所得  amountMining: place.uuidOwner ? place.sellPrice-place.buyPrice : 0, // place.buyPrice*place.profitRate + place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate),
+      // 交易产生的LOG币也是USDT挖矿得到的，交易本身不是挖矿所得  amountMining: place.ownerUuid ? place.sellPrice-place.buyPrice : 0, // place.buyPrice*place.profitRate + place.buyPrice*(1+place.profitRate)*(place.feeRate+place.taxRate),
       txGroup: 'ESTATE_TX',
       txType: 'ESTATE_BUYIN',
       txTimeUnix: txTimeUnix,
@@ -171,9 +182,9 @@ DAD.api.payToBuyPlace = async function (option) {
     txBuyer.txHash = ticCrypto.hash(json)
 
     let seller
-    if (place.uuidOwner) {
+    if (place.ownerUuid) {
       // 如果有前任主人。（如果没有，就是系统初始化状态）
-      seller = await wo.User.findOne({ uuid: place.uuidOwner })
+      seller = await wo.User.findOne({ uuid: place.ownerUuid })
       seller.balance += place.buyPrice * (1 + place.profitRate)
       seller.estateProfitSum += place.buyPrice * place.profitRate
       seller.estateHoldingNumber -= 1
@@ -199,8 +210,8 @@ DAD.api.payToBuyPlace = async function (option) {
 
     let originalBuyTimeUnix = place.buyTimeUnix
 
-    place.uuidPreowner = place.uuidOwner
-    place.uuidOwner = buyer.uuid
+    place.preownerUuid = place.ownerUuid
+    place.ownerUuid = buyer.uuid
     place.buyPrice = place.sellPrice
     place.sellPrice = place.buyPrice * (1 + place.profitRate) * (1 + place.feeRate + place.taxRate)
     place.buyTimeUnix = txTimeUnix
@@ -240,7 +251,7 @@ DAD.api.uploadImage = async function (option) {
 DAD.api.changeImage = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.uuidOwner === option._passtokenSource.uuid) {
+    if (place && place.ownerUuid === option._passtokenSource.uuid) {
       let file = option._req.file
       if (file && /^image\//.test(file.mimetype)) {
         await DAD.update({ uuid: option.Place.uuid }, { image: option._req.file.filename })
@@ -258,7 +269,7 @@ DAD.api.changeImage = async function (option) {
 DAD.api.changeImage2Cloud = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.image) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.uuidOwner === option._passtokenSource.uuid) {
+    if (place && place.ownerUuid === option._passtokenSource.uuid) {
       await DAD.update({ uuid: option.Place.uuid }, { image: option.Place.image })
       return Object.assign({ _state: 'SUCCESS' })
     } else {
@@ -272,7 +283,7 @@ DAD.api.changeImage2Cloud = async function (option) {
 DAD.api.changeIntro = async function (option) {
   if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.intro) {
     let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.uuidOwner === option._passtokenSource.uuid) {
+    if (place && place.ownerUuid === option._passtokenSource.uuid) {
       await DAD.update({ uuid: option.Place.uuid }, { intro: option.Place.intro })
       return { _state: 'SUCCESS' }
     } else {

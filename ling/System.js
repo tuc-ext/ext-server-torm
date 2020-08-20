@@ -6,23 +6,13 @@ const Place = require('./Place.js')
 const User = require('./User.js')
 const Ling = require('so.ling/Ling.to.js')
 
-const DAD = (module.exports = class System extends Ling {
-  static schema = {
-    name: this.name,
-    target: this,
-    columns: {
-      aiid: { type: 'int', generated: true, primary: true },
-      usd2cny: { type: Number, default: null },
-      when: { type: Date, nullable: true },
-    },
-  }
-})
+const DAD = (module.exports = class System extends Ling {})
 
 DAD.api = {}
 
 DAD.api.getUsd2Cny = DAD.api.getLog2Cny = async function () {
   delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
-  let result = require('../ConfigDynamic.js')
+  const result = require('../ConfigDynamic.js')
   return { _state: 'SUCCESS', usd2cny: result.usd2cny }
   // 另一个方案：从数据库里读取
   // let data = await DAD.findOne()
