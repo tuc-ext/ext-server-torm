@@ -19,7 +19,7 @@ const DAD = (module.exports = class Story extends Ling {
 })
 
 DAD.api = {}
-DAD.api.getStoryList = async ({ placeUuid, skip = 0, take = 10, order = { aiid: 'DESC' } } = {}) => {
+DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10, order = { aiid: 'DESC' } } = {}) => {
   // let [storyList, count] = await DAD.findAndCount({ where: { placeUuid }, skip, take, order })
   let storyList = await DAD.createQueryBuilder('story')
     .leftJoinAndSelect(wo.User, 'author', 'author.uuid=story.author_uuid')
@@ -32,8 +32,9 @@ DAD.api.getStoryList = async ({ placeUuid, skip = 0, take = 10, order = { aiid: 
   storyList.forEach((story, index) => {
     story.storyContent = JSON.parse(story.storyContent)
   })
-  let count = await DAD.count({ placeUuid })
-  return { _state: 'SUCCESS', storyList, count }
+  let storyCount = await DAD.count({ placeUuid })
+  let likeCount = await wo.Like.count({ placeUuid, status: 'LIKE' })
+  return { _state: 'SUCCESS', storyList, storyCount, likeCount }
 }
 
 DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid } = {} }) => {
@@ -51,12 +52,8 @@ DAD.api.publish = async ({ _passtokenSource, story: { placeUuid, storyContent, u
   if (_passtokenSource && placeUuid) {
     let nowTimeUnix = Date.now()
     if (uuid) {
-      let story = await DAD.createQueryBuilder('story')
-        .leftJoinAndSelect(wo.User, 'author', 'author.uuid=story.author_uuid')
-        .select(['story.*', 'author.portrait', 'author.nickname'])
-        .where('story.uuid= :storyUuid', { storyUuid: uuid })
-        .getRawOne()
-      story.storyContent = JSON.parse(story.storyContent)
+      // 已经存在
+      let story = await DAD.findOne({ uuid })
       if (story && story.author_uuid && story.author_uuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
         await DAD.update({ uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
         story.storyContent = storyContent
@@ -66,13 +63,9 @@ DAD.api.publish = async ({ _passtokenSource, story: { placeUuid, storyContent, u
         return { _state: 'UNMATCHED_STORY' }
       }
     } else {
+      // 尚不存在
       let story = await DAD.save({ placeUuid, author_uuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
-      story = await DAD.createQueryBuilder('story')
-        .leftJoinAndSelect(wo.User, 'author', 'author.uuid=story.author_uuid')
-        .select(['story.*', 'author.portrait', 'author.nickname'])
-        .where('story.uuid= :storyUuid', { storyUuid: story.uuid })
-        .getRawOne()
-      story.storyContent = JSON.parse(story.storyContent)
+      story.storyContent = storyContent
       return { _state: 'SUCCESS', story }
     }
   }

@@ -18,6 +18,7 @@ async function load() {
 
   for (let place of placedb) {
     place.createTime = new Date()
+    place.startTimeUnix = place.startTime.valueOf()
     place.sellTimeUnix = place.startTime.valueOf()
     place.sellTimeUnixDaily = place.sellTimeUnix % DAY_MILLIS
     place.sellPrice = place.startPrice

@@ -20,22 +20,23 @@ const DAD = (module.exports = class User extends Ling {
       aiid: { type: Number, primary: true, generated: true },
       uuid: { type: String, unique: true, generated: 'uuid' },
       phone: { type: String, unique: true },
-      passwordServer: { type: String, nullable: true },
-      regcode: { type: String, nullable: true, comment: '我的邀请人的邀请码，不是我的邀请码' },
-      portrait: { type: String, nullable: true },
-      nickname: { type: String, nullable: true },
+      passwordServer: { type: String, default: null },
+      regcode: { type: String, default: null, comment: '我的邀请人的邀请码，不是我的邀请码' },
+      portrait: { type: String, default: null },
+      nickname: { type: String, default: null },
       realname: { type: String, nullable: true, default: '' },
       lang: { type: String, nullable: true },
-      citizen: { type: String, nullable: true },
-      idType: { type: String, nullable: true },
+      citizen: { type: String, default: null },
+      idType: { type: String, default: null },
       idNumber: { type: String, nullable: true, default: '' },
-      kycStateL1: { type: String, nullable: true },
-      kycStateL2: { type: String, nullable: true },
-      kycStateL3: { type: String, nullable: true },
-      idCardCover: { type: String, nullable: true },
-      idCardBack: { type: String, nullable: true },
-      idCardSelfie: { type: String, nullable: true },
+      kycStateL1: { type: String, default: null },
+      kycStateL2: { type: String, default: null },
+      kycStateL3: { type: String, default: null },
+      idCardCover: { type: String, default: null },
+      idCardBack: { type: String, default: null },
+      idCardSelfie: { type: String, default: null },
       whenRegister: { type: Date, default: null },
+      registerTimeUnix: { type: 'int', default: null },
       coinAddress: { type: 'simple-json', default: '{}' },
       payChannel: { type: 'simple-json', default: '{}', nullable: true },
       balance: { type: 'real', default: 0 },
@@ -409,12 +410,12 @@ DAD.api.register = DAD.api1.register = async function (option) {
     option.passwordClient
   ) {
     let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
-    let whenRegister = new Date()
+    let registerTimeUnix = Date.now()
     // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
     // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
     // Account/Change/Index 最大到 parseInt(0x7FFFFFFF, 16)
     // 后面还可继续延伸 /xxx/xxx/xxx/......
-    let seed = ticCrypto.hash(whenRegister.valueOf() + option._passtokenSource.uuid, { hasher: 'md5' })
+    let seed = ticCrypto.hash(registerTimeUnix + option._passtokenSource.uuid, { hasher: 'md5' })
     let part0 = parseInt(seed.slice(0, 6), 16)
     let part1 = parseInt(seed.slice(6, 12), 16)
     let part2 = parseInt(seed.slice(12, 18), 16)
@@ -442,8 +443,8 @@ DAD.api.register = DAD.api1.register = async function (option) {
       amount: 10 * wo.Trade.getExchangeRate({}),
       amountMining: 10 * wo.Trade.getExchangeRate({}), // 奖金是通过注册行为凭空挖出的
       exchangeRate: wo.Trade.getExchangeRate({}),
-      txTime: whenRegister,
-      txTimeUnix: whenRegister.valueOf(),
+      txTime: new Date(registerTimeUnix),
+      txTimeUnix: registerTimeUnix,
     })
     txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
     let user = DAD.create({
@@ -453,7 +454,8 @@ DAD.api.register = DAD.api1.register = async function (option) {
       regcode: option._passtokenSource.regcode.toLowerCase(),
       nickname: `----${option.phone.substr(-4)}`,
       coinAddress,
-      whenRegister,
+      whenRegister: new Date(registerTimeUnix),
+      registerTimeUnix,
       lang: option.lang,
       citizen: option.citizen,
       balance: 10 * wo.Trade.getExchangeRate({}),
@@ -618,7 +620,7 @@ DAD.sysapi.getUserArray = async ({ where, take = 10, order = { aiid: 'ASC' }, sk
   return { _state: 'SUCCESS', userArray, count }
 }
 
-DAD.api.getCommunityMembers = async ({ _passtokenSource = {}, order = { whenRegister: 'DESC' }, skip = 0, take = 10 } = {}) => {
+DAD.api.getCommunityMembers = async ({ _passtokenSource = {}, order = { registerTimeUnix: 'DESC' }, skip = 0, take = 10 } = {}) => {
   let result = { _state: 'ERROR' }
   if (_passtokenSource.uuid) {
     let me = await DAD.findOne({ uuid: _passtokenSource.uuid })

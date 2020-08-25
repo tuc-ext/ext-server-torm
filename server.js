@@ -34,6 +34,7 @@ async function initSingle() {
   wo.Story = require('./ling/Story.js')
   wo.ExPoster = require('./ling/ExPoster.js')
   wo.ExOrder = require('./ling/ExOrder.js')
+  wo.Like = require('./ling/Like.js')
 
   mylog.info(`Initializing datastore ${Config.datastore} ......`)
   let connectionOptions = Config.datastore
@@ -50,6 +51,7 @@ async function initSingle() {
         new to.EntitySchema(wo.Place.schema),
         new to.EntitySchema(wo.ExPoster.schema),
         new to.EntitySchema(wo.ExOrder.schema),
+        new to.EntitySchema(wo.Like.schema),
       ],
       synchronize: true, //Config.env!=='production'?true:false,
     })

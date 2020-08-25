@@ -18,14 +18,14 @@ const DAD = (module.exports = class Place extends Ling {
     columns: {
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
-      pcode: { type: String, nullable: true, unique: true, comment: '人工定义的地区编号，用于防止重复' },
-      ownerUuid: { type: String, nullable: true },
-      preownerUuid: { type: String, nullable: true, comment: '交易对手的uuid' },
-      creatorUuid: { type: String, nullable: true },
-      name: { type: String, nullable: true },
-      intro: { type: String, nullable: true },
-      image: { type: String, nullable: true },
-      video: { type: String, nullable: true },
+      pcode: { type: String, default: null, unique: true, comment: '人工定义的地区编号，用于防止重复' },
+      ownerUuid: { type: String, default: null },
+      preownerUuid: { type: String, default: null, comment: '交易对手的uuid' },
+      creatorUuid: { type: String, default: null },
+      name: { type: String, default: null },
+      intro: { type: String, default: null },
+      image: { type: String, default: null },
+      video: { type: String, default: null },
       address: { type: 'simple-json', default: '{}', nullable: true },
       geoposition: { type: 'simple-json', default: '{}', nullable: true },
       tagList: { type: 'simple-json', default: '[]', nullable: true },
@@ -33,14 +33,15 @@ const DAD = (module.exports = class Place extends Ling {
       profitRate: { type: 'real', default: 0.05, comment: '卖家盈利，是成本价的一个比例' },
       feeRate: { type: 'real', default: 0.005, comment: '抵消成本的费用，通常是固定数额，也可是原始销售价格的一个比例' },
       taxRate: { type: 'real', default: 0.005, comment: '公共税收，通常是原始销售价格的一个比例' },
-      startTime: { type: Date, nullable: true },
-      startPrice: { type: 'real', nullable: true },
-      buyTimeUnix: { type: 'int', nullable: true }, // 交易达成的时间
-      buyTimeUnixDaily: { type: 'int', nullable: true },
-      buyPrice: { type: 'real', nullable: true },
-      sellTimeUnix: { type: 'int', nullable: true },
-      sellTimeUnixDaily: { type: 'int', nullable: true },
-      sellPrice: { type: 'real', nullable: true },
+      startTime: { type: Date, default: null },
+      startTimeUnix: { type: 'int', default: null },
+      startPrice: { type: 'real', default: null },
+      buyTimeUnix: { type: 'int', default: null }, // 交易达成的时间
+      buyTimeUnixDaily: { type: 'int', default: null },
+      buyPrice: { type: 'real', default: null },
+      sellTimeUnix: { type: 'int', default: null },
+      sellTimeUnixDaily: { type: 'int', default: null },
+      sellPrice: { type: 'real', default: null },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
@@ -53,8 +54,9 @@ DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }
   // let [placeList, count] = await DAD.findAndCount({ skip, take, order })
 
   let placeList = await DAD.createQueryBuilder('place')
-    .select(['place.*', 'owner.portrait', 'owner.nickname'])
     .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid=owner.uuid')
+    .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid=place.ownerUuid and like.placeUuid=place.uuid')
+    .select(['place.*', 'owner.portrait', 'owner.nickname', 'like.status']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
     .offset(skip)
     .limit(take)
     .orderBy(order)
@@ -66,6 +68,7 @@ DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }
       place.geoposition = JSON.parse(place.geoposition)
       place.address = JSON.parse(place.address)
       place.tagList = JSON.parse(place.tagList)
+      place.startTime = new Date(place.startTime)
     })
     return { _state: 'SUCCESS', placeList, count }
   }
@@ -100,6 +103,7 @@ DAD.api.payToCreatePlace = async function (option) {
     place.buyPrice = place.startPrice
     place.sellPrice = place.buyPrice * (1 + place.profitRate) * (1 + place.feeRate + place.taxRate)
     place.startTime = new Date(txTimeUnix)
+    place.startTimeUnix = txTimeUnix
     place.buyTimeUnix = txTimeUnix
     place.buyTimeUnixDaily = place.buyTimeUnix % DAY_MILLIS
     place.sellTimeUnix = place.buyTimeUnix + FROZEN_MILLIS
