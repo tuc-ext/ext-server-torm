@@ -22,19 +22,28 @@ const DAD = (module.exports = class Like extends Ling {
 DAD.api = {}
 
 DAD.api.like = async ({ _passtokenSource, placeUuid }) => {
-  let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: 'LIKE', editTimeUnix: Date.now() })
-  await like.save()
-  return { _state: 'SUCCESS', like }
+  if (_passtokenSource && _passtokenSource.uuid && placeUuid) {
+    let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: 'LIKE', editTimeUnix: Date.now() })
+    await like.save()
+    return { _state: 'SUCCESS', like }
+  }
+  return { _state: 'INPUT_MALFORMED' }
 }
 
 DAD.api.dislike = async ({ _passtokenSource, placeUuid }) => {
-  let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: 'DISLIKE', editTimeUnix: Date.now() })
-  await like.save()
-  return { _state: 'SUCCESS', like }
+  if (_passtokenSource && _passtokenSource.uuid && placeUuid) {
+    let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: 'DISLIKE', editTimeUnix: Date.now() })
+    await like.save()
+    return { _state: 'SUCCESS', like }
+  }
+  return { _state: 'INPUT_MALFORMED' }
 }
 
 DAD.api.clear = async ({ _passtokenSource, placeUuid }) => {
-  let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: null, editTimeUnix: Date.now() })
-  await like.save()
-  return { _state: 'SUCCESS', like }
+  if (_passtokenSource && _passtokenSource.uuid && placeUuid) {
+    let like = new DAD({ userUuid: _passtokenSource.uuid, placeUuid, status: null, editTimeUnix: Date.now() })
+    await like.save()
+    return { _state: 'SUCCESS', like }
+  }
+  return { _state: 'INPUT_MALFORMED' }
 }
