@@ -9,7 +9,7 @@ const DAD = (module.exports = class Story extends Ling {
     columns: {
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
-      author_uuid: { type: String, nullable: true },
+      authorUuid: { type: String, nullable: true },
       placeUuid: { type: String, nullable: true },
       editTimeUnix: { type: 'int', default: 0 },
       createTimeUnix: { type: 'int', default: 0 },
@@ -22,7 +22,7 @@ DAD.api = {}
 DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10, order = { aiid: 'DESC' } } = {}) => {
   // let [storyList, count] = await DAD.findAndCount({ where: { placeUuid }, skip, take, order })
   let storyList = await DAD.createQueryBuilder('story')
-    .leftJoinAndSelect(wo.User, 'author', 'author.uuid=story.author_uuid')
+    .leftJoinAndSelect(wo.User, 'author', 'author.uuid=story.authorUuid')
     .select(['story.*', 'author.portrait', 'author.nickname'])
     .where('story.placeUuid=:placeUuid', { placeUuid })
     .offset(skip)
@@ -54,7 +54,7 @@ DAD.api.publish = async ({ _passtokenSource, story: { placeUuid, storyContent, u
     if (uuid) {
       // 已经存在
       let story = await DAD.findOne({ uuid })
-      if (story && story.author_uuid && story.author_uuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
+      if (story && story.authorUuid && story.authorUuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
         await DAD.update({ uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
         story.storyContent = storyContent
         story.editTimeUnix = nowTimeUnix
@@ -64,7 +64,7 @@ DAD.api.publish = async ({ _passtokenSource, story: { placeUuid, storyContent, u
       }
     } else {
       // 尚不存在
-      let story = await DAD.save({ placeUuid, author_uuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
+      let story = await DAD.save({ placeUuid, authorUuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
       story.storyContent = storyContent
       return { _state: 'SUCCESS', story }
     }
