@@ -39,11 +39,8 @@ DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10
 
 DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid } = {} }) => {
   if (uuid) {
-    let story = await DAD.findOne({ uuid: uuid })
-    if (story && story.author && story.author.uuid === _passtokenSource.uuid) {
-      await DAD.delete({ uuid: uuid })
-      return { _state: 'SUCCESS', story: { uuid: uuid } }
-    }
+    await DAD.delete({ uuid: uuid, authorUuid: _passtokenSource.uuid })
+    return { _state: 'SUCCESS', story: { uuid: uuid } }
   }
   return { _state: 'FAIL' }
 }
