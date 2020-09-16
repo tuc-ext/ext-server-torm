@@ -32,38 +32,46 @@ DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10
   storyList.forEach((story, index) => {
     story.storyContent = JSON.parse(story.storyContent)
   })
-  let storyCount = await DAD.count({ placeUuid })
-  let likeCount = await wo.Like.count({ placeUuid, status: 'LIKE' })
-  return { _state: 'SUCCESS', storyList, storyCount, likeCount }
+  return { _state: 'SUCCESS', storyList }
 }
 
 DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid } = {} }) => {
   if (uuid) {
-    await DAD.delete({ uuid: uuid, authorUuid: _passtokenSource.uuid })
-    return { _state: 'SUCCESS', story: { uuid: uuid } }
+    return await to.getManager().transaction(async (txman) => {
+      await txman.delete(DAD, { uuid: uuid, authorUuid: _passtokenSource.uuid })
+      await txman.decrement(wo.Place, { uuid: placeUuid }, 'countComment', 1)
+      return { _state: 'SUCCESS', story: { uuid: uuid } }
+    })
   }
   return { _state: 'FAIL' }
 }
 
-DAD.api.publish = async ({ _passtokenSource, story: { placeUuid, storyContent, uuid } = {} }) => {
+DAD.api.publishStory = async ({ _passtokenSource, story: { placeUuid, storyContent, uuid } = {} }) => {
   if (_passtokenSource && placeUuid) {
     let nowTimeUnix = Date.now()
     if (uuid) {
       // 已经存在
       let story = await DAD.findOne({ uuid })
       if (story && story.authorUuid && story.authorUuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
-        await DAD.update({ uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
-        story.storyContent = storyContent
-        story.editTimeUnix = nowTimeUnix
-        return { _state: 'SUCCESS', story }
+        return await to.getManager().transaction(async (txman) => {
+          await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
+          await txman.update(DAD, { uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
+          story.storyContent = storyContent
+          story.editTimeUnix = nowTimeUnix
+          return { _state: 'SUCCESS', story }
+        })
       } else {
         return { _state: 'UNMATCHED_STORY' }
       }
     } else {
       // 尚不存在
-      let story = await DAD.save({ placeUuid, authorUuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
-      story.storyContent = storyContent
-      return { _state: 'SUCCESS', story }
+      return await to.getManager().transaction(async (txman) => {
+        await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
+        let story = new DAD({ placeUuid, authorUuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
+        await txman.save(story)
+        story.storyContent = storyContent
+        return { _state: 'SUCCESS', story }
+      })
     }
   }
   return { _state: 'UNAUTHORIZED_AUTHOR' }

@@ -43,6 +43,9 @@ const DAD = (module.exports = class Place extends Ling {
       sellTimeUnixDaily: { type: 'int', default: null },
       sellPrice: { type: 'real', default: null },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+      countLike: { type: 'int', default: 0 },
+      countDislike: { type: 'int', default: 0 },
+      countComment: { type: 'int', default: 0 },
     },
   }
 })
@@ -75,10 +78,33 @@ DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
-DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip, take = 10 } = {}) {
-  let where = { ownerUuid: _passtokenSource.uuid }
-  let [estateList, count] = await DAD.findAndCount({ where, order, skip, take })
-  return { _state: 'SUCCESS', estateList, count }
+DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip = 0, take = 10 } = {}) {
+  // let where = { ownerUuid: _passtokenSource.uuid }
+  // let [estateList, count] = await DAD.findAndCount({ where, order, skip, take })
+  // return { _state: 'SUCCESS', estateList, count }
+
+  // 用这样复杂的算法，主要是为了得到 like.status，其他都可以在前端直接获取。
+  let placeList = await DAD.createQueryBuilder('place')
+    .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid=owner.uuid')
+    .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid=place.ownerUuid and like.placeUuid=place.uuid')
+    .select(['place.*', 'owner.portrait', 'owner.nickname', 'like.status']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
+    .where({ ownerUuid: _passtokenSource.uuid })
+    .offset(skip)
+    .limit(take)
+    .orderBy(order)
+    .getRawMany()
+  let count = await DAD.count({ where: { ownerUuid: _passtokenSource.uuid } })
+  if (Array.isArray(placeList)) {
+    placeList.forEach((place, index) => {
+      place.json = JSON.parse(place.json)
+      place.geoposition = JSON.parse(place.geoposition)
+      place.address = JSON.parse(place.address)
+      place.tagList = JSON.parse(place.tagList)
+      place.startTime = new Date(place.startTime)
+    })
+    return { _state: 'SUCCESS', estateList: placeList, count }
+  }
+  return { _state: 'FAIL', estateList: [], count: 0 }
 }
 
 DAD.api.payToCreatePlace = async function (option) {
