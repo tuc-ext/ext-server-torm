@@ -53,12 +53,12 @@ const DAD = (module.exports = class Place extends Ling {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.getPlaceList = async function ({ skip = 0, order = { startTime: 'DESC' }, take = 10 } = {}) {
+DAD.api.getPlaceList = async function ({ _passtokenSource, skip = 0, order = { startTime: 'DESC' }, take = 10 } = {}) {
   // let [placeList, count] = await DAD.findAndCount({ skip, take, order })
 
   let placeList = await DAD.createQueryBuilder('place')
-    .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid=owner.uuid')
-    .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid=place.ownerUuid and like.placeUuid=place.uuid')
+    .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid = owner.uuid')
+    .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid = :onlineUser and place.uuid = like.placeUuid', { onlineUser: _passtokenSource.uuid })
     .select(['place.*', 'owner.portrait', 'owner.nickname', 'like.status']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
     .offset(skip)
     .limit(take)
