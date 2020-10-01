@@ -107,22 +107,22 @@ DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUn
   return { _state: 'FAIL', estateList: [], count: 0 }
 }
 
-DAD.api.payToCreatePlace = async function (option) {
-  let creator = await wo.User.findOne({ uuid: option._passtokenSource.uuid })
+DAD.api.payToCreatePlace = async function ({ _passtokenSource, Place }) {
+  let creator = await wo.User.findOne({ uuid: _passtokenSource.uuid })
 
   if (creator.estateHoldingNumber >= ESTATE_RESTRICT) {
     return { _state: 'EXCEED_HOLDING_NUMBER' }
   }
 
-  if (option.Place.startPrice && creator.balance < option.Place.startPrice) {
+  if (Place.startPrice && creator.balance < Place.startPrice) {
     return { _state: 'BALANCE_NOT_ENOUGH' }
   }
 
   let txTimeUnix = Date.now()
-  if (option.Place.name && option.Place.profitRate) {
-    let place = DAD.create(option.Place)
-    place.creatorUuid = option._passtokenSource.uuid
-    place.ownerUuid = option._passtokenSource.uuid
+  if (Place.name && Place.profitRate) {
+    let place = DAD.create(Place)
+    place.creatorUuid = _passtokenSource.uuid
+    place.ownerUuid = _passtokenSource.uuid
     place.feeRate = Config.FEE_RATE
     place.taxRate = Config.TAX_RATE
     place.startPrice = Number(place.startPrice)
@@ -170,9 +170,9 @@ DAD.api.payToCreatePlace = async function (option) {
   }
 }
 
-DAD.api.payToBuyPlace = async function (option) {
-  let place = await DAD.findOne({ uuid: option.Place.uuid })
-  let buyer = await wo.User.findOne({ uuid: option._passtokenSource.uuid })
+DAD.api.payToBuyPlace = async function ({ _passtokenSource, Place }) {
+  let place = await DAD.findOne({ uuid: Place.uuid })
+  let buyer = await wo.User.findOne({ uuid: _passtokenSource.uuid })
 
   if (buyer.estateHoldingNumber >= ESTATE_RESTRICT) {
     return { _state: 'EXCEED_HOLDING_NUMBER' }
@@ -264,10 +264,10 @@ DAD.api.payToBuyPlace = async function (option) {
   }
 }
 
-DAD.api.uploadImage = async function (option) {
+DAD.api.uploadImage = async function ({ _passtokenSource, _req }) {
   // Estate 尚未存入数据库，只是上传图片，不修改数据库
-  if (option._passtokenSource && option._passtokenSource.isOnline) {
-    let file = option._req.file
+  if (_passtokenSource && _passtokenSource.isOnline) {
+    let file = _req.file
     if (file && /^image\//.test(file.mimetype)) {
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
@@ -278,13 +278,13 @@ DAD.api.uploadImage = async function (option) {
   }
 }
 
-DAD.api.changeImage = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid) {
-    let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.ownerUuid === option._passtokenSource.uuid) {
-      let file = option._req.file
+DAD.api.changeImage = async function ({ _passtokenSource, Place, _req }) {
+  if (_passtokenSource && _passtokenSource.isOnline && Place && Place.uuid) {
+    let place = await DAD.findOne({ uuid: Place.uuid })
+    if (place && place.ownerUuid === _passtokenSource.uuid) {
+      let file = _req.file
       if (file && /^image\//.test(file.mimetype)) {
-        await DAD.update({ uuid: option.Place.uuid }, { image: option._req.file.filename })
+        await DAD.update({ uuid: Place.uuid }, { image: _req.file.filename })
         return Object.assign(file, { _state: 'SUCCESS' })
       } else {
         return { _state: 'FILE_NOT_IMAGE' }
@@ -296,11 +296,11 @@ DAD.api.changeImage = async function (option) {
     return { _state: 'USER_NOT_ONLINE' }
   }
 }
-DAD.api.changeImage2Cloud = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.image) {
-    let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.ownerUuid === option._passtokenSource.uuid) {
-      await DAD.update({ uuid: option.Place.uuid }, { image: option.Place.image })
+DAD.api.changeImage2Cloud = async function ({ _passtokenSource, Place }) {
+  if (_passtokenSource && _passtokenSource.isOnline && Place && Place.uuid && Place.image) {
+    let place = await DAD.findOne({ uuid: Place.uuid })
+    if (place && place.ownerUuid === _passtokenSource.uuid) {
+      await DAD.update({ uuid: Place.uuid }, { image: Place.image })
       return Object.assign({ _state: 'SUCCESS' })
     } else {
       return { _state: 'NOT_ESTATE_OWNER' }
@@ -310,11 +310,11 @@ DAD.api.changeImage2Cloud = async function (option) {
   }
 }
 
-DAD.api.changeIntro = async function (option) {
-  if (option._passtokenSource && option._passtokenSource.isOnline && option.Place && option.Place.uuid && option.Place.intro) {
-    let place = await DAD.findOne({ uuid: option.Place.uuid })
-    if (place && place.ownerUuid === option._passtokenSource.uuid) {
-      await DAD.update({ uuid: option.Place.uuid }, { intro: option.Place.intro })
+DAD.api.changeIntro = async function ({ _passtokenSource, Place }) {
+  if (_passtokenSource && _passtokenSource.isOnline && Place && Place.uuid && Place.intro) {
+    let place = await DAD.findOne({ uuid: Place.uuid })
+    if (place && place.ownerUuid === _passtokenSource.uuid) {
+      await DAD.update({ uuid: Place.uuid }, { intro: Place.intro })
       return { _state: 'SUCCESS' }
     } else {
       return { _state: 'NOT_ESTATE_OWNER' }
@@ -322,4 +322,14 @@ DAD.api.changeIntro = async function (option) {
   } else {
     return { _state: 'INPUT_MALFORMED' }
   }
+}
+
+DAD.api.deletePlace = async function ({ _passtokenSource, place }) {
+  if (place && place.uuid && _passtokenSource && _passtokenSource.uuid) {
+    return await TO.getManager().transaction(async (txman) => {
+      await txman.delete(DAD, { uuid: place.uuid, ownerUuid: _passtokenSource.uuid })
+      return { _state: 'SUCCESS' }
+    })
+  }
+  return { _state: 'FAILED' }
 }

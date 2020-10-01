@@ -1,5 +1,5 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
-const to = require('typeorm')
+const TO = require('typeorm')
 const Ling = require('so.ling/Ling.to.js')
 
 const DAD = (module.exports = class Story extends Ling {
@@ -35,10 +35,10 @@ DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10
   return { _state: 'SUCCESS', storyList }
 }
 
-DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid } = {} }) => {
+DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid, placeUuid } = {} }) => {
   if (uuid) {
-    return await to.getManager().transaction(async (txman) => {
-      await txman.delete(DAD, { uuid: uuid, authorUuid: _passtokenSource.uuid })
+    return await TO.getManager().transaction(async (txman) => {
+      await txman.delete(DAD, { uuid, placeUuid, authorUuid: _passtokenSource.uuid })
       await txman.decrement(wo.Place, { uuid: placeUuid }, 'countComment', 1)
       return { _state: 'SUCCESS', story: { uuid: uuid } }
     })
@@ -53,7 +53,7 @@ DAD.api.publishStory = async ({ _passtokenSource, story: { placeUuid, storyConte
       // 已经存在
       let story = await DAD.findOne({ uuid })
       if (story && story.authorUuid && story.authorUuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
-        return await to.getManager().transaction(async (txman) => {
+        return await TO.getManager().transaction(async (txman) => {
           await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
           await txman.update(DAD, { uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
           story.storyContent = storyContent
@@ -65,7 +65,7 @@ DAD.api.publishStory = async ({ _passtokenSource, story: { placeUuid, storyConte
       }
     } else {
       // 尚不存在
-      return await to.getManager().transaction(async (txman) => {
+      return await TO.getManager().transaction(async (txman) => {
         await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
         let story = new DAD({ placeUuid, authorUuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
         await txman.save(story)
