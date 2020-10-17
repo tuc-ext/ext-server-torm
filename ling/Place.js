@@ -50,13 +50,22 @@ const DAD = (module.exports = class Place extends Ling {
   }
 })
 
+DAD.parseOne = (place) => {
+  place.json = JSON.parse(place.json)
+  place.geoposition = JSON.parse(place.geoposition)
+  place.address = JSON.parse(place.address)
+  place.tagList = JSON.parse(place.tagList)
+  place.startTime = new Date(place.startTime)
+  return place
+}
+
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
 DAD.api.getPlaceList = async function ({ _passtokenSource, skip = 0, order = { startTime: 'DESC' }, take = 10 } = {}) {
   // let [placeList, count] = await DAD.findAndCount({ skip, take, order })
 
-  let placeList = await DAD.createQueryBuilder('place')
+  let placeList = await DAD.createQueryBuilder('place') // 用这样复杂的算法，主要是为了得到 like.status，其他都可以在前端直接获取。
     .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid = owner.uuid')
     .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid = :onlineUser and place.uuid = like.placeUuid', { onlineUser: _passtokenSource.uuid })
     .select(['place.*', 'owner.portrait', 'owner.nickname', 'like.status']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
@@ -67,23 +76,61 @@ DAD.api.getPlaceList = async function ({ _passtokenSource, skip = 0, order = { s
   let count = await DAD.count()
   if (Array.isArray(placeList)) {
     placeList.forEach((place, index) => {
-      place.json = JSON.parse(place.json)
-      place.geoposition = JSON.parse(place.geoposition)
-      place.address = JSON.parse(place.address)
-      place.tagList = JSON.parse(place.tagList)
-      place.startTime = new Date(place.startTime)
+      DAD.parseOne(place)
     })
     return { _state: 'SUCCESS', placeList, count }
   }
   return { _state: 'FAIL', placeList: [], count: 0 }
 }
 
-DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip = 0, take = 10 } = {}) {
+DAD.api.getMyLikedSceneList = async ({ _passtokenSource, skip = 0, take = 10, order = {} }) => {
+  let sceneList = await DAD.createQueryBuilder('place')
+    .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid = owner.uuid')
+    .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid = :onlineUser and place.uuid = like.placeUuid', {
+      onlineUser: _passtokenSource.uuid,
+    })
+    .select(['place.*', 'owner.portrait', 'owner.nickname', 'like.status']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
+    .where('like.status = :liked', { liked: 'LIKE' }) // 不知为何，必须放在这里才见效，不能在 leftJoinAndSelect(... like.status=:liked ...)
+    .offset(skip)
+    .limit(take)
+    .orderBy(order)
+    //    .getSql()
+    .getRawMany()
+  let countLike = await wo.Like.count({ where: { userUuid: _passtokenSource.uuid, status: 'LIKE' } })
+  if (Array.isArray(sceneList)) {
+    sceneList.forEach((scene, index) => {
+      DAD.parseOne(scene)
+    })
+    return { _state: 'SUCCESS', estateList: sceneList, count: countLike }
+  }
+  return { _state: 'FAIL', estateList: [], count: 0 }
+}
+
+DAD.api.getMyCreatedSceneList = async ({ _passtokenSource, skip = 0, take = 10, order = {} }) => {
+  let sceneList = await DAD.createQueryBuilder('place')
+    .leftJoinAndSelect(wo.User, 'owner', 'place.creatorUuid = owner.uuid')
+    .select(['place.*', 'owner.portrait', 'owner.nickname']) // 应当写在 leftJoin 之后，否则，会把所有 owner.* 都转成 owner_* 返回，不论有没有指明select哪些字段。
+    .where({ creatorUuid: _passtokenSource.uuid })
+    .offset(skip)
+    .limit(take)
+    .orderBy(order)
+    //    .getSql()
+    .getRawMany()
+  let countCreated = await DAD.count({ where: { creatorUuid: _passtokenSource.uuid } })
+  if (Array.isArray(sceneList)) {
+    sceneList.forEach((scene, index) => {
+      DAD.parseOne(scene)
+    })
+    return { _state: 'SUCCESS', estateList: sceneList, count: countCreated }
+  }
+  return { _state: 'FAIL', estateList: [], count: 0 }
+}
+
+DAD.api.getMyPlaceList = async ({ _passtokenSource, order = { buyTimeUnix: 'DESC' }, skip = 0, take = 10 } = {}) => {
   // let where = { ownerUuid: _passtokenSource.uuid }
   // let [estateList, count] = await DAD.findAndCount({ where, order, skip, take })
   // return { _state: 'SUCCESS', estateList, count }
 
-  // 用这样复杂的算法，主要是为了得到 like.status，其他都可以在前端直接获取。
   let placeList = await DAD.createQueryBuilder('place')
     .leftJoinAndSelect(wo.User, 'owner', 'place.ownerUuid=owner.uuid')
     .leftJoinAndSelect(wo.Like, 'like', 'like.userUuid=place.ownerUuid and like.placeUuid=place.uuid')
@@ -96,11 +143,7 @@ DAD.api.getMyPlaceList = async function ({ _passtokenSource, order = { buyTimeUn
   let count = await DAD.count({ where: { ownerUuid: _passtokenSource.uuid } })
   if (Array.isArray(placeList)) {
     placeList.forEach((place, index) => {
-      place.json = JSON.parse(place.json)
-      place.geoposition = JSON.parse(place.geoposition)
-      place.address = JSON.parse(place.address)
-      place.tagList = JSON.parse(place.tagList)
-      place.startTime = new Date(place.startTime)
+      DAD.parseOne(place)
     })
     return { _state: 'SUCCESS', estateList: placeList, count }
   }
