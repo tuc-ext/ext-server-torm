@@ -2,7 +2,7 @@
 
 ## 项目库导航
 
-- 应用链总入口 [tac/\_tac](https://git.faronear.org/tac/_tac)
+- 应用链 [tac/\_tac](https://git.faronear.org/tac/_tac)
   - 洛格 [tac/log](https://git.faronear.org/tac/log)
     - 应用服务端
       - **<font size=5>[tac/log.server.oo](https://git.faronear.org/tac/log.server.oo) (面向对象)</font>**
