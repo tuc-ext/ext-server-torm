@@ -1,6 +1,5 @@
 'use strict'
 
-const Ling = require('so.ling/Ling.to.js')
 const ticCrypto = require('tic.crypto')
 const to = require('typeorm')
 
@@ -11,7 +10,9 @@ const EtherscanApi = require('etherscan-api').init(Config.ETHERSCAN_APIKEY, Conf
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class Trade extends Ling {
+const DAD = (module.exports = class Trade extends (
+  to.BaseEntity
+) {
   // 构建类
   static schema = {
     name: this.name,

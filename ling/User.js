@@ -1,5 +1,4 @@
 'use strict'
-const Ling = require('so.ling/Ling.to.js')
 const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
 const Messenger = require('so.base/Messenger.js')
@@ -11,7 +10,9 @@ const to = require('typeorm')
 const Config = require('so.base/Config.js')
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class User extends Ling {
+const DAD = (module.exports = class User extends (
+  to.BaseEntity
+) {
   // 构建类
   static schema = {
     name: this.name,
@@ -173,7 +174,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
         txTime: passTime,
         txTimeUnix: passTime.valueOf(),
       })
-      txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
+      txReward.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
       await txman.save(txReward)
 
       await txman.update(
@@ -446,7 +447,8 @@ DAD.api.register = DAD.api1.register = async function (option) {
       txTime: new Date(registerTimeUnix),
       txTimeUnix: registerTimeUnix,
     })
-    txReward.txHash = ticCrypto.hash(txReward.getJson({ exclude: ['aiid', 'uuid'] }))
+    txReward.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+
     let user = DAD.create({
       uuid: option._passtokenSource.uuid,
       phone: option.phone,

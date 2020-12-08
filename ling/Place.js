@@ -1,15 +1,16 @@
 'use strict'
 const Config = require('so.base/Config.js')
 const ticCrypto = require('tic.crypto')
-const Ling = require('so.ling/Ling.to.js')
-const TO = require('typeorm')
+const to = require('typeorm')
 
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 const FROZEN_MILLIS = 60 * 60 * 1000 // 购入后，冻结多久
 const ESTATE_RESTRICT = 100
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class Place extends Ling {
+const DAD = (module.exports = class Place extends (
+  to.BaseEntity
+) {
   // 构建类
 
   static schema = {
@@ -198,7 +199,7 @@ DAD.api.payToCreatePlace = async function ({ _passtokenSource, Place }) {
       txTime: new Date(txTimeUnix),
       json: { Place: { name: place.name } },
     })
-    txBuyer.txHash = ticCrypto.hash(txBuyer.getJson({ exclude: ['aiid', 'uuid'] }))
+    txBuyer.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
     if (await txBuyer.save()) {
       return {
         _state: 'ESTATE_CREATE_SUCCESS',
@@ -251,7 +252,7 @@ DAD.api.payToBuyPlace = async function ({ _passtokenSource, Place }) {
       txTime: new Date(txTimeUnix),
       json: { Place: { name: place.name } },
     })
-    let json = txBuyer.getJson({ exclude: ['aiid', 'uuid'] })
+    let json = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
     txBuyer.txHash = ticCrypto.hash(json)
 
     let seller
@@ -277,7 +278,7 @@ DAD.api.payToBuyPlace = async function ({ _passtokenSource, Place }) {
         txTime: new Date(txTimeUnix),
         json: { Place: { name: place.name } },
       })
-      txSeller.txHash = ticCrypto.hash(txSeller.getJson({ exclude: ['aiid', 'uuid'] }))
+      txSeller.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txSeller.constructor.schema.columns, entity: txSeller, exclude: ['aiid', 'uuid'] }))
       await txSeller.save()
     }
 
@@ -369,10 +370,25 @@ DAD.api.changeIntro = async function ({ _passtokenSource, Place }) {
 
 DAD.api.deletePlace = async function ({ _passtokenSource, place }) {
   if (place && place.uuid && _passtokenSource && _passtokenSource.uuid) {
-    return await TO.getManager().transaction(async (txman) => {
+    return await to.getManager().transaction(async (txman) => {
       await txman.delete(DAD, { uuid: place.uuid, ownerUuid: _passtokenSource.uuid })
       return { _state: 'SUCCESS' }
     })
   }
   return { _state: 'FAILED' }
+}
+
+const my = {
+  sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
+    let newEntity = {}
+    for (let key of Object.keys(fields).sort()) {
+      if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
+        newEntity[key] = entity[key]
+      }
+    }
+    for (let exkey of exclude) {
+      delete newEntity[exkey]
+    }
+    return JSON.stringify(newEntity)
+  },
 }

@@ -1,8 +1,9 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
 const to = require('typeorm')
-const Ling = require('so.ling/Ling.to.js')
 
-const DAD = (module.exports = class Like extends Ling {
+const DAD = (module.exports = class Like extends (
+  to.BaseEntity
+) {
   static schema = {
     name: this.name,
     target: this,

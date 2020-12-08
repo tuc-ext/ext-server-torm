@@ -2,15 +2,6 @@
 const fs = require('fs')
 const path = require('path')
 const to = require('typeorm')
-const my = {
-  parseJsonPossible(value) {
-    try {
-      return JSON.parse(value)
-    } catch (e) {
-      return value
-    }
-  },
-}
 const Config = require('so.base/Config.js')
 if (typeof Config.ssl === 'string') {
   Config.ssl = eval(`(${Config.ssl})`)
@@ -21,10 +12,27 @@ global.mylog = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' }
 async function initSingle() {
   global.wo = {} // wo 代表 world或‘我’，是当前的命名空间，把各种类都放在这里，防止和其他库的冲突。
   wo.Config = Config
-  // wo.Tool=new (require('so.base/Egg.js'))()
-  //   .extendMe(require('so.base/Messenger.js'))
-  //   .extendMe(require('so.base/Webtoken.js'))
-  //   .extendMe(require('so.base/User.js'))
+  wo.Tool = {
+    parseJsonPossible(value) {
+      try {
+        return JSON.parse(value)
+      } catch (e) {
+        return value
+      }
+    },
+    sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
+      let newEntity = {}
+      for (let key of Object.keys(fields).sort()) {
+        if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
+          newEntity[key] = entity[key]
+        }
+      }
+      for (let exkey of exclude) {
+        delete newEntity[exkey]
+      }
+      return JSON.stringify(newEntity)
+    },
+  }
 
   mylog.info('Loading classes ......')
   wo.System = require('./ling/System.js')
@@ -115,7 +123,7 @@ function runServer() {
     }
     for (let key in req.body) {
       // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
-      option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : my.parseJsonPossible(req.body[key])
+      option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.Tool.parseJsonPossible(req.body[key])
     }
     let { _api, _who, _act } = req.params
     console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)

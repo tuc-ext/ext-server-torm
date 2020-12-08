@@ -20,7 +20,6 @@
     "node-schedule": "^1.3.0",
     "serve-favicon": "^2.5.0",
     "so.base": "git+https://git.faronear.org/so/so.base",
-    "so.ling": "git+https://git.faronear.org/so/so.ling",
     "sqlite3": "^5.0.0",
     "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
     "typeorm": "^0.2.24",
