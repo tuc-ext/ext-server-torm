@@ -377,18 +377,3 @@ DAD.api.deletePlace = async function ({ _passtokenSource, place }) {
   }
   return { _state: 'FAILED' }
 }
-
-const my = {
-  sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
-    let newEntity = {}
-    for (let key of Object.keys(fields).sort()) {
-      if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
-        newEntity[key] = entity[key]
-      }
-    }
-    for (let exkey of exclude) {
-      delete newEntity[exkey]
-    }
-    return JSON.stringify(newEntity)
-  },
-}
