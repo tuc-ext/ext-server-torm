@@ -1,16 +1,16 @@
 const DAY_MILLIS = 24 * 60 * 60 * 1000
-const to = require('typeorm')
+const torm = require('typeorm')
 
 async function load() {
   global.wo = {}
 
   const Place = await require('../ling/Place.js')
 
-  await to.createConnection({
+  await torm.createConnection({
     type: 'sqlite',
     database: 'database/log.sqlite',
     //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
-    entities: [new to.EntitySchema(Place.schema)],
+    entities: [new torm.EntitySchema(Place.schema)],
     synchronize: Config.env !== 'production' ? true : false,
   })
 

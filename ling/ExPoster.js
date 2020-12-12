@@ -1,8 +1,8 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const DAD = (module.exports = class ExPoster extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   static schema = {
     name: this.name,
@@ -59,12 +59,12 @@ DAD.api.cancelPoster = async ({ ExPoster: { uuid } = {}, _passtokenSource } = {}
   let poster = await wo.ExPoster.findOne({ uuid: uuid })
   if (poster && _passtokenSource.uuid === poster.ownerUuid) {
     // 如果本广告还有进行中的订单，就不能撤销。
-    let suborderCount = await wo.ExOrder.count({ where: { posterUuid: uuid, status: to.Not('ORDER_COMPLETED') } })
+    let suborderCount = await wo.ExOrder.count({ where: { posterUuid: uuid, status: torm.Not('ORDER_COMPLETED') } })
     if (suborderCount > 0) {
       return { _state: 'ORDER_IN_PROCESS' }
     }
 
-    await to.getManager().transaction(async (txman) => {
+    await torm.getManager().transaction(async (txman) => {
       if (poster.type === 'SELL') {
         let onlineUser = await wo.User.findOne({ uuid: _passtokenSource.uuid })
         await txman.update(
@@ -83,7 +83,7 @@ DAD.api.cancelPoster = async ({ ExPoster: { uuid } = {}, _passtokenSource } = {}
 }
 
 DAD.api.getSellPosterList = async ({ order = { price: 'ASC' }, take = 10, skip = 0 } = {}) => {
-  let [posterList, count] = await DAD.findAndCount({ where: { type: 'SELL', status: to.Not('CANCELED') }, take, order, skip })
+  let [posterList, count] = await DAD.findAndCount({ where: { type: 'SELL', status: torm.Not('CANCELED') }, take, order, skip })
   if (posterList) {
     for (let poster of posterList) {
       let owner = await wo.User.findOne({ uuid: poster.ownerUuid })
@@ -95,7 +95,7 @@ DAD.api.getSellPosterList = async ({ order = { price: 'ASC' }, take = 10, skip =
   return { _state: 'FAILED' }
 }
 DAD.api.getBuyPosterList = async ({ order = { price: 'DESC' }, take = 10, skip = 0 } = {}) => {
-  let [posterList, count] = await DAD.findAndCount({ where: { type: 'BUY', status: to.Not('CANCELED') }, take, order, skip })
+  let [posterList, count] = await DAD.findAndCount({ where: { type: 'BUY', status: torm.Not('CANCELED') }, take, order, skip })
   if (posterList) {
     for (let poster of posterList) {
       let owner = await wo.User.findOne({ uuid: poster.ownerUuid })
@@ -138,6 +138,6 @@ DAD.api.getSuborderList = async ({ _passtokenSource, posterUuid, order = { start
 
 DAD.api.getMyOrder = async ({ _passtokenSource, posterUuid, type } = {}) => {
   // 一个广告下，我只能有一个正在进行中的订单。
-  let myOrder = await wo.ExOrder.findOne({ posterUuid: posterUuid, ownerUuid: _passtokenSource.uuid, type: type, status: to.Not('ORDER_COMPLETED') })
+  let myOrder = await wo.ExOrder.findOne({ posterUuid: posterUuid, ownerUuid: _passtokenSource.uuid, type: type, status: torm.Not('ORDER_COMPLETED') })
   return { _state: 'SUCCESS', myOrder }
 }

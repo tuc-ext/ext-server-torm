@@ -1,7 +1,7 @@
 'use strict'
 const Config = require('so.base/Config.js')
 const ticCrypto = require('tic.crypto')
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 const FROZEN_MILLIS = 60 * 60 * 1000 // 购入后，冻结多久
@@ -9,7 +9,7 @@ const ESTATE_RESTRICT = 100
 
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class Place extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   // 构建类
 
@@ -370,7 +370,7 @@ DAD.api.changeIntro = async function ({ _passtokenSource, Place }) {
 
 DAD.api.deletePlace = async function ({ _passtokenSource, place }) {
   if (place && place.uuid && _passtokenSource && _passtokenSource.uuid) {
-    return await to.getManager().transaction(async (txman) => {
+    return await torm.getManager().transaction(async (txman) => {
       await txman.delete(DAD, { uuid: place.uuid, ownerUuid: _passtokenSource.uuid })
       return { _state: 'SUCCESS' }
     })

@@ -1,7 +1,7 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const to = require('typeorm')
+const torm = require('typeorm')
 const Config = require('so.base/Config.js')
 if (typeof Config.ssl === 'string') {
   Config.ssl = eval(`(${Config.ssl})`)
@@ -49,17 +49,17 @@ async function initSingle() {
   if (typeof Config.datastore === 'string') {
     connectionOptions = eval(`(${Config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   }
-  let datastore = await to.createConnection(
+  let datastore = await torm.createConnection(
     Object.assign(connectionOptions, {
       //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
       entities: [
-        new to.EntitySchema(wo.Story.schema),
-        new to.EntitySchema(wo.Trade.schema),
-        new to.EntitySchema(wo.User.schema),
-        new to.EntitySchema(wo.Place.schema),
-        new to.EntitySchema(wo.ExPoster.schema),
-        new to.EntitySchema(wo.ExOrder.schema),
-        new to.EntitySchema(wo.Like.schema),
+        new torm.EntitySchema(wo.Story.schema),
+        new torm.EntitySchema(wo.Trade.schema),
+        new torm.EntitySchema(wo.User.schema),
+        new torm.EntitySchema(wo.Place.schema),
+        new torm.EntitySchema(wo.ExPoster.schema),
+        new torm.EntitySchema(wo.ExOrder.schema),
+        new torm.EntitySchema(wo.Like.schema),
       ],
       synchronize: true, //Config.env!=='production'?true:false,
     })

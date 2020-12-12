@@ -1,8 +1,8 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const DAD = (module.exports = class Story extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   static schema = {
     name: this.name,
@@ -38,7 +38,7 @@ DAD.api.getStoryList = async ({ _passtokenSource, placeUuid, skip = 0, take = 10
 
 DAD.api.deleteStory = async ({ _passtokenSource, story: { uuid, placeUuid } = {} }) => {
   if (uuid) {
-    return await to.getManager().transaction(async (txman) => {
+    return await torm.getManager().transaction(async (txman) => {
       await txman.delete(DAD, { uuid, placeUuid, authorUuid: _passtokenSource.uuid })
       await txman.decrement(wo.Place, { uuid: placeUuid }, 'countComment', 1)
       return { _state: 'SUCCESS', story: { uuid: uuid } }
@@ -54,7 +54,7 @@ DAD.api.publishStory = async ({ _passtokenSource, story: { placeUuid, storyConte
       // 已经存在
       let story = await DAD.findOne({ uuid })
       if (story && story.authorUuid && story.authorUuid === _passtokenSource.uuid && story.placeUuid === placeUuid) {
-        return await to.getManager().transaction(async (txman) => {
+        return await torm.getManager().transaction(async (txman) => {
           await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
           await txman.update(DAD, { uuid: uuid }, { storyContent, editTimeUnix: nowTimeUnix })
           story.storyContent = storyContent
@@ -66,7 +66,7 @@ DAD.api.publishStory = async ({ _passtokenSource, story: { placeUuid, storyConte
       }
     } else {
       // 尚不存在
-      return await to.getManager().transaction(async (txman) => {
+      return await torm.getManager().transaction(async (txman) => {
         await txman.increment(wo.Place, { uuid: placeUuid }, 'countComment', 1)
         let story = new DAD({ placeUuid, authorUuid: _passtokenSource.uuid, storyContent, createTimeUnix: nowTimeUnix, editTimeUnix: nowTimeUnix })
         await txman.save(story)

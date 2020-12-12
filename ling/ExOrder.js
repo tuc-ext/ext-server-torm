@@ -1,8 +1,8 @@
 // import {BaseEntity, Entity, PrimaryGeneratedColumn, Column} from "typeorm"
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const DAD = (module.exports = class ExOrder extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   static schema = {
     name: this.name,
@@ -38,7 +38,7 @@ DAD.api.createOrder = async ({ ExOrder, _passtokenSource } = {}) => {
     }
 
     // 一个人在一个广告下，只能同时有一个进行中的订单
-    let myOrder = await DAD.findOne({ ownerUuid: _passtokenSource.uuid, status: to.Not('ORDER_COMPLETED') })
+    let myOrder = await DAD.findOne({ ownerUuid: _passtokenSource.uuid, status: torm.Not('ORDER_COMPLETED') })
     if (myOrder) {
       return { _state: 'ORDER_IN_PROCESS' }
     }
@@ -138,7 +138,7 @@ DAD.api.confirmRelease = async ({ ExOrder, _passtokenSource } = {}) => {
       }
       order.status = 'ORDER_COMPLETED'
       order.releaseTime = new Date()
-      await to.getManager().transaction(async (txman) => {
+      await torm.getManager().transaction(async (txman) => {
         // 更新买家卖家
         await txman.decrement(wo.User, { uuid: order.sellerUuid }, 'frozenBalance', order.amount)
         await txman.increment(wo.User, { uuid: order.buyerUuid }, 'balance', order.amount)

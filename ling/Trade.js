@@ -1,7 +1,7 @@
 'use strict'
 
 const ticCrypto = require('tic.crypto')
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const Config = require('so.base/Config.js')
 const User = require('./User.js')
@@ -11,7 +11,7 @@ const DAY_MILLIS = 24 * 60 * 60 * 1000
 
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class Trade extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   // 构建类
   static schema = {
@@ -175,7 +175,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
           onlineUser.depositLogSum += txDB.amount
           depositUsdtNew += txDB.amountSource
           depositLogNew += txDB.amount
-          await to.getManager().transaction(async (txman) => {
+          await torm.getManager().transaction(async (txman) => {
             await txman.save(txDB)
             await txman.save(onlineUser)
           })
@@ -199,7 +199,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
 
 DAD.api.getMyTradeList = async function ({ _passtokenSource, maxtime, where = {}, order = { txTimeUnix: 'DESC' }, take = 10 } = {}) {
   where.uuidUser = _passtokenSource.uuid
-  where.txTimeUnix = to.LessThan(maxtime)
+  where.txTimeUnix = torm.LessThan(maxtime)
   let txlist = await DAD.find({ where, order, take })
   if (txlist) {
     return {

@@ -4,9 +4,9 @@ const Config = require('so.base/Config.js')
 const Trade = require('./Trade.js')
 const Place = require('./Place.js')
 const User = require('./User.js')
-const to = require('typeorm')
+const torm = require('typeorm')
 
-const DAD = (module.exports = class System extends to.BaseEntity {})
+const DAD = (module.exports = class System extends torm.BaseEntity {})
 
 DAD.api = {}
 
@@ -72,6 +72,6 @@ DAD.api.getConfiguration = async function () {
 
 const my = {
   async sum({ table, field, where } = {}) {
-    return (await to.getRepository(table).createQueryBuilder().select(`SUM(${field})`, 'sum').where(where).getRawOne()).sum
+    return (await torm.getRepository(table).createQueryBuilder().select(`SUM(${field})`, 'sum').where(where).getRawOne()).sum
   },
 }

@@ -5,13 +5,13 @@ const Messenger = require('so.base/Messenger.js')
 const Webtoken = require('so.base/Webtoken.js')
 const Internation = require('so.base/Internation.js')
 // const Trade = require('./Trade.js') // 这会造成循环require
-const to = require('typeorm')
+const torm = require('typeorm')
 
 const Config = require('so.base/Config.js')
 
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class User extends (
-  to.BaseEntity
+  torm.BaseEntity
 ) {
   // 构建类
   static schema = {
@@ -125,7 +125,7 @@ DAD.api.updateKycL1 = async function (option) {
 }
 DAD.sysapi.passKycL1 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL1: 'PASSED' })
     result._state = 'SUCCESS'
   })
@@ -133,7 +133,7 @@ DAD.sysapi.passKycL1 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL1 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL1: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -150,7 +150,7 @@ DAD.api.updateKycL2 = async function ({ _passtokenSource, User }) {
 }
 DAD.sysapi.passKycL2 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     // 先更新本人的状态
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL2: 'PASSED' })
     result._state = 'SUCCESS'
@@ -193,7 +193,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL2 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL2: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -211,7 +211,7 @@ DAD.api.updateKycL3 = async function ({ _passtokenSource, User }) {
 }
 DAD.sysapi.passKycL3 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL3: 'PASSED' })
     result._state = 'SUCCESS'
   })
@@ -219,7 +219,7 @@ DAD.sysapi.passKycL3 = async function ({ User }) {
 }
 DAD.sysapi.rejectKycL3 = async function ({ User }) {
   let result = { _state: 'ERROR' }
-  await to.getManager().transaction(async (txman) => {
+  await torm.getManager().transaction(async (txman) => {
     await txman.update(DAD, { uuid: User.uuid }, { kycStateL3: 'REJECTED' })
     result._state = 'SUCCESS'
   })
@@ -464,7 +464,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
       rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
     let aiidInviter = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
-    await to.getManager().transaction(async (txman) => {
+    await torm.getManager().transaction(async (txman) => {
       await txman.save(txReward)
       await txman.save(user)
       if (aiidInviter > 0) {
