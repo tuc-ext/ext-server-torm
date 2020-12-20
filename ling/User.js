@@ -7,8 +7,6 @@ const Internation = require('so.base/Internation.js')
 // const Trade = require('./Trade.js') // 这会造成循环require
 const torm = require('typeorm')
 
-const Config = require('so.base/Config.js')
-
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class User extends (
   torm.BaseEntity
@@ -174,7 +172,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
         txTime: passTime,
         txTimeUnix: passTime.valueOf(),
       })
-      txReward.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+      txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
       await txman.save(txReward)
 
       await txman.update(
@@ -237,7 +235,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
       uuid = `${Uuid.v4()}`
       _state = 'NEW_USER'
     }
-    mylog.info(`identify::::::: uuid = ${uuid}`)
+    wo.log.info(`identify::::::: uuid = ${uuid}`)
     return {
       _state,
       uuid,
@@ -264,10 +262,10 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   let passcode = ticCrypto.randomNumber({ length: 6 })
   let passcodePhone = Internation.validatePhone({ phone }) ? phone : _passtokenSource.phone
   let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
-  mylog.info('passcode = ' + passcode)
-  mylog.info('uuid = ' + _passtokenSource.uuid)
-  mylog.info('phone = ' + passcodePhone)
-  mylog.info('passcodeHash = ' + passcodeHash)
+  wo.log.info('passcode = ' + passcode)
+  wo.log.info('uuid = ' + _passtokenSource.uuid)
+  wo.log.info('phone = ' + passcodePhone)
+  wo.log.info('passcodeHash = ' + passcodeHash)
   // send SMS
   let sendResult
   if (process.env.NODE_ENV === 'production') {
@@ -398,8 +396,8 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
 }
 
 DAD.api.register = DAD.api1.register = async function (option) {
-  mylog.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
-  mylog.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
+  wo.log.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
+  wo.log.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
   if (
     option._passtokenSource &&
     option._passtokenSource.identifyState === 'NEW_USER' &&
@@ -429,11 +427,11 @@ DAD.api.register = DAD.api1.register = async function (option) {
     let coinAddress = {
       BTC: {
         path: pathBTC,
-        address: ticCrypto.secword2account(Config.secword, { coin: 'BTC', path: pathBTC }).address,
+        address: ticCrypto.secword2account(wo.config.secword, { coin: 'BTC', path: pathBTC }).address,
       },
       ETH: {
         path: pathETH,
-        address: ticCrypto.secword2account(Config.secword, { coin: 'ETH', path: pathETH }).address,
+        address: ticCrypto.secword2account(wo.config.secword, { coin: 'ETH', path: pathETH }).address,
       },
     }
     let txReward = wo.Trade.create({
@@ -447,7 +445,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
       txTime: new Date(registerTimeUnix),
       txTimeUnix: registerTimeUnix,
     })
-    txReward.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+    txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
 
     let user = DAD.create({
       uuid: option._passtokenSource.uuid,

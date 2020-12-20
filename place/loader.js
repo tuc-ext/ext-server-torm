@@ -1,5 +1,6 @@
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 const torm = require('typeorm')
+const Config = require('so.base/Config.js')
 
 async function load() {
   global.wo = {}

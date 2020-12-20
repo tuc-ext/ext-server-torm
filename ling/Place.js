@@ -1,5 +1,5 @@
 'use strict'
-const Config = require('so.base/Config.js')
+
 const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
 
@@ -12,7 +12,6 @@ const DAD = (module.exports = class Place extends (
   torm.BaseEntity
 ) {
   // 构建类
-
   static schema = {
     name: this.name,
     target: this,
@@ -167,8 +166,8 @@ DAD.api.payToCreatePlace = async function ({ _passtokenSource, Place }) {
     let place = DAD.create(Place)
     place.creatorUuid = _passtokenSource.uuid
     place.ownerUuid = _passtokenSource.uuid
-    place.feeRate = Config.FEE_RATE
-    place.taxRate = Config.TAX_RATE
+    place.feeRate = wo.config.FEE_RATE
+    place.taxRate = wo.config.TAX_RATE
     place.startPrice = Number(place.startPrice)
     place.buyPrice = place.startPrice
     place.sellPrice = place.buyPrice * (1 + place.profitRate) * (1 + place.feeRate + place.taxRate)
@@ -199,7 +198,7 @@ DAD.api.payToCreatePlace = async function ({ _passtokenSource, Place }) {
       txTime: new Date(txTimeUnix),
       json: { Place: { name: place.name } },
     })
-    txBuyer.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
+    txBuyer.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
     if (await txBuyer.save()) {
       return {
         _state: 'ESTATE_CREATE_SUCCESS',
@@ -252,7 +251,7 @@ DAD.api.payToBuyPlace = async function ({ _passtokenSource, Place }) {
       txTime: new Date(txTimeUnix),
       json: { Place: { name: place.name } },
     })
-    let json = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
+    let json = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txBuyer.constructor.schema.columns, entity: txBuyer, exclude: ['aiid', 'uuid'] }))
     txBuyer.txHash = ticCrypto.hash(json)
 
     let seller
@@ -278,7 +277,7 @@ DAD.api.payToBuyPlace = async function ({ _passtokenSource, Place }) {
         txTime: new Date(txTimeUnix),
         json: { Place: { name: place.name } },
       })
-      txSeller.txHash = ticCrypto.hash(wo.Tool.sortAndFilterJson({ fields: txSeller.constructor.schema.columns, entity: txSeller, exclude: ['aiid', 'uuid'] }))
+      txSeller.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txSeller.constructor.schema.columns, entity: txSeller, exclude: ['aiid', 'uuid'] }))
       await txSeller.save()
     }
 

@@ -3,9 +3,8 @@
 const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
 
-const Config = require('so.base/Config.js')
 const User = require('./User.js')
-const EtherscanApi = require('etherscan-api').init(Config.ETHERSCAN_APIKEY, Config.ETH_NETTYPE, 5000)
+const EtherscanApi = require('etherscan-api').init(wo.config.ETHERSCAN_APIKEY, wo.config.ETH_NETTYPE, 5000)
 
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 
@@ -40,7 +39,7 @@ const DAD = (module.exports = class Trade extends (
   }
 
   static getExchangeRate({ date = new Date(), coin = 'USDT' } = {}) {
-    let epoch = new Date(Config.EPOCH)
+    let epoch = new Date(wo.config.EPOCH)
     let dayNumber = date > epoch ? parseInt((date - epoch) / DAY_MILLIS) : 0
     switch (coin) {
       case 'USDT':
@@ -70,7 +69,7 @@ DAD.api.getMyTokenBalance = async function ({ coinType, _passtokenSource } = {})
       return { _state: 'USER_NOT_FOUND' }
     }
     let address = onlineUser.coinAddress[coinType].address
-    let tokenContract = Config.ETH_TOKEN_INFO[coinType].contract
+    let tokenContract = wo.config.ETH_TOKEN_INFO[coinType].contract
     // 查询以太币余额 await api.account.balance(address)
     let tokenBalanceResult = await EtherscanApi.account.tokenBalanceResult(address, '', tokenContract) // tokenName must be empty '', otherwise it fails, don't know why.
     console.log(`My ${coinType} balance = ${JSON.stringify(tokenBalanceResult)}`) // {"status":"1","message":"OK","result":"116517481000"}
@@ -98,7 +97,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
     return { _state: 'USER_NOT_FOUND' }
   }
   let address, tokenContract, txlistChain
-  if (Config.env === 'production') {
+  if (wo.config.env === 'production') {
     switch (coinType) {
       case 'BTC':
       case 'USDT_ON_BTC':
@@ -107,7 +106,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
       case 'USDT_ON_ETH':
         address = onlineUser.coinAddress.ETH.address.toLowerCase()
     }
-    tokenContract = Config.ETH_TOKEN_INFO['USDT_ON_ETH'].contract
+    tokenContract = wo.config.ETH_TOKEN_INFO['USDT_ON_ETH'].contract
     txlistChain = await EtherscanApi.account.tokentx(address, tokenContract, startBlock, endBlock, pageNumber, pageSize, sort).catch(function (err) {
       console.log(err)
       return { _state: 'CHAIN_QUERY_EMPTY' }
@@ -118,7 +117,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
     let accNone = '0xaDe455212458D41EF81fF157f39320128D161735' // 没有钱，没用过，为了测试。
 
     address = acc1
-    tokenContract = Config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
+    tokenContract = wo.config.ETH_TOKEN_INFO.USDT_ON_ETH.contract
     txlistChain = {
       status: '1',
       message: 'OK',
@@ -165,7 +164,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
           txDB.txTimeUnix = Date.now() // 以到账log的时间为准，不以ETH链上usdt到账时间 txChain.timeStamp*1000 为准
           txDB.txTime = new Date(txDB.txTimeUnix)
           txDB.amountSource = txChain.value / Math.pow(10, txChain.tokenDecimal)
-          txDB.exchangeRate = DAD.getExchangeRate({ coin: 'USDT_ON_ETH' }) // Config.coinSet.USDT_ON_ETH.exchange
+          txDB.exchangeRate = DAD.getExchangeRate({ coin: 'USDT_ON_ETH' }) // wo.config.coinSet.USDT_ON_ETH.exchange
           txDB.amount = txDB.amountSource * txDB.exchangeRate
           txDB.amountMining = txDB.amount
           txDB.json = txChain

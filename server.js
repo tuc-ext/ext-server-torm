@@ -2,39 +2,38 @@
 const fs = require('fs')
 const path = require('path')
 const torm = require('typeorm')
-const Config = require('so.base/Config.js')
-if (typeof Config.ssl === 'string') {
-  Config.ssl = eval(`(${Config.ssl})`)
+
+const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+wo.log = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' })
+wo.config = require('so.base/Config.js')
+if (typeof wo.config.ssl === 'string') {
+  wo.config.ssl = eval(`(${wo.config.ssl})`)
+}
+wo.tool = {
+  parseJsonPossible(value) {
+    try {
+      return JSON.parse(value)
+    } catch (e) {
+      return value
+    }
+  },
+  sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
+    const newEntity = {}
+    for (let key of Object.keys(fields).sort()) {
+      if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
+        newEntity[key] = entity[key]
+      }
+    }
+    for (let exkey of exclude) {
+      delete newEntity[exkey]
+    }
+    return JSON.stringify(newEntity)
+  },
 }
 
-global.mylog = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' })
-
 async function initSingle() {
-  global.wo = {} // wo 代表 world或‘我’，是当前的命名空间，把各种类都放在这里，防止和其他库的冲突。
-  wo.Config = Config
-  wo.Tool = {
-    parseJsonPossible(value) {
-      try {
-        return JSON.parse(value)
-      } catch (e) {
-        return value
-      }
-    },
-    sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
-      let newEntity = {}
-      for (let key of Object.keys(fields).sort()) {
-        if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
-          newEntity[key] = entity[key]
-        }
-      }
-      for (let exkey of exclude) {
-        delete newEntity[exkey]
-      }
-      return JSON.stringify(newEntity)
-    },
-  }
+  wo.log.info('Loading classes ......')
 
-  mylog.info('Loading classes ......')
   wo.System = require('./ling/System.js')
   wo.Trade = require('./ling/Trade.js')
   wo.User = require('./ling/User.js')
@@ -44,10 +43,10 @@ async function initSingle() {
   wo.ExOrder = require('./ling/ExOrder.js')
   wo.Like = require('./ling/Like.js')
 
-  mylog.info(`Initializing datastore ${Config.datastore} ......`)
-  let connectionOptions = Config.datastore
-  if (typeof Config.datastore === 'string') {
-    connectionOptions = eval(`(${Config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  wo.log.info(`Initializing datastore ${wo.config.datastore} ......`)
+  let connectionOptions = wo.config.datastore
+  if (typeof wo.config.datastore === 'string') {
+    connectionOptions = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   }
   let datastore = await torm.createConnection(
     Object.assign(connectionOptions, {
@@ -61,7 +60,7 @@ async function initSingle() {
         new torm.EntitySchema(wo.ExOrder.schema),
         new torm.EntitySchema(wo.Like.schema),
       ],
-      synchronize: true, //Config.env!=='production'?true:false,
+      synchronize: true, //wo.config.env!=='production'?true:false,
     })
   )
 
@@ -70,7 +69,7 @@ async function initSingle() {
 
 function runServer() {
   // 配置并启动 Web 服务
-  mylog.info('★★★★★★★★ 启动服务 ★★★★★★★★')
+  wo.log.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
   const webToken = require('so.base/Webtoken')
@@ -96,7 +95,7 @@ function runServer() {
         filename: function (req, file, cb) {
           // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
           let ext = file.originalname.replace(/^.*\.(\w+)$/, '$1')
-          let _passtokenSource = webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {}
+          let _passtokenSource = webToken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {}
           let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
           cb(null, filename)
         },
@@ -116,14 +115,14 @@ function runServer() {
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    let option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, Config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    let option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) {
       // GET 方法传来的参数.
       option[key] = my.parseJsonPossible(req.query[key])
     }
     for (let key in req.body) {
       // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
-      option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.Tool.parseJsonPossible(req.body[key])
+      option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     let { _api, _who, _act } = req.params
     console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
@@ -151,7 +150,7 @@ function runServer() {
         res.json({ _state: 'URL_MALFORMED' })
       }
     } catch (exception) {
-      mylog.info(exception)
+      wo.log.info(exception)
       res.json({ _state: 'EXECUTION_ERROR' })
     }
   })
@@ -172,57 +171,58 @@ function runServer() {
 
   /** * 启动 Web 服务 ***/
   let webServer
-  let portHttp = Config.port || 80
-  let portHttps = Config.port || 443
+  let portHttp = wo.config.port || 80
+  let portHttps = wo.config.port || 443
   let ipv4 = require('so.base/Network.js').getMyIp()
-  if (Config.protocol === 'http') {
+  if (wo.config.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
-        if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
+        if (err) wo.log.info(err)
+        else
+          wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
       })
-  } else if (Config.protocol === 'https') {
+  } else if (wo.config.protocol === 'https') {
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(Config.ssl.file.key),
-          cert: fs.readFileSync(Config.ssl.file.cert),
-          // ca: [ fs.readFileSync(Config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.config.ssl.file.key),
+          cert: fs.readFileSync(wo.config.ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
-        if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on ${Config.protocol}://${Config.host}:${portHttps} for ${server.settings.env} environment`)
+        if (err) wo.log.info(err)
+        else wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttps} for ${server.settings.env} environment`)
       })
-  } else if ('httpall' === Config.protocol) {
+  } else if ('httpall' === wo.config.protocol) {
     portHttp = 80
 
     require('http')
       .createServer(
         server.all('*', function (ask, reply) {
-          reply.redirect(`https://${Config.host}:${portHttps}`)
+          reply.redirect(`https://${wo.config.host}:${portHttps}`)
         })
       )
       .listen(portHttp, function (err) {
-        if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on [${Config.protocol}] http://${Config.host}:${portHttp} for ${server.settings.env} environment`)
+        if (err) wo.log.info(err)
+        else wo.log.info(`Web Server listening on [${wo.config.protocol}] http://${wo.config.host}:${portHttp} for ${server.settings.env} environment`)
       })
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(Config.ssl.file.key),
-          cert: fs.readFileSync(Config.ssl.file.cert),
-          // ca: [ fs.readFileSync(Config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.config.ssl.file.key),
+          cert: fs.readFileSync(wo.config.ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.config.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
-        if (err) mylog.info(err)
-        else mylog.info(`Web Server listening on [${Config.protocol}] https://${Config.host}:${portHttps} for ${server.settings.env} environment`)
+        if (err) wo.log.info(err)
+        else wo.log.info(`Web Server listening on [${wo.config.protocol}] https://${wo.config.host}:${portHttps} for ${server.settings.env} environment`)
       })
   }
 

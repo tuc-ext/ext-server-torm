@@ -1,6 +1,5 @@
 'use strict'
 
-const Config = require('so.base/Config.js')
 const Trade = require('./Trade.js')
 const Place = require('./Place.js')
 const User = require('./User.js')
@@ -30,13 +29,13 @@ DAD.api.getLinks = async () => {
 }
 
 DAD.api.getConfiguration = async function () {
-  for (const coin in Config.depositCoinSet) {
-    Config.depositCoinSet[coin].exchangeRate = Trade.getExchangeRate({
+  for (const coin in wo.config.depositCoinSet) {
+    wo.config.depositCoinSet[coin].exchangeRate = Trade.getExchangeRate({
       coin: coin,
     })
   }
-  for (const coin in Config.withdrawCoinSet) {
-    Config.withdrawCoinSet[coin].exchangeRate = Trade.getExchangeRate({
+  for (const coin in wo.config.withdrawCoinSet) {
+    wo.config.withdrawCoinSet[coin].exchangeRate = Trade.getExchangeRate({
       coin: coin,
     })
   }
@@ -44,8 +43,8 @@ DAD.api.getConfiguration = async function () {
   let configDynamic = require('../ConfigDynamic.js')
 
   const result = {
-    depositCoinSet: Config.depositCoinSet,
-    withdrawCoinSet: Config.withdrawCoinSet,
+    depositCoinSet: wo.config.depositCoinSet,
+    withdrawCoinSet: wo.config.withdrawCoinSet,
     configDynamic: configDynamic,
   }
   result.estateCount = await Place.count()
