@@ -1,5 +1,5 @@
 const WebSocket = require('ws')
-const webToken = require('so.base/Webtoken')
+const webtoken = require('so.webtoken')
 
 const my = {
   appSocketServer: undefined,
@@ -29,7 +29,7 @@ module.exports = {
           return
         }
         if (dataObj.skevent === 'SOCKET_OWNER') {
-          dataObj._passtokenSource = webToken.verifyToken(dataObj._passtoken, wo.config.tokenKey) // todo: 为防止前端欺骗，应当用和login里类似的方法来检查来检查
+          dataObj._passtokenSource = webtoken.verifyToken(dataObj._passtoken, wo.config.tokenKey) // todo: 为防止前端欺骗，应当用和login里类似的方法来检查来检查
           my.socketPool[dataObj._passtokenSource.uuid] = socket
           console.log('收到Login 成功的消息，绑定socket', Object.keys(my.socketPool))
 

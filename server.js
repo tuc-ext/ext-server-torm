@@ -4,8 +4,8 @@ const path = require('path')
 const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
-wo.log = require('so.base/Logger.js')({ root: 'logbook', file: 'log.log' })
-wo.config = require('so.base/Config.js')
+wo.log = require('so.logger')({ root: 'logbook', file: 'log.log' })
+wo.config = require('so.sysconfig')
 if (typeof wo.config.ssl === 'string') {
   wo.config.ssl = eval(`(${wo.config.ssl})`)
 }
@@ -72,7 +72,7 @@ function runServer() {
   wo.log.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
-  const webToken = require('so.base/Webtoken')
+  const webtoken = require('so.webtoken')
 
   /** * 通用中间件 ***/
 
@@ -95,7 +95,7 @@ function runServer() {
         filename: function (req, file, cb) {
           // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
           let ext = file.originalname.replace(/^.*\.(\w+)$/, '$1')
-          let _passtokenSource = webToken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {}
+          let _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {}
           let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
           cb(null, filename)
         },
@@ -115,7 +115,7 @@ function runServer() {
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    let option = { _passtokenSource: webToken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    let option = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.config.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) {
       // GET 方法传来的参数.
       option[key] = my.parseJsonPossible(req.query[key])
@@ -173,7 +173,7 @@ function runServer() {
   let webServer
   let portHttp = wo.config.port || 80
   let portHttps = wo.config.port || 443
-  let ipv4 = require('so.base/Network.js').getMyIp()
+  let ipv4 = require('so.nettool').getMyIp()
   if (wo.config.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')

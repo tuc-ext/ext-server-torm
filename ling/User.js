@@ -1,9 +1,9 @@
 'use strict'
 const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
-const Messenger = require('so.base/Messenger.js')
-const Webtoken = require('so.base/Webtoken.js')
-const Internation = require('so.base/Internation.js')
+const messenger = require('so.messenger')
+const webtoken = require('so.webtoken')
+const Internation = require('so.i18n')
 // const Trade = require('./Trade.js') // 这会造成循环require
 const torm = require('typeorm')
 
@@ -227,23 +227,19 @@ DAD.sysapi.rejectKycL3 = async function ({ User }) {
 DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   if (phone && Internation.validatePhone({ phone })) {
     let user = await DAD.findOne({ phone })
-    let _state, uuid
-    if (user) {
-      uuid = user.uuid
-      _state = 'OLD_USER'
-    } else {
-      uuid = `${Uuid.v4()}`
-      _state = 'NEW_USER'
-    }
-    wo.log.info(`identify::::::: uuid = ${uuid}`)
+    let _state = user ? 'OLD_USER' : 'NEW_USER'
+    let uuid = user ? user.uuid : Uuid.v4()
     return {
       _state,
       uuid,
-      _passtoken: Webtoken.createToken({
-        phone,
-        uuid,
-        identifyState: _state,
-      }),
+      _passtoken: webtoken.createToken(
+        {
+          phone,
+          uuid,
+          identifyState: _state,
+        },
+        wo.config.tokenKey
+      ),
     }
   }
   return { _state: 'INPUT_MALFORMED' }
@@ -263,23 +259,21 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   let passcodePhone = Internation.validatePhone({ phone }) ? phone : _passtokenSource.phone
   let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
   wo.log.info('passcode = ' + passcode)
-  wo.log.info('uuid = ' + _passtokenSource.uuid)
   wo.log.info('phone = ' + passcodePhone)
+  wo.log.info('uuid = ' + _passtokenSource.uuid)
   wo.log.info('passcodeHash = ' + passcodeHash)
   // send SMS
-  let sendResult
+  let sendResult = { sendState: 'DONE' }
   if (process.env.NODE_ENV === 'production') {
-    sendResult = await Messenger.sendSms(passcodePhone, {
+    sendResult = await messenger.sendSms(passcodePhone, {
       vendor: 'aliyun',
       msgParam: { code: passcode },
       templateCode: 'SMS_142465215',
       signName: 'LOG',
     })
-  } else {
-    sendResult = { state: 'DONE' }
   }
 
-  if (sendResult.state === 'DONE') {
+  if (sendResult.sendState === 'DONE') {
     let passcodeSentAt = Date.now()
     let passcodeExpireAt = Date.now() + 5 * 60 * 1000
     return {
@@ -288,14 +282,15 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
       passcodePhone,
       passcodeSentAt,
       passcodeExpireAt,
-      _passtoken: Webtoken.createToken(
+      _passtoken: webtoken.createToken(
         Object.assign(_passtokenSource, {
           passcodePhone,
           passcodeHash,
           passcodeState: 'PASSCODE_SENT',
           passcodeSentAt,
           passcodeExpireAt,
-        })
+        }),
+        wo.config.tokenKey
       ),
     }
   }
@@ -317,11 +312,12 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
     return {
       _state: 'VERIFY_SUCCESS',
       verifyExpireAt: expire,
-      _passtoken: Webtoken.createToken(
+      _passtoken: webtoken.createToken(
         Object.assign(_passtokenSource, {
           verifyState: 'VERIFY_SUCCESS',
           verifyExpireAt: expire,
-        })
+        }),
+        wo.config.tokenKey
       ),
     }
   } else {
@@ -352,10 +348,11 @@ DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
     _state: 'SUCCESS',
     verifyExpireAt: expire,
     phone: _passtokenSource.passcodePhone,
-    _passtoken: Webtoken.createToken(
+    _passtoken: webtoken.createToken(
       Object.assign(_passtokenSource, {
         phone: _passtokenSource.passcodePhone,
-      })
+      }),
+      wo.config.tokenKey
     ),
   }
 }
@@ -364,14 +361,12 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  if (/^[0-9a-zA-Z]+$/.test(regcode)) {
-    let aiid = ticCrypto.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
-    if (aiid < 0 || !Number.isInteger(aiid) || aiid > (await DAD.count())) {
-      return { _state: 'REGCODE_USER_NOTEXIST' }
-    }
-    // 允许 aiid>0 或 aiid===0 第一个用户登录时，需要一个系统默认的邀请码。
-  } else {
+  let aiid = ticCrypto.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
+  if (aiid === null) {
+    // 非法的regcode
     return { _state: 'REGCODE_MALFORMED' }
+  } else if (aiid > (await DAD.count())) {
+    return { _state: 'REGCODE_USER_NOTEXIST' }
   }
   if (/^\d{6}$/.test(passcode) && _passtokenSource.phone === _passtokenSource.passcodePhone) {
     if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
@@ -379,12 +374,13 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
       return {
         _state: 'VERIFY_SUCCESS',
         verifyExpireAt: expire,
-        _passtoken: Webtoken.createToken(
+        _passtoken: webtoken.createToken(
           Object.assign(_passtokenSource, {
             regcode: regcode,
             verifyState: 'VERIFY_SUCCESS',
             verifyExpireAt: expire,
-          })
+          }),
+          wo.config.tokenKey
         ),
       }
     } else {
@@ -395,26 +391,26 @@ DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode 
   }
 }
 
-DAD.api.register = DAD.api1.register = async function (option) {
-  wo.log.info(`${__filename} register::::::: option._passtokenSource.uuid = ${option._passtokenSource.uuid}`)
-  wo.log.info(`${__filename} register::::::: option.passwordClient = ${option.passwordClient}`)
+DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passwordClient, phone, lang, citizen }) {
+  wo.log.info(`${__filename} register::::::: _passtokenSource.uuid = ${_passtokenSource.uuid}`)
+  wo.log.info(`${__filename} register::::::: passwordClient = ${passwordClient}`)
   if (
-    option._passtokenSource &&
-    option._passtokenSource.identifyState === 'NEW_USER' &&
-    option._passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
-    option._passtokenSource.verifyExpireAt > Date.now() &&
-    option.phone &&
-    option.phone === option._passtokenSource.phone &&
-    option._passtokenSource.uuid &&
-    option.passwordClient
+    _passtokenSource &&
+    _passtokenSource.identifyState === 'NEW_USER' &&
+    _passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
+    _passtokenSource.verifyExpireAt > Date.now() &&
+    phone &&
+    phone === _passtokenSource.phone &&
+    _passtokenSource.uuid &&
+    passwordClient
   ) {
-    let passwordServer = ticCrypto.hash(option.passwordClient + option._passtokenSource.uuid)
+    let passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
     let registerTimeUnix = Date.now()
     // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
     // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
     // Account/Change/Index 最大到 parseInt(0x7FFFFFFF, 16)
     // 后面还可继续延伸 /xxx/xxx/xxx/......
-    let seed = ticCrypto.hash(registerTimeUnix + option._passtokenSource.uuid, { hasher: 'md5' })
+    let seed = ticCrypto.hash(registerTimeUnix + _passtokenSource.uuid, { hasher: 'md5' })
     let part0 = parseInt(seed.slice(0, 6), 16)
     let part1 = parseInt(seed.slice(6, 12), 16)
     let part2 = parseInt(seed.slice(12, 18), 16)
@@ -435,7 +431,7 @@ DAD.api.register = DAD.api1.register = async function (option) {
       },
     }
     let txReward = wo.Trade.create({
-      uuidUser: option._passtokenSource.uuid,
+      uuidUser: _passtokenSource.uuid,
       uuidOther: 'SYSTEM',
       txGroup: 'REWARD_TX',
       txType: 'REWARD_REGIST',
@@ -448,20 +444,20 @@ DAD.api.register = DAD.api1.register = async function (option) {
     txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
 
     let user = DAD.create({
-      uuid: option._passtokenSource.uuid,
-      phone: option.phone,
+      uuid: _passtokenSource.uuid,
+      phone: phone,
       passwordServer,
-      regcode: option._passtokenSource.regcode.toLowerCase(),
-      nickname: `----${option.phone.substr(-4)}`,
+      regcode: _passtokenSource.regcode.toLowerCase(),
+      nickname: `----${phone.substr(-4)}`,
       coinAddress,
       whenRegister: new Date(registerTimeUnix),
       registerTimeUnix,
-      lang: option.lang,
-      citizen: option.citizen,
+      lang: lang,
+      citizen: citizen,
       balance: 10 * wo.Trade.getExchangeRate({}),
       rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
-    let aiidInviter = ticCrypto.regcode2aiid(option._passtokenSource.regcode.toLowerCase())
+    let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
     await torm.getManager().transaction(async (txman) => {
       await txman.save(txReward)
       await txman.save(user)
@@ -473,14 +469,17 @@ DAD.api.register = DAD.api1.register = async function (option) {
       return {
         _state: 'REGISTER_SUCCESS',
         onlineUser: await DAD.normalize(user),
-        _passtoken: Webtoken.createToken({
-          uuid: option._passtokenSource.uuid,
-          phone: option.phone,
-          passwordClient: option.passwordClient,
-          isOnline: 'ONLINE',
-          onlineSince: new Date(),
-          onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-        }),
+        _passtoken: webtoken.createToken(
+          {
+            uuid: _passtokenSource.uuid,
+            phone: phone,
+            passwordClient: passwordClient,
+            isOnline: 'ONLINE',
+            onlineSince: new Date(),
+            onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+          },
+          wo.config.tokenKey
+        ),
       }
     } else {
       return { _state: 'REGISTER_FAILED' }
@@ -516,14 +515,17 @@ DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passt
         return {
           _state: 'LOGIN_SUCCESS',
           onlineUser: await DAD.normalize(onlineUser),
-          _passtoken: Webtoken.createToken({
-            uuid: _passtokenSource.uuid,
-            phone: phone,
-            passwordClient: passwordClient,
-            isOnline: 'ONLINE',
-            onlineSince: Date.now(),
-            onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-          }),
+          _passtoken: webtoken.createToken(
+            {
+              uuid: _passtokenSource.uuid,
+              phone: phone,
+              passwordClient: passwordClient,
+              isOnline: 'ONLINE',
+              onlineSince: Date.now(),
+              onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+            },
+            wo.config.tokenKey
+          ),
         }
       } else {
         return {
@@ -575,14 +577,17 @@ DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewC
     DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticCrypto.hash(passwordNewClient + _passtokenSource.uuid) })
     return {
       _state: 'SUCCESS',
-      _passtoken: Webtoken.createToken({
-        uuid: _passtokenSource.uuid,
-        phone: onlineUser.phone,
-        passwordClient: passwordNewClient,
-        isOnline: 'ONLINE',
-        onlineSince: Date.now(),
-        onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-      }),
+      _passtoken: webtoken.createToken(
+        {
+          uuid: _passtokenSource.uuid,
+          phone: onlineUser.phone,
+          passwordClient: passwordNewClient,
+          isOnline: 'ONLINE',
+          onlineSince: Date.now(),
+          onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        },
+        wo.config.tokenKey
+      ),
     }
   }
   return { _state: 'PASSWORD_UNMATCH' }
