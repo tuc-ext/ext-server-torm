@@ -5,7 +5,7 @@ const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 wo.log = require('so.logger')({ root: 'logbook', file: 'log.log' })
-wo.config = require('so.sysconfig')
+wo.config = require('so.sysconfig')()
 if (typeof wo.config.ssl === 'string') {
   wo.config.ssl = eval(`(${wo.config.ssl})`)
 }

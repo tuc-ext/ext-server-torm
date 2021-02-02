@@ -26,7 +26,7 @@
     "so.sysconfig": "git+https://git.faronear.org/npm/so.sysconfig",
     "so.webtoken": "git+https://git.faronear.org/npm/so.webtoken",
     "sqlite3": "^5.0.0",
-    "tic.crypto": "git+https://git.faronear.org/tic/tic.crypto",
+    "tic.crypto": "git+https://git.faronear.org/npm/tic.crypto",
     "typeorm": "^0.2.24",
     "ws": "^7.3.0"
   },
