@@ -8,9 +8,7 @@ const Internation = require('so.i18n')
 const torm = require('typeorm')
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class User extends (
-  torm.BaseEntity
-) {
+const DAD = (module.exports = class User extends torm.BaseEntity {
   // 构建类
   static schema = {
     name: this.name,
@@ -406,20 +404,9 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
   ) {
     let passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
     let registerTimeUnix = Date.now()
-    // 路径规范 BIP44: m/Purpose'/Coin'/Account'/Change/Index,
-    // 但实际上 Purpose, Coin 都可任意定；' 可有可无；
-    // Account/Change/Index 最大到 parseInt(0x7FFFFFFF, 16)
-    // 后面还可继续延伸 /xxx/xxx/xxx/......
-    let seed = ticCrypto.hash(registerTimeUnix + _passtokenSource.uuid, { hasher: 'md5' })
-    let part0 = parseInt(seed.slice(0, 6), 16)
-    let part1 = parseInt(seed.slice(6, 12), 16)
-    let part2 = parseInt(seed.slice(12, 18), 16)
-    let part3 = parseInt(seed.slice(18, 24), 16)
-    let part4 = parseInt(seed.slice(24, 30), 16)
-    let part5 = parseInt(seed.slice(31, 32), 16)
-    let path = `${part0}'/${part1}/${part2}/${part3}/${part4}/${part5}`
-    let pathBTC = `m/44'/0'/${path}`
-    let pathETH = `m/44'/60'/${path}`
+
+    let pathBTC = ticCrypto.seed2path(registerTimeUnix + _passtokenSource.uuid, { coin: 'BTC' })
+    let pathETH = ticCrypto.seed2path(registerTimeUnix + _passtokenSource.uuid, { coin: 'ETH' })
     let coinAddress = {
       BTC: {
         path: pathBTC,
@@ -430,6 +417,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
         address: ticCrypto.secword2account(wo.config.secword, { coin: 'ETH', path: pathETH }).address,
       },
     }
+
     let txReward = wo.Trade.create({
       uuidUser: _passtokenSource.uuid,
       uuidOther: 'SYSTEM',
@@ -457,6 +445,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       balance: 10 * wo.Trade.getExchangeRate({}),
       rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
+
     let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
     await torm.getManager().transaction(async (txman) => {
       await txman.save(txReward)
@@ -465,7 +454,9 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
         await txman.increment(DAD, { aiid: aiidInviter }, 'communityNumber', 1)
       }
     })
+
     if (user) {
+      wo.EventCenter.emit('User.REGISTER_SUCCESS', { uuid: _passtokenSource.uuid })
       return {
         _state: 'REGISTER_SUCCESS',
         onlineUser: await DAD.normalize(user),
@@ -482,6 +473,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
         ),
       }
     } else {
+      wo.EventCenter.emit('User.REGISTER_FAILED')
       return { _state: 'REGISTER_FAILED' }
     }
   }

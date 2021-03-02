@@ -34,6 +34,8 @@ wo.tool = {
 async function initSingle() {
   wo.log.info('Loading classes ......')
 
+  wo.EventCenter = new (require('events'))()
+
   wo.System = require('./ling/System.js')
   wo.Trade = require('./ling/Trade.js')
   wo.User = require('./ling/User.js')
