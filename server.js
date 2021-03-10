@@ -140,25 +140,25 @@ function runServer() {
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    try {
-      if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
+    if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
+      try {
         var outdata = await wo[_who][_api][_act](option)
         console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
         console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
         console.log(outdata)
         console.log('⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
-      } else {
-        res.json({ _state: 'URL_MALFORMED' })
+      } catch (exception) {
+        wo.log.info(exception)
+        res.json({ _state: 'BACKEND_EXCEPTION' })
       }
-    } catch (exception) {
-      wo.log.info(exception)
-      res.json({ _state: 'EXECUTION_ERROR' })
+    } else {
+      res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
 
   server.all('*', function (req, res) {
-    /* 错误的API调用进入这里。 */ res.json({ _state: 'UNKNOWN_API' })
+    /* 错误的API调用进入这里。 */ res.json({ _state: 'BACKEND_API_MALFORMED' })
   })
 
   // 错误处理中间件应当在路由加载之后才能加载

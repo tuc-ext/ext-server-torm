@@ -486,7 +486,21 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
     let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer && onlineUser.phone === _passtokenSource.phone) {
-        return { _state: 'AUTOLOGIN_SUCCESS', onlineUser: await DAD.normalize(onlineUser) }
+        return {
+          _state: 'AUTOLOGIN_SUCCESS',
+          onlineUser: await DAD.normalize(onlineUser),
+          _passtoken: webtoken.createToken(
+            {
+              uuid: _passtokenSource.uuid,
+              phone: _passtokenSource.phone,
+              passwordClient: _passtokenSource.passwordClient,
+              isOnline: 'ONLINE',
+              onlineSince: Date.now(),
+              onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+            },
+            wo.config.tokenKey
+          ),
+        }
       } else {
         return { _state: 'AUTOLOGIN_FAILED_WRONG_PASSWORD' }
       }
@@ -540,14 +554,12 @@ DAD.api.logout = async function ({ _passtokenSource }) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.resetPassword = async function ({ _passtokenSource, phone, passwordClient }) {
+DAD.api.resetPassword = async function ({ _passtokenSource = {}, phone = '', passwordClient }) {
   if (
-    _passtokenSource &&
     _passtokenSource.identifyState === 'OLD_USER' &&
     _passtokenSource.verifyState === 'VERIFY_SUCCESS' &&
     _passtokenSource.verifyExpireAt > Date.now() &&
-    phone &&
-    phone === _passtokenSource.phone &&
+    _passtokenSource.phone === phone &&
     _passtokenSource.uuid &&
     passwordClient
   ) {
@@ -556,7 +568,7 @@ DAD.api.resetPassword = async function ({ _passtokenSource, phone, passwordClien
     if (updated) {
       return { _state: 'RESET_SUCCESS' }
     } else {
-      return { _state: 'REGISTER_FAILED' }
+      return { _state: 'RESET_FAILED' }
     }
   } else {
     return { _state: 'INPUT_MALFORMED' }
