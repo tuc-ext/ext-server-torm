@@ -5,7 +5,6 @@ module.exports = {
   commanderOptions: [
     // 命令行里可以接受的参数。将传给 config.js 里的 commander。每个参数的定义格式是 [参数名，参数键，描述]，后两者用于传给commander，取值后覆盖掉Config里的同名变量。
     ['datastore', '-d, --datastore <string>', 'Datastore for permanent storage in JSON string.'],
-    ['env', '--env <string>', 'Runtime environment: production|development.'],
     ['host', '-H, --host <string>', 'Host ip or domain name.'],
     ['protocol', '-P, --protocol <string>', 'Web Server protocol: http|https|httpall.'],
     ['port', '-p, --port <number>', 'HTTP port number.'],

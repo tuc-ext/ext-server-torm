@@ -62,7 +62,7 @@ async function initSingle() {
         new torm.EntitySchema(wo.ExOrder.schema),
         new torm.EntitySchema(wo.Like.schema),
       ],
-      synchronize: true, //wo.config.env!=='production'?true:false,
+      synchronize: true, // process.env.NODE_ENV!=='production'?true:false,
     })
   )
 
