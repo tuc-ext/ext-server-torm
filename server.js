@@ -4,11 +4,14 @@ const path = require('path')
 const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
-wo.log = require('so.logger')({ root: 'logbook', file: 'log.log' })
+
 wo.config = require('so.sysconfig')()
-if (typeof wo.config.ssl === 'string') {
-  wo.config.ssl = eval(`(${wo.config.ssl})`)
-}
+if (typeof wo.config.ssl === 'string') wo.config.ssl = eval(`(${wo.config.ssl})`)
+if (typeof wo.config.datastore === 'string') wo.config.datastore = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+if (!wo.config.datastore.type) wo.config.datastore.type = 'sqlite' // 默认为 sqlite
+
+wo.log = require('so.logger')(wo.config.logstore)
+
 wo.tool = {
   parseJsonPossible(value) {
     try {
@@ -45,13 +48,9 @@ async function initSingle() {
   wo.ExOrder = require('./ling/ExOrder.js')
   wo.Like = require('./ling/Like.js')
 
-  wo.log.info(`Initializing datastore ${wo.config.datastore} ......`)
-  let connectionOptions = wo.config.datastore
-  if (typeof wo.config.datastore === 'string') {
-    connectionOptions = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-  }
-  let datastore = await torm.createConnection(
-    Object.assign(connectionOptions, {
+  wo.log.info(`Initializing datastore ${JSON.stringify(wo.config.datastore)} ......`)
+  await torm.createConnection(
+    Object.assign(wo.config.datastore, {
       //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
       entities: [
         new torm.EntitySchema(wo.Story.schema),
@@ -62,7 +61,7 @@ async function initSingle() {
         new torm.EntitySchema(wo.ExOrder.schema),
         new torm.EntitySchema(wo.Like.schema),
       ],
-      synchronize: true, // process.env.NODE_ENV!=='production'?true:false,
+      synchronize: true, // wo.config.runenv !== 'production' ? true : false,
     })
   )
 
@@ -78,7 +77,7 @@ function runServer() {
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(server.get('env') === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')(wo.config.runenv === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())
@@ -162,7 +161,7 @@ function runServer() {
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
-  if (server.get('env') === 'development') {
+  if (wo.config.runenv === 'development') {
     server.use(
       require('errorhandler')({
         dumpExceptions: true,
@@ -182,8 +181,7 @@ function runServer() {
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else
-          wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttp} with IPv4=${ipv4} for ${server.settings.env} environment`)
+        else wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttp} with IPv4=${ipv4} for ${wo.config.runenv} environment`)
       })
   } else if (wo.config.protocol === 'https') {
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
@@ -198,7 +196,7 @@ function runServer() {
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttps} for ${server.settings.env} environment`)
+        else wo.log.info(`Web Server listening on ${wo.config.protocol}://${wo.config.host}:${portHttps} for ${wo.config.runenv} environment`)
       })
   } else if ('httpall' === wo.config.protocol) {
     portHttp = 80
@@ -211,7 +209,7 @@ function runServer() {
       )
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.config.protocol}] http://${wo.config.host}:${portHttp} for ${server.settings.env} environment`)
+        else wo.log.info(`Web Server listening on [${wo.config.protocol}] http://${wo.config.host}:${portHttp} for ${wo.config.runenv} environment`)
       })
     webServer = require('https')
       .createServer(
@@ -224,7 +222,7 @@ function runServer() {
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.config.protocol}] https://${wo.config.host}:${portHttps} for ${server.settings.env} environment`)
+        else wo.log.info(`Web Server listening on [${wo.config.protocol}] https://${wo.config.host}:${portHttps} for ${wo.config.runenv} environment`)
       })
   }
 

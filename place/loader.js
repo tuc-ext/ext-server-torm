@@ -12,7 +12,7 @@ async function load() {
     database: 'database/log.sqlite',
     //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
     entities: [new torm.EntitySchema(Place.schema)],
-    synchronize: Config.env !== 'production' ? true : false,
+    synchronize: Config.runenv !== 'production' ? true : false,
   })
 
   let placedb = require('./placedb.js')

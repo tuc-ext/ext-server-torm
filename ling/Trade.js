@@ -9,9 +9,7 @@ const EtherscanApi = require('etherscan-api').init(wo.config.ETHERSCAN_APIKEY, w
 const DAY_MILLIS = 24 * 60 * 60 * 1000
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class Trade extends (
-  torm.BaseEntity
-) {
+const DAD = (module.exports = class Trade extends torm.BaseEntity {
   // 构建类
   static schema = {
     name: this.name,
@@ -97,7 +95,7 @@ DAD.api.refreshMyDeposit = async function ({ _passtokenSource, coinType } = {}) 
     return { _state: 'USER_NOT_FOUND' }
   }
   let address, tokenContract, txlistChain
-  if (wo.config.env === 'production') {
+  if (wo.config.runenv === 'production') {
     switch (coinType) {
       case 'BTC':
       case 'USDT_ON_BTC':
