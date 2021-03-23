@@ -139,7 +139,7 @@ function runServer() {
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    if (wo[_who] && wo[_who][_api] && wo[_who][_api].hasOwnProperty(_act) && typeof wo[_who][_api][_act] === 'function') {
+    if (typeof wo[_who]?.[_api]?.[_act] === 'function' && wo[_who][_api].hasOwnProperty(_act)) {
       try {
         var outdata = await wo[_who][_api][_act](option)
         console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
