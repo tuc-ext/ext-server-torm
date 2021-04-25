@@ -19,7 +19,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
 })
 
 DAD.init = async () => {
-  DAD.ipfs = await IPFS.create()
+  DAD.ipfs = await IPFS.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
   return DAD
 }
 
