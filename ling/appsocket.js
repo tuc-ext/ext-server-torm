@@ -1,4 +1,4 @@
-const WebSocket = require('ws')
+const ws = require('ws')
 const webtoken = require('so.webtoken')
 
 const my = {
@@ -9,7 +9,7 @@ const my = {
 
 module.exports = {
   initSocket: (webServer) => {
-    my.appSocketServer = new WebSocket.Server({ server: webServer })
+    my.appSocketServer = new ws.Server({ server: webServer })
     console.info('App Socket Server attached to web server.')
 
     my.appSocketServer.on('connection', (socket, req) => {

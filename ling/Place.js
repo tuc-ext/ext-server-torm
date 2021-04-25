@@ -42,10 +42,10 @@ const DAD = (module.exports = class Place extends (
       sellTimeUnix: { type: 'int', default: null },
       sellTimeUnixDaily: { type: 'int', default: null },
       sellPrice: { type: 'real', default: null },
-      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
       countLike: { type: 'int', default: 0 },
       countDislike: { type: 'int', default: 0 },
       countComment: { type: 'int', default: 0 },
+      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
 })

@@ -16,7 +16,7 @@ module.exports = {
   port: 60564, // 本节点的 Web服务端口号
   // 数据库设置
   datastore: { type: 'sqlite', database: 'database/log.sqlite' },
-  logstore: { type:'file', root: 'logbook', file:'log.txt'}
+  logstore: { type: 'file', root: 'logbook', file: 'log.txt' },
 
   ETHERSCAN_APIKEY: '测试发现，其实胡编的也可以用，不管对主网还是测试网。但只有访问主网的apikey使用才会被etherscan记录。',
   ETH_NETTYPE: 'ropsten',

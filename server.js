@@ -47,6 +47,7 @@ async function initSingle() {
   wo.ExPoster = require('./ling/ExPoster.js')
   wo.ExOrder = require('./ling/ExOrder.js')
   wo.Like = require('./ling/Like.js')
+  wo.NFT = await require('./ling/NFT.js').init()
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.config.datastore)} ......`)
   await torm.createConnection(
