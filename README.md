@@ -4,8 +4,8 @@
 
 - 应用链 [tac/\_tac](https://git.faronear.org/tac/_tac)
   - 洛格 [tac/log](https://git.faronear.org/tac/log)
-    - 应用服务端
-      - **<font size=5>[tac/log.server.oo](https://git.faronear.org/tac/log.server.oo) (面向对象)</font>**
+    - 服务端
+      - **<font size=5>[tac/log.server.oo](https://git.faronear.org/tac/log.server.oo)</font>**
 
 ## 更多资料
 
