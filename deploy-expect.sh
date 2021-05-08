@@ -12,6 +12,6 @@ expect {
   ":~]"
   {send "su\n";exp_continue}
   "Password:"
-  {send "yuan&jin52O\ncd /faronear/tac/log.server.oo && git pull && npx pm2 restart all && npx pm2 log\n"}
+  {send "yuan&jin52O\ncd /faronear/tac/log.server.torm && git pull && npx pm2 restart all && npx pm2 log\n"}
 }
 interact
