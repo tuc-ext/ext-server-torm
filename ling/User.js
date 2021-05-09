@@ -1,9 +1,9 @@
 'use strict'
 const Uuid = require('uuid')
 const ticCrypto = require('tic.crypto')
-const messenger = require('so.messenger')
-const webtoken = require('so.webtoken')
-const Internation = require('so.i18n')
+const messenger = require('sol.messenger')
+const webtoken = require('sol.webtoken')
+const Internation = require('sol.i18n')
 // const Trade = require('./Trade.js') // 这会造成循环require
 const torm = require('typeorm')
 

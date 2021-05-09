@@ -5,12 +5,12 @@ const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
-wo.config = require('so.sysconfig')()
+wo.config = require('sol.sysconfig')()
 if (typeof wo.config.ssl === 'string') wo.config.ssl = eval(`(${wo.config.ssl})`)
 if (typeof wo.config.datastore === 'string') wo.config.datastore = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
 if (!wo.config.datastore.type) wo.config.datastore.type = 'sqlite' // 默认为 sqlite
 
-wo.log = require('so.logger')(wo.config.logstore)
+wo.log = require('sol.logger')(wo.config.logstore)
 
 wo.tool = {
   parseJsonPossible(value) {
@@ -74,7 +74,7 @@ function runServer() {
   wo.log.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
-  const webtoken = require('so.webtoken')
+  const webtoken = require('sol.webtoken')
 
   /** * 通用中间件 ***/
 
@@ -175,7 +175,7 @@ function runServer() {
   let webServer
   let portHttp = wo.config.port || 80
   let portHttps = wo.config.port || 443
-  let ipv4 = require('so.nettool').getMyIp()
+  let ipv4 = require('sol.nettool').getMyIp()
   if (wo.config.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')

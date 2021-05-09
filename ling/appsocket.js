@@ -1,5 +1,5 @@
 const ws = require('ws')
-const webtoken = require('so.webtoken')
+const webtoken = require('sol.webtoken')
 
 const my = {
   appSocketServer: undefined,
