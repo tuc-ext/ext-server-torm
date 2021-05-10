@@ -1,11 +1,10 @@
-# log.server.torm: 洛格.服务端.面向对象
+# log.server.torm ｜ 洛格.服务端.面向对象
 
-## 项目库导航
+导航路径 [Organizations](https://git.faronear.org/explore/organizations)
 
 - 应用链 [tac/\_tac](https://git.faronear.org/tac/_tac)
   - 洛格 [tac/log](https://git.faronear.org/tac/log)
-    - 服务端
-      - **<font size=5>[tac/log.server.torm](https://git.faronear.org/tac/log.server.torm)</font>**
+    - **<font size=5>服务端.torm [tac/log.server.torm](https://git.faronear.org/tac/log.server.torm)</font>**
 
 ## 更多资料
 
