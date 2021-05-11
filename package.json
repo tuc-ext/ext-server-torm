@@ -1,5 +1,5 @@
 {
-  "name": "log.server",
+  "name": "ubi.server",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -39,17 +39,17 @@
     "supervisor": "^0.12.0"
   },
   "scripts": {
-    "ssl": "certbot certonly -d server.log.yuanjin.net --standalone",
+    "ssl": "certbot certonly -d server.ubi.yuanjin.net --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database -- server.js",
-    "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name log.server.torm",
+    "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name ubi.server.torm",
     "daemon": "cross-env NODE_ENV=production node server.js",
     "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
-    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name log.server.torm",
-    "certbot": "certbot certonly -d server.log.yuanjin.net",
-    "deploy": "expect deploy-expect.sh server.log.yuanjin.net",
+    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ubi.server.torm",
+    "certbot": "certbot certonly -d server.ubi.yuanjin.net",
+    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net",
     "pm2": "pm2"
   },
   "author": ""

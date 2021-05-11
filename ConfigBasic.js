@@ -15,7 +15,7 @@ module.exports = {
   host: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
   port: 60564, // 本节点的 Web服务端口号
   // 数据库设置
-  datastore: { type: 'sqlite', database: 'database/log.sqlite' },
+  datastore: { type: 'sqlite', database: 'database/ubi.sqlite' },
   logstore: { type: 'file', root: 'logbook', file: 'log.txt' },
 
   ETHERSCAN_APIKEY: '测试发现，其实胡编的也可以用，不管对主网还是测试网。但只有访问主网的apikey使用才会被etherscan记录。',
@@ -45,7 +45,7 @@ module.exports = {
 
   production: {
     protocol: 'https',
-    host: 'server.log.yuanjin.net',
+    host: 'server.ubi.yuanjin.net',
     ssl: {
       type: 'file', // file
       file: {

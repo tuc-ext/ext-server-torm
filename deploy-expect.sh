@@ -3,7 +3,7 @@
 ## Usage: expect this.sh
 
 set timeout 30
-spawn ssh adot@server.log.yuanjin.net
+spawn ssh adot@server.ubi.yuanjin.net
 expect {
   "(yes/no)?"
   {send "yes\n";exp_continue}
@@ -12,6 +12,6 @@ expect {
   ":~]"
   {send "su\n";exp_continue}
   "Password:"
-  {send "yuan&jin52O\ncd /faronear/tac/log.server.torm && git pull && npx pm2 restart all && npx pm2 log\n"}
+  {send "yuan&jin52O\ncd /faronear/tac/ubi.server.torm && git pull && npx pm2 restart all && npx pm2 log\n"}
 }
 interact

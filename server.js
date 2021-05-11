@@ -39,14 +39,6 @@ async function initSingle() {
 
   wo.EventCenter = new (require('events'))()
 
-  wo.System = require('./ling/System.js')
-  wo.Trade = require('./ling/Trade.js')
-  wo.User = require('./ling/User.js')
-  wo.Place = require('./ling/Place.js')
-  wo.Story = require('./ling/Story.js')
-  wo.ExPoster = require('./ling/ExPoster.js')
-  wo.ExOrder = require('./ling/ExOrder.js')
-  wo.Like = require('./ling/Like.js')
   wo.NFT = await require('./ling/NFT.js').init()
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.config.datastore)} ......`)
@@ -54,13 +46,7 @@ async function initSingle() {
     Object.assign(wo.config.datastore, {
       //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
       entities: [
-        new torm.EntitySchema(wo.Story.schema),
-        new torm.EntitySchema(wo.Trade.schema),
-        new torm.EntitySchema(wo.User.schema),
-        new torm.EntitySchema(wo.Place.schema),
-        new torm.EntitySchema(wo.ExPoster.schema),
-        new torm.EntitySchema(wo.ExOrder.schema),
-        new torm.EntitySchema(wo.Like.schema),
+//        new torm.EntitySchema(wo.Like.schema),
       ],
       synchronize: true, // wo.config.runenv !== 'production' ? true : false,
     })
