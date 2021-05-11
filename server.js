@@ -46,7 +46,7 @@ async function initSingle() {
     Object.assign(wo.config.datastore, {
       //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
       entities: [
-//        new torm.EntitySchema(wo.Like.schema),
+        //        new torm.EntitySchema(wo.Like.schema),
       ],
       synchronize: true, // wo.config.runenv !== 'production' ? true : false,
     })
@@ -214,8 +214,8 @@ function runServer() {
   }
 
   // 启动socket服务
-  wo.appSocket = require('./ling/appsocket.js')
-  wo.appSocket.initSocket(webServer)
+  wo.basesocket = require('sol.basesocket')
+  wo.basesocket.initSocket(webServer)
 
   return webServer
 }
