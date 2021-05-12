@@ -44,9 +44,9 @@ async function initSingle() {
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.config.datastore)} ......`)
   await torm.createConnection(
     Object.assign(wo.config.datastore, {
-      //    entitySchemas: [wo.Story.schema, wo.Trade.schema, wo.User.schema, wo.Place.schema],
+      entitySchemas: [wo.NFT.schema],
       entities: [
-        //        new torm.EntitySchema(wo.Like.schema),
+        new torm.EntitySchema(wo.NFT.schema),
       ],
       synchronize: true, // wo.config.runenv !== 'production' ? true : false,
     })
