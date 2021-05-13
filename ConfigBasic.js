@@ -6,8 +6,8 @@ module.exports = {
     // 命令行里可以接受的参数。将传给 config.js 里的 commander。每个参数的定义格式是 [参数名，参数键，描述]，后两者用于传给commander，取值后覆盖掉Config里的同名变量。
     ['datastore', '-d, --datastore <string>', 'Permanent storage in JSON string.'],
     ['host', '-H, --host <string>', 'Host ip or domain name.'],
-    ['protocol', '-P, --protocol <string>', 'Web Server protocol: http|https|httpall.'],
     ['port', '-p, --port <number>', 'HTTP port number.'],
+    ['protocol', '-P, --protocol <string>', 'Web Server protocol: http|https|httpall.'],
     ['ssl', '--ssl <string>', 'SSL options in JSON string.'],
   ],
 
@@ -17,31 +17,6 @@ module.exports = {
   // 数据库设置
   datastore: { type: 'sqlite', database: 'database/ubi.sqlite' },
   logstore: { type: 'file', root: 'logbook', file: 'log.txt' },
-
-  ETHERSCAN_APIKEY: '测试发现，其实胡编的也可以用，不管对主网还是测试网。但只有访问主网的apikey使用才会被etherscan记录。',
-  ETH_NETTYPE: 'ropsten',
-  ETH_TOKEN_INFO: {
-    USDT_ON_ETH: {
-      // created by myself in Ethereum's testnet 'ropsten'
-      contract: '0xb16815dbeceb459d9e33b8bba45ed717c479ea1c',
-      owner: '0xe72ba549597aec145b2ec62b99928bd8d1d16230',
-    },
-  },
-  EPOCH: '2020-05-25T16:00:00.000Z', // 原为3/25
-  depositCoinSet: {
-    USDT_ON_ETH: { name: 'USDT', exchangeRate: 1000 },
-    // USDT_ON_BTC: { name:'USDT(BTC)', exchangeRate: 1000 },
-    // BTC: { name:'BTC', exchangeRate: 6000000 },
-    // ETH: { name:'ETH', exchangeRate: 15 },
-  },
-  withdrawCoinSet: {
-    LOG: { name: 'LOG', exchangeRate: 1 },
-    USDT_ON_ETH: { name: 'USDT', exchangeRate: 1000 },
-  },
-  COMMUNITY_REWARD: 5,
-  PROFIT_RATE: 0.05,
-  FEE_RATE: 0.005,
-  TAX_RATE: 0.005,
 
   production: {
     protocol: 'https',
@@ -54,18 +29,5 @@ module.exports = {
         ca: '', // ssl ca file,
       },
     },
-
-    ETHERSCAN_APIKEY: '9M4QGPUVYPG5G9BIM5EJ96IA6TARPGZRBX',
-    ETH_NETTYPE: undefined,
-    ETH_TOKEN_INFO: {
-      USDT_ON_ETH: { contract: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
-      EURT_ON_ETH: { contract: '0xabdf147870235fcfc34153828c769a70b3fae01f' },
-      CNHT_ON_ETH: { contract: '0x6e109e9dd7fa1a58bc3eff667e8e41fc3cc07aef' },
-    },
   },
-
-  /* 数据库，HTTP 等设置（与时光链本身无关） */
-  HTTP_BODY_LIMIT: '50mb',
-  UPLOAD_LIMIT: 1048576, // 单位: Byte。
-  SESSION_LIFETIME: 60 * 60 * 24 * 7, // 一星期
 }
