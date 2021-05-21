@@ -38,6 +38,8 @@ DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
   return { _state: 'SUCCESS', cid: cid.toString() }
 }
 
-DAD.api.seal = async ({ creator_cipher, cid } = {}) => {
-  let proxy_cipher = ticCrypto.encrypt({ data: cid, key: '', keytype: 'pwd' })
+DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
+  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
+  console.log('proxy_cipher===', proxy_cipher)
+  return { _state: 'SUCCESS', proxy_cipher }
 }
