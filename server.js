@@ -45,9 +45,7 @@ async function initSingle() {
   await torm.createConnection(
     Object.assign(wo.config.datastore, {
       entitySchemas: [wo.NFT.schema],
-      entities: [
-        new torm.EntitySchema(wo.NFT.schema),
-      ],
+      entities: [new torm.EntitySchema(wo.NFT.schema)],
       synchronize: true, // wo.config.runenv !== 'production' ? true : false,
     })
   )
@@ -113,10 +111,10 @@ function runServer() {
       option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     let { _api, _who, _act } = req.params
-    console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
+    console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
     console.info(`[ Request ${_api}/${_who}/${_act} indata ] `)
     console.log(option)
-    console.log('👆 👆 👆 👆 👆 👆 👆 👆')
+    console.log('👆-👆-👆-👆-👆-👆-👆-👆')
 
     option._req = req
     option._res = res
@@ -129,10 +127,10 @@ function runServer() {
     if (typeof wo[_who]?.[_api]?.[_act] === 'function' && wo[_who][_api].hasOwnProperty(_act)) {
       try {
         var outdata = await wo[_who][_api][_act](option)
-        console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
+        console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
         console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
         console.log(outdata)
-        console.log('⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️ ⬆️')
+        console.log('⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
         wo.log.info(exception)

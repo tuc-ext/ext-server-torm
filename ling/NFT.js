@@ -13,9 +13,9 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     columns: {
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
-      creator_cipher: { type: 'simple-json', default: '{}', nullable: true },
+      creator_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
       creator_pubkey: { type: String, default: '', nullable: true },
-      proxy_cipher: { type: 'simple-json', default: '{}', nullable: true },
+      proxy_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
       proxy_pubkey: { type: String, default: '', nullable: true },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
@@ -41,5 +41,22 @@ DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
 DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
   let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
   console.log('proxy_cipher===', proxy_cipher)
+  // to check cid 是否已存在
+  await DAD.insert({ creator_cipher, proxy_cipher })
   return { _state: 'SUCCESS', proxy_cipher }
+}
+
+DAD.api.getNftList = async ({}) => {
+  let nftList = await DAD.find()
+  return { _state: 'SUCCESS', nftList }
+}
+
+DAD.api.unsealNft = async ({}) => {
+  let nftList = await DAD.find()
+  let cidList = []
+  for (let nft of nftList) {
+    let cid = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
+    cidList.push(cid)
+  }
+  return { _state: 'SUCCESS', cidList }
 }
