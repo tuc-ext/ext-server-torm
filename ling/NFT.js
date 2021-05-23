@@ -46,17 +46,12 @@ DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
   return { _state: 'SUCCESS', proxy_cipher }
 }
 
-DAD.api.getNftList = async ({}) => {
+DAD.api.getNftList = async () => {
   let nftList = await DAD.find()
   return { _state: 'SUCCESS', nftList }
 }
 
-DAD.api.unsealNft = async ({}) => {
-  let nftList = await DAD.find()
-  let cidList = []
-  for (let nft of nftList) {
-    let cid = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
-    cidList.push(cid)
-  }
-  return { _state: 'SUCCESS', cidList }
+DAD.api.unsealNft = async ({ nft }) => {
+  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
+  return { _state: 'SUCCESS', plaindata }
 }
