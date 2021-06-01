@@ -14,9 +14,11 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       aiid: { type: 'int', generated: true, primary: true },
       uuid: { type: String, generated: 'uuid', unique: true },
       creator_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
-      creator_pubkey: { type: String, default: '', nullable: true },
+      creator_pubkey: { type: String, default: '', nullable: true, comment: '原始创作者' },
+      owner_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
+      owner_pubkey: { type: String, default: '', nullable: true, comment: '当前拥有者' },
       proxy_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
-      proxy_pubkey: { type: String, default: '', nullable: true },
+      proxy_pubkey: { type: String, default: '', nullable: true, comment: '当前代理者' },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
