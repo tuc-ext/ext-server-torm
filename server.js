@@ -40,6 +40,7 @@ async function initSingle() {
   wo.EventCenter = new (require('events'))()
 
   wo.NFT = await require('./ling/NFT.js').init()
+  wo.Action = await require('./ling/Action.js')
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.config.datastore)} ......`)
   await torm.createConnection(

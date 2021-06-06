@@ -6,12 +6,11 @@
   - 泛游 [tac/ubi](https://git.faronear.org/tac/ubi)
     - **<font size=5>服务端.torm [tac/ubi.server.torm](https://git.faronear.org/tac/ubi.server.torm)</font>**
 
-## 网络地址
+- NFT: 记录创作、转让的交易。OwnerAction
+- Action: 记录NFT的付费解密的交易。VisitorAction
+- Coin: 记录资金流转的交易
 
-- 应用后台主机: `server.ubi.yuanjin.net`
+第一次创作：要提供 cid 作为证明
+转让：要提供买家和卖家各自的签名
 
-## 系统部署
-
-```
-npm run deploy -- 密码
-```
+解密：提供支付证明。

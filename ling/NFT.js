@@ -4,6 +4,8 @@ const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
 const IPFS = require('ipfs-core')
 
+// 叫做 ASSET?
+
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class NFT extends torm.BaseEntity {
   // 构建类
@@ -11,8 +13,9 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
-      aiid: { type: 'int', generated: true, primary: true },
-      uuid: { type: String, generated: 'uuid', unique: true },
+      // aiid: { type: 'int', generated: true, primary: true },
+      // uuid: { type: String, generated: 'uuid', unique: true },
+      hash: { type: String, unique: true, default: '', nullable: false, primary: true},
       creator_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },
       creator_pubkey: { type: String, default: '', nullable: true, comment: '原始创作者' },
       owner_cipher: { type: 'simple-json', default: '{}', nullable: true, unique: true },

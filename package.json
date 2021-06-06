@@ -50,8 +50,7 @@
     "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
     "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ubi.server.torm",
     "certbot": "certbot certonly -d server.ubi.yuanjin.net",
-    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net",
-    "pm2": "pm2"
+    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net"
   },
   "author": ""
 }
