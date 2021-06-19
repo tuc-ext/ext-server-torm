@@ -5,7 +5,7 @@ const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
-function configServer(){
+function configEnvironment(){
   wo.config = require('sol.sysconfig')()
 
   if (typeof wo.config.ssl === 'string') wo.config.ssl = eval(`(${wo.config.ssl})`)
@@ -13,7 +13,7 @@ function configServer(){
   if (!wo.config.datastore.type) wo.config.datastore.type = 'sqlite' // 默认为 sqlite
 }
 
-async function initServer() {
+async function initWorld() {
   wo.log = require('sol.logger')(wo.config.logstore)
   wo.tool = require('sol.tool')
   
@@ -201,7 +201,7 @@ function runServer() {
 }
 
 ;(async function start() {
-  configServer()
-  await initServer()
+  configEnvironment()
+  await initWorld()
   runServer()
 })()
