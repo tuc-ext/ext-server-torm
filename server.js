@@ -79,7 +79,7 @@ function runServer() {
 
   /** * 路由中间件 ***/
 
-  server.all('/:_api/:_who/:_act', async function (req, res) {
+  server.all('/:api/:who/:how', async function (req, res) {
     // API 格式：http://address:port/api/Block/getBlockList
 
     /* 把前端传来的json参数，重新解码成对象 */
@@ -93,9 +93,9 @@ function runServer() {
       // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
       option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
-    let { _api, _who, _act } = req.params
+    let { api, who, how } = req.params
     console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
-    console.info(`[ Request ${_api}/${_who}/${_act} indata ] `)
+    console.info(`[ Request ${api}/${who}/${how} indata ] `)
     console.log(option)
     console.log('👆-👆-👆-👆-👆-👆-👆-👆')
 
@@ -107,11 +107,11 @@ function runServer() {
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    if (typeof wo[_who]?.[_api]?.[_act] === 'function' && wo[_who][_api].hasOwnProperty(_act)) {
+    if (typeof wo[who]?.[api]?.[how] === 'function' && wo[who][api].hasOwnProperty(how)) {
       try {
-        var outdata = await wo[_who][_api][_act](option)
+        var outdata = await wo[who][api][how](option)
         console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
-        console.info(`[ Response ${_api}/${_who}/${_act} outdata ] `)
+        console.info(`[ Response ${api}/${who}/${how} outdata ] `)
         console.log(outdata)
         console.log('⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
