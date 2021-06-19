@@ -6,15 +6,15 @@ const torm = require('typeorm')
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment(){
-  wo.envc = require('sol.sysconfig')()
+  wo.envi = require('sol.enviconfig')()
 
-  if (typeof wo.envc.ssl === 'string') wo.envc.ssl = eval(`(${wo.envc.ssl})`)
-  if (typeof wo.envc.datastore === 'string') wo.envc.datastore = eval(`(${wo.envc.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-  if (!wo.envc.datastore.type) wo.envc.datastore.type = 'sqlite' // 默认为 sqlite
+  if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
+  if (typeof wo.envi.datastore === 'string') wo.envi.datastore = eval(`(${wo.envi.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  if (!wo.envi.datastore.type) wo.envi.datastore.type = 'sqlite' // 默认为 sqlite
 }
 
 async function initWorld() {
-  wo.log = require('sol.logger')(wo.envc.logstore)
+  wo.log = require('sol.logger')(wo.envi.logstore)
   wo.tool = require('sol.tool')
   
   wo.log.info('Loading classes ......')
@@ -24,12 +24,12 @@ async function initWorld() {
   wo.NFT = await require('./ling/NFT.js').init()
   wo.Action = await require('./ling/Action.js')
 
-  wo.log.info(`Initializing datastore ${JSON.stringify(wo.envc.datastore)} ......`)
+  wo.log.info(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
   await torm.createConnection(
-    Object.assign(wo.envc.datastore, {
+    Object.assign(wo.envi.datastore, {
       entitySchemas: [wo.NFT.schema],
       entities: [new torm.EntitySchema(wo.NFT.schema)],
-      synchronize: true, // wo.envc.runenv !== 'production' ? true : false,
+      synchronize: true, // wo.envi.runenv !== 'production' ? true : false,
     })
   )
 
@@ -45,7 +45,7 @@ function runServer() {
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(wo.envc.runenv === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')(wo.envi.runenv === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())
@@ -64,7 +64,7 @@ function runServer() {
         filename: function (req, file, cb) {
           // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
           let ext = file.originalname.replace(/^.*\.(\w+)$/, '$1')
-          let _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.envc.tokenKey) || {}
+          let _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {}
           let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
           cb(null, filename)
         },
@@ -84,7 +84,7 @@ function runServer() {
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    let option = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envc.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    let option = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (let key in req.query) {
       // GET 方法传来的参数.
       option[key] = my.parseJsonPossible(req.query[key])
@@ -129,7 +129,7 @@ function runServer() {
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
-  if (wo.envc.runenv === 'development') {
+  if (wo.envi.runenv === 'development') {
     server.use(
       require('errorhandler')({
         dumpExceptions: true,
@@ -140,57 +140,57 @@ function runServer() {
 
   /** * 启动 Web 服务 ***/
   let webServer
-  let portHttp = wo.envc.port || 80
-  let portHttps = wo.envc.port || 443
+  let portHttp = wo.envi.port || 80
+  let portHttps = wo.envi.port || 443
   let ipv4 = require('sol.nettool').getMyIp()
-  if (wo.envc.protocol === 'http') {
+  if (wo.envi.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on ${wo.envc.protocol}://${wo.envc.host}:${portHttp} with IPv4=${ipv4} for ${wo.envc.runenv} environment`)
+        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.runenv} environment`)
       })
-  } else if (wo.envc.protocol === 'https') {
+  } else if (wo.envi.protocol === 'https') {
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envc.ssl.file.key),
-          cert: fs.readFileSync(wo.envc.ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envc.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envi.ssl.file.key),
+          cert: fs.readFileSync(wo.envi.ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envi.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on ${wo.envc.protocol}://${wo.envc.host}:${portHttps} for ${wo.envc.runenv} environment`)
+        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.runenv} environment`)
       })
-  } else if ('httpall' === wo.envc.protocol) {
+  } else if ('httpall' === wo.envi.protocol) {
     portHttp = 80
 
     require('http')
       .createServer(
         server.all('*', function (ask, reply) {
-          reply.redirect(`https://${wo.envc.host}:${portHttps}`)
+          reply.redirect(`https://${wo.envi.host}:${portHttps}`)
         })
       )
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.envc.protocol}] http://${wo.envc.host}:${portHttp} for ${wo.envc.runenv} environment`)
+        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.runenv} environment`)
       })
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envc.ssl.file.key),
-          cert: fs.readFileSync(wo.envc.ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envc.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envi.ssl.file.key),
+          cert: fs.readFileSync(wo.envi.ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envi.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.envc.protocol}] https://${wo.envc.host}:${portHttps} for ${wo.envc.runenv} environment`)
+        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.runenv} environment`)
       })
   }
 

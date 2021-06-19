@@ -25,7 +25,7 @@
     "sol.logger": "git+https://git.faronear.org/npm/sol.logger",
     "sol.messenger": "git+https://git.faronear.org/npm/sol.messenger",
     "sol.nettool": "git+https://git.faronear.org/npm/sol.nettool",
-    "sol.sysconfig": "git+https://git.faronear.org/npm/sol.sysconfig",
+    "sol.enviconfig": "git+https://git.faronear.org/npm/sol.enviconfig",
     "sol.tool": "git+https://git.faronear.org/npm/sol.tool",
     "sol.webtoken": "git+https://git.faronear.org/npm/sol.webtoken",
     "sqlite3": "^5.0.0",
