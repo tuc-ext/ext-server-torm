@@ -44,7 +44,7 @@ DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
 }
 
 DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
-  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
+  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envc.secword).seckey, keytype: 'pwd' })
   console.log('proxy_cipher===', proxy_cipher)
   // to check cid 是否已存在
   await DAD.insert({ creator_cipher, proxy_cipher })
@@ -57,6 +57,6 @@ DAD.api.getNftList = async () => {
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.config.secword).seckey, keytype: 'pwd' })
+  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envc.secword).seckey, keytype: 'pwd' })
   return { _state: 'SUCCESS', plaindata }
 }
