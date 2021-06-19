@@ -29,7 +29,7 @@ async function initWorld() {
     Object.assign(wo.envi.datastore, {
       entitySchemas: [wo.NFT.schema],
       entities: [new torm.EntitySchema(wo.NFT.schema)],
-      synchronize: true, // wo.envi.runenv !== 'production' ? true : false,
+      synchronize: true, // wo.envi.prodev !== 'production' ? true : false,
     })
   )
 
@@ -45,7 +45,7 @@ function runServer() {
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(wo.envi.runenv === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')(wo.envi.prodev === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/logbook', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())
@@ -129,7 +129,7 @@ function runServer() {
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
-  if (wo.envi.runenv === 'development') {
+  if (wo.envi.prodev === 'development') {
     server.use(
       require('errorhandler')({
         dumpExceptions: true,
@@ -149,7 +149,7 @@ function runServer() {
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.runenv} environment`)
+        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
       })
   } else if (wo.envi.protocol === 'https') {
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
@@ -164,7 +164,7 @@ function runServer() {
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.runenv} environment`)
+        else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   } else if ('httpall' === wo.envi.protocol) {
     portHttp = 80
@@ -177,7 +177,7 @@ function runServer() {
       )
       .listen(portHttp, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.runenv} environment`)
+        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.prodev} environment`)
       })
     webServer = require('https')
       .createServer(
@@ -190,7 +190,7 @@ function runServer() {
       )
       .listen(portHttps, function (err) {
         if (err) wo.log.info(err)
-        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.runenv} environment`)
+        else wo.log.info(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   }
 
