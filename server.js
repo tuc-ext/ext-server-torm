@@ -5,36 +5,18 @@ const torm = require('typeorm')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
-wo.config = require('sol.sysconfig')()
-if (typeof wo.config.ssl === 'string') wo.config.ssl = eval(`(${wo.config.ssl})`)
-if (typeof wo.config.datastore === 'string') wo.config.datastore = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-if (!wo.config.datastore.type) wo.config.datastore.type = 'sqlite' // 默认为 sqlite
+function configServer(){
+  wo.config = require('sol.sysconfig')()
 
-wo.log = require('sol.logger')(wo.config.logstore)
-
-wo.tool = {
-  parseJsonPossible(value) {
-    try {
-      return JSON.parse(value)
-    } catch (e) {
-      return value
-    }
-  },
-  sortAndFilterJson({ fields, entity, exclude = [] } = {}) {
-    const newEntity = {}
-    for (let key of Object.keys(fields).sort()) {
-      if (typeof (entity[key] !== 'undefined') && !Number.isNaN(entity[key]) && entity[key] !== Infinity) {
-        newEntity[key] = entity[key]
-      }
-    }
-    for (let exkey of exclude) {
-      delete newEntity[exkey]
-    }
-    return JSON.stringify(newEntity)
-  },
+  if (typeof wo.config.ssl === 'string') wo.config.ssl = eval(`(${wo.config.ssl})`)
+  if (typeof wo.config.datastore === 'string') wo.config.datastore = eval(`(${wo.config.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  if (!wo.config.datastore.type) wo.config.datastore.type = 'sqlite' // 默认为 sqlite
 }
 
-async function initSingle() {
+async function initServer() {
+  wo.log = require('sol.logger')(wo.config.logstore)
+  wo.tool = require('sol.tool')
+  
   wo.log.info('Loading classes ......')
 
   wo.EventCenter = new (require('events'))()
@@ -219,6 +201,7 @@ function runServer() {
 }
 
 ;(async function start() {
-  await initSingle()
+  configServer()
+  await initServer()
   runServer()
 })()
