@@ -15,7 +15,7 @@ function configEnvironment(){
 
 async function initWorld() {
   wo.log = require('sol.logger')(wo.envi.logstore)
-  wo.tool = require('sol.tool')
+  wo.tool = require('sol.basetool')
   
   wo.log.info('Loading classes ......')
 

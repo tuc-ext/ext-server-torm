@@ -41,7 +41,7 @@
     "sol.logger": "git+https://git.faronear.org/npm/sol.logger",
     "sol.messenger": "git+https://git.faronear.org/npm/sol.messenger",
     "sol.nettool": "git+https://git.faronear.org/npm/sol.nettool",
-    "sol.tool": "git+https://git.faronear.org/npm/sol.tool",
+    "sol.basetool": "git+https://git.faronear.org/npm/sol.basetool",
     "sol.webServerSocket": "git+https://git.faronear.org/npm/sol.webServerSocket",
     "sol.webtoken": "git+https://git.faronear.org/npm/sol.webtoken",
     "sqlite3": "^5.0.0",
