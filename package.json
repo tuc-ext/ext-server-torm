@@ -2,9 +2,25 @@
   "name": "ubi.server.torm",
   "version": "0.1.0",
   "private": true,
+  "author": "",
   "engines": {
     "node": "10.16.0",
     "npm": "6.9.0"
+  },
+  "scripts": {
+    "clean": "run-script-os",
+    "clean:nix": "rm -fr node_modules && rm -fr package-lock.json",
+    "clean:windows": "rd /s /q node_modeuls && rd /s /q package-lock.json",
+    "ssl": "certbot certonly -d server.ubi.yuanjin.net --standalone",
+    "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
+    "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
+    "dev": "cross-env NODE_ENV=development node server.js",
+    "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database -- server.js",
+    "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name ubi.server.torm",
+    "drive": "cross-env NODE_ENV=production node server.js",
+    "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
+    "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ubi.server.torm",
+    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net"
   },
   "dependencies": {
     "body-parser": "^1.16.1",
@@ -37,21 +53,8 @@
     "cross-env": "^7.0.2",
     "nodemon": "^2.0.2",
     "pm2": "^4.5.0",
+    "run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
     "supervisor": "^0.12.0"
-  },
-  "scripts": {
-    "ssl": "certbot certonly -d server.ubi.yuanjin.net --standalone",
-    "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
-    "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
-    "dev": "cross-env NODE_ENV=development node server.js",
-    "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database -- server.js",
-    "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name ubi.server.torm",
-    "daemon": "cross-env NODE_ENV=production node server.js",
-    "daemon.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
-    "daemon.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ubi.server.torm",
-    "certbot": "certbot certonly -d server.ubi.yuanjin.net",
-    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net"
-  },
-  "author": ""
+  }
 }
