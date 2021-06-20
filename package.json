@@ -8,9 +8,9 @@
     "npm": "6.9.0"
   },
   "scripts": {
-    "clean": "run-script-os",
-    "clean:nix": "rm -fr node_modules && rm -fr package-lock.json",
-    "clean:windows": "rd /s /q node_modeuls && rd /s /q package-lock.json",
+    "boot": "run-script-os",
+    "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
+    "boot:windows": "rd /s /q node_modeuls && rd /s /q package-lock.json && npm i",
     "ssl": "certbot certonly -d server.ubi.yuanjin.net --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
