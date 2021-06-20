@@ -195,7 +195,7 @@ function runServer() {
   }
 
   // 启动socket服务
-  wo.basesocket = require('sol.basesocket').initSocket(webServer)
+  wo.webServerSocket = require('sol.webServerSocket').initSocket(webServer)
 
   return webServer
 }
