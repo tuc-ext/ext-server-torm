@@ -8,9 +8,9 @@
     "npm": "6.9.0"
   },
   "scripts": {
-    "boot": "npm i run-script-os && run-script-os",
+    "boot": "npx run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
-    "boot:windows": "rd /s /q node_modules && rd /s /q package-lock.json && npm i",
+    "boot:windows": "npx rimraf node_modules package-lock.json && npm i",
     "ssl": "certbot certonly -d server.ubi.yuanjin.net --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbook,database --inspect-brk -- server.js",
@@ -53,6 +53,7 @@
     "cross-env": "^7.0.2",
     "nodemon": "^2.0.2",
     "pm2": "^4.5.0",
+    "rimraf": "^3.0.2",
     "run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
     "supervisor": "^0.12.0"
