@@ -4,7 +4,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "ubi.server.torm : nodemon",
+      "name": "ubi.server.torm",
       "runtimeExecutable": "nodemon",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/server.js",
