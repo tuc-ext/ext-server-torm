@@ -15,7 +15,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     columns: {
       // aiid: { type: 'int', generated: true, primary: true },
       // uuid: { type: String, generated: 'uuid', unique: true },
-      hash: { type: String, nullable: false, primary: true},
+      hash: { type: String, nullable: false, generated: 'uuid', primary: true},
       creator_cipher: { type: 'simple-json', default: '{}', nullable: true },
       creator_pubkey: { type: String, default: '', nullable: true, comment: '原始创作者' },
       owner_cipher: { type: 'simple-json', default: '{}', nullable: true },
