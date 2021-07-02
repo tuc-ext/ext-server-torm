@@ -22,7 +22,7 @@ async function initWorld() {
   wo.EventCenter = new (require('events'))()
 
   wo.NFT = await require('./ling/NFT.js').init()
-  wo.User = require('../ling/User.js')
+  wo.User = require('./ling/User.js')
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
   await torm.createConnection(

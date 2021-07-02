@@ -5,7 +5,7 @@
       "type": "node",
       "request": "launch",
       "name": "ubi.server.torm",
-      "runtimeExecutable": "nodemon",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/server.js",
       "restart": true,
