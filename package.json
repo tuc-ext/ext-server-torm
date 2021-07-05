@@ -20,7 +20,9 @@
     "drive": "cross-env NODE_ENV=production nodemon server.js",
     "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbook,database -- server.js",
     "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ubi.server.torm",
-    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net"
+    "deploy": "expect deploy-expect.sh server.ubi.yuanjin.net",
+    "db.download": "scp adot@server.ubi.yuanjin.net:/faronear/tac/ubi.server.torm/database/ubi.sqlite ./database/ubi.$(date +%Y%m%d-%H%M%S).sqlite",
+    "db.upload": "scp ./database/ubi.sqlite adot@server.ubi.yuanjin.net:/faronear/tac/ubi.server.torm/database/ubi.$(date +%Y%m%d-%H%M%S).sqlite"
   },
   "dependencies": {
     "body-parser": "^1.16.1",
