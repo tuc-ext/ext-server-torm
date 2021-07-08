@@ -79,39 +79,39 @@ function runServer() {
 
   /** * 路由中间件 ***/
 
-  server.all('/:api/:who/:how', async function (req, res) {
+  server.all('/:apiVersion/:apiWho/:apiHow', async function (req, res) {
     // API 格式：http://address:port/api/Block/getBlockList
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    let option = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
-    for (let key in req.query) {
+    const indata = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    for (const key in req.query) {
       // GET 方法传来的参数.
-      option[key] = my.parseJsonPossible(req.query[key])
+      indata[key] = wo.tool.parseJsonPossible(req.query[key])
     }
-    for (let key in req.body) {
+    for (const key in req.body) {
       // POST 方法传来的参数. content-type=application/x-www-form-urlencoded 或 application/json 或 multipart/form-data（由 multer 处理）
-      option[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
+      indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
-    let { api, who, how } = req.params
+    const { apiVersion, apiWho, apiHow } = req.params
     console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
-    console.info(`[ Request ${api}/${who}/${how} indata ] `)
-    console.log(option)
+    console.info(`[ Request ${apiVersion}/${apiWho}/${apiHow} indata ] `)
+    console.log(indata)
     console.log('👆-👆-👆-👆-👆-👆-👆-👆')
 
-    option._req = req
-    option._res = res
+    indata._req = req
+    indata._res = res
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type')
 
-    if (typeof wo[who]?.[api]?.[how] === 'function' && wo[who][api].hasOwnProperty(how)) {
+    if (typeof wo[apiWho]?.[apiVersion]?.[apiHow] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiHow)) {
       try {
-        var outdata = await wo[who][api][how](option)
+        const outdata = await wo[apiWho][apiVersion][apiHow](indata)
         console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
-        console.info(`[ Response ${api}/${who}/${how} outdata ] `)
+        console.info(`[ Response ${apiVersion}/${apiWho}/${apiHow} outdata ] `)
         console.log(outdata)
         console.log('⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
