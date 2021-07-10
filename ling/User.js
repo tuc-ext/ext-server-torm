@@ -353,7 +353,7 @@ DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
   }
 }
 
-DAD.api.prepareRegister = async function ({ _passtokenSource, passcode, regcode } = {}) {
+DAD.api.verifyPasscodeAndRegcode = async function ({ _passtokenSource, passcode, regcode } = {}) {
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
