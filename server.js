@@ -21,6 +21,7 @@ async function initWorld() {
 
   wo.EventCenter = new (require('events'))()
 
+  wo.System = require('./ling/System.js')
   wo.NFT = await require('./ling/NFT.js').init()
   wo.User = require('./ling/User.js')
 
