@@ -1,5 +1,5 @@
-echo 'Starting ubi.server.torm...'
-cd /faronear/tac.ubi/ubi.server.torm
+echo 'Starting ext.server.torm...'
+cd /faronear/tac.ext/ext.server.torm
 sudo npm run drive.pm2
 
-echo 'Started ubi.server.torm!'
+echo 'Started ext.server.torm!'
