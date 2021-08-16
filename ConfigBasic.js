@@ -16,7 +16,7 @@ module.exports = {
   port: 60824, // 本节点的 Web服务端口号
   // 数据库设置
   datastore: { type: 'sqlite', database: 'database/ext.sqlite' },
-  logstore: { type: 'file', root: 'logbook', file: 'log.txt' },
+  logstore: { type: 'file', root: 'logbase', file: 'log.txt' },
 
   production: {
     protocol: 'https',

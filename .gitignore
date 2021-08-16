@@ -1,6 +1,6 @@
 # 以'#'开始的行，被视为注释.                                                                                                                          
 node_modules*
-logbook/*log*
+logbase/*log*
 database/*.sqlite*
 .sass-cache
 package-lock.json
@@ -11,6 +11,5 @@ test*
 .idea
 *.db
 *.rdb
-upload/*/*_*
 ConfigDynamic.js
 ConfigSecret.js
