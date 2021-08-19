@@ -1,8 +1,4 @@
 'use strict'
-
-const Trade = require('./Trade.js')
-const Place = require('./Place.js')
-const User = require('./User.js')
 const torm = require('typeorm')
 
 const DAD = (module.exports = class System extends torm.BaseEntity {})
