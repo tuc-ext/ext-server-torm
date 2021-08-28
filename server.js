@@ -28,7 +28,6 @@ async function initWorld() {
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
   await torm.createConnection(
     Object.assign(wo.envi.datastore, {
-      entitySchemas: [wo.NFT.schema],
       entities: [new torm.EntitySchema(wo.NFT.schema), new torm.EntitySchema(wo.User.schema)],
       synchronize: true, // wo.envi.prodev !== 'production' ? true : false,
     })
