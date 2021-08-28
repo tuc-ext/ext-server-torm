@@ -1,7 +1,7 @@
 'use strict'
 const torm = require('typeorm')
 
-const DAD = (module.exports = class System extends torm.BaseEntity {})
+const DAD = (module.exports = class System {})
 
 DAD.api = {}
 
@@ -9,7 +9,7 @@ DAD.api.getConfiguration = async function () {
 
   const result = {
     _state: 'SUCCESS',
-    configDynamic: my.getDynamicConfig(),
+    configDynamic: wo.tool.getDynamicConfig(),
   }
   console.log(result)
   return result
@@ -20,12 +20,4 @@ const my = {
     return (await torm.getRepository(table).createQueryBuilder().select(`SUM(${field})`, 'sum').where(where).getRawOne()).sum
   },
 
-  getDynamicConfig() {
-    if (fs.existsSync(path.join(process.cwd(), '../ConfigBasic.js'))) {
-      delete require.cache[require.resolve('../ConfigDynamic.js')] // delete require.cache['../ConfigDynamic.js'] 不起作用
-      return require('../ConfigDynamic.js')
-    } else {
-      return {}
-    }
-  },
 }

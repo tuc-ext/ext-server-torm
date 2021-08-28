@@ -64,9 +64,9 @@ function runServer() {
         },
         filename: function (req, file, cb) {
           // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
-          let ext = file.originalname.replace(/^.*\.(\w+)$/, '$1')
+          let fileNameExtension = file.originalname.replace(/^.*\.(\w+)$/, '$1')
           let _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {}
-          let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${ext}`
+          let filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}.${fileNameExtension}`
           cb(null, filename)
         },
       }),
