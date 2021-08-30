@@ -21,8 +21,8 @@
     "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
     "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
     "deploy": "expect deploy-expect.sh server.ext.yuanjin.net",
-    "db.download": "scp adot@server.ext.yuanjin.net:/faronear/tac/ext.server.torm/database/ext.sqlite ./database/ext.$(date +%Y%m%d-%H%M%S).sqlite",
-    "db.upload": "scp ./database/ext.sqlite adot@server.ext.yuanjin.net:/faronear/tac/ext.server.torm/database/ext.$(date +%Y%m%d-%H%M%S).sqlite"
+    "db.download": "scp adot@server.ext.yuanjin.net:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext.$(date +%Y%m%d-%H%M%S).sqlite",
+    "db.upload": "scp ./database/ext.sqlite adot@server.ext.yuanjin.net:/faronear/tuc/ext.server.torm/database/ext.$(date +%Y%m%d-%H%M%S).sqlite"
   },
   "dependencies": {
     "body-parser": "^1.16.1",
