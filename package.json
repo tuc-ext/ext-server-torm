@@ -48,7 +48,7 @@
     "sol.webtoken": "git+https://git.faronear.org/npm/sol.webtoken",
     "sqlite3": "^5.0.0",
     "tic.crypto": "git+https://git.faronear.org/npm/tic.crypto",
-    "typeorm": "^0.2.24",
+    "typeorm": "^0.2.37",
     "ws": "^7.3.0"
   },
   "devDependencies": {
