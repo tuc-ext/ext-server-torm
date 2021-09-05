@@ -73,10 +73,10 @@ DAD.api.changePortrait = async function ({ _passtokenSource, _req } = {}) {
       await DAD.update({ uuid: _passtokenSource.uuid }, { portrait: file.filename })
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
-      return { _state: 'FILE_NOT_IMAGE' }
+      return { _state: 'BACKEND_FAIL_FILE_NOT_IMAGE' }
     }
   } else {
-    return { _state: 'USER_NOT_ONLINE' }
+    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
   }
 }
 DAD.api.changePortrait2Cloud = async ({ _passtokenSource, User: { portrait } = {} } = {}) => {
@@ -88,7 +88,7 @@ DAD.api.changePortrait2Cloud = async ({ _passtokenSource, User: { portrait } = {
       return { _state: 'FILE_NOT_EXIST' }
     }
   } else {
-    return { _state: 'USER_NOT_ONLINE' }
+    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
   }
 }
 
@@ -101,10 +101,10 @@ DAD.api.uploadIdCard = async function ({ _passtokenSource, side, _req }) {
       await DAD.update({ uuid: _passtokenSource.uuid }, obj)
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
-      return { _state: 'FILE_NOT_IMAGE' }
+      return { _state: 'BACKEND_FAIL_FILE_NOT_IMAGE' }
     }
   } else {
-    return { _state: 'USER_NOT_ONLINE' }
+    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
   }
 }
 

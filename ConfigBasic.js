@@ -1,5 +1,7 @@
 'use strict'
 
+const basetool = require('sol.basetool')
+
 module.exports = {
   // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。
   commanderOptions: [
@@ -13,7 +15,7 @@ module.exports = {
 
   protocol: 'http', // http|https|httpall
   host: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
-  port: 60824, // 本节点的 Web服务端口号
+  port: 60000 + parseInt(basetool.name2port('ext')), // 本节点的 Web服务端口号
   // 数据库设置
   datastore: { type: 'sqlite', database: 'database/ext.sqlite' },
   logstore: { type: 'file', root: 'logbase', file: 'log.txt' },
