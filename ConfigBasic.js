@@ -20,6 +20,8 @@ module.exports = {
   datastore: { type: 'sqlite', database: 'database/ext.sqlite' },
   logstore: { type: 'file', root: 'logbase', file: 'log.txt' },
 
+  uploadroot: 'upload',
+
   production: {
     protocol: 'https',
     host: 'server.ext.yuanjin.net',
