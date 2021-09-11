@@ -24,7 +24,7 @@ module.exports = {
 
   production: {
     protocol: 'https',
-    host: 'server.ext.yuanjin.net',
+    host: 'ext-server.bittic.org',
     ssl: {
       type: 'file', // file
       file: {

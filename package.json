@@ -11,7 +11,7 @@
     "boot": "npx run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
     "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
-    "ssl": "certbot certonly -d server.ext.yuanjin.net --standalone",
+    "ssl": "certbot certonly -d ext-server.bittic.org --standalone",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbase,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
@@ -20,9 +20,8 @@
     "drive": "cross-env NODE_ENV=production nodemon server.js",
     "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
     "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
-    "deploy": "expect deploy-expect.sh server.ext.yuanjin.net",
-    "db.download": "scp adot@server.ext.yuanjin.net:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext.$(date +%Y%m%d-%H%M%S).sqlite",
-    "db.upload": "scp ./database/ext.sqlite adot@server.ext.yuanjin.net:/faronear/tuc/ext.server.torm/database/ext.$(date +%Y%m%d-%H%M%S).sqlite"
+    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext.$(date +%Y%m%d-%H%M%S).sqlite",
+    "db.upload": "scp ./database/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.$(date +%Y%m%d-%H%M%S).sqlite"
   },
   "dependencies": {
     "body-parser": "^1.16.1",
