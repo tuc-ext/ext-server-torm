@@ -1,5 +1,6 @@
 'use strict'
 const torm = require('typeorm')
+const enviconfig = require('sol.enviconfig')
 
 const DAD = (module.exports = class System {})
 
@@ -9,7 +10,7 @@ DAD.api.getConfiguration = async function () {
 
   const result = {
     _state: 'SUCCESS',
-    configDynamic: wo.tool.getDynamicConfig(),
+    configDynamic: enviconfig.getDynamicConfig(),
   }
   console.log(result)
   return result

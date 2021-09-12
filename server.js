@@ -6,7 +6,7 @@ const torm = require('typeorm')
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment(){
-  wo.envi = require('sol.enviconfig')()
+  wo.envi = require('sol.enviconfig').mergeConfig()
 
   if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
   if (typeof wo.envi.datastore === 'string') wo.envi.datastore = eval(`(${wo.envi.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
