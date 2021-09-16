@@ -1,6 +1,6 @@
 'use strict'
 
-const basetool = require('sol.basetool')
+const basetool = require('core.tool')
 
 module.exports = {
   // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。

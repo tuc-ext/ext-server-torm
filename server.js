@@ -6,7 +6,7 @@ const torm = require('typeorm')
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment(){
-  wo.envi = require('sol.enviconfig').mergeConfig()
+  wo.envi = require('base.enviconfig').mergeConfig()
 
   if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
   if (typeof wo.envi.datastore === 'string') wo.envi.datastore = eval(`(${wo.envi.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
@@ -14,8 +14,8 @@ function configEnvironment(){
 }
 
 async function initWorld() {
-  wo.log = require('sol.logger')(wo.envi.logstore)
-  wo.tool = require('sol.basetool')
+  wo.log = require('base.logger')(wo.envi.logstore)
+  wo.tool = require('core.tool')
   
   wo.log.info('Loading classes ......')
 
@@ -41,7 +41,7 @@ function runServer() {
   wo.log.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
-  const webtoken = require('sol.webtoken')
+  const webtoken = require('base.webtoken')
 
   /** * 通用中间件 ***/
 
@@ -143,7 +143,7 @@ function runServer() {
   let webServer
   let portHttp = wo.envi.port || 80
   let portHttps = wo.envi.port || 443
-  let ipv4 = require('sol.nettool').getMyIp()
+  let ipv4 = require('base.nettool').getMyIp()
   if (wo.envi.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
@@ -196,7 +196,7 @@ function runServer() {
   }
 
   // 启动socket服务
-  wo.webServerSocket = require('sol.webServerSocket').initSocket(webServer)
+  wo.serverWebsocket = require('base.websocket.server').initSocket(webServer)
 
   return webServer
 }

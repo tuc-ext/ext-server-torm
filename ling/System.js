@@ -1,6 +1,6 @@
 'use strict'
 const torm = require('typeorm')
-const enviconfig = require('sol.enviconfig')
+const enviconfig = require('base.enviconfig')
 
 const DAD = (module.exports = class System {})
 

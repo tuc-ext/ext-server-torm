@@ -1,8 +1,8 @@
 'use strict'
 const ticCrypto = require('tic.crypto')
-const messenger = require('sol.messenger')
-const webtoken = require('sol.webtoken')
-const Internation = require('sol.i18n')
+const messenger = require('base.messenger')
+const webtoken = require('base.webtoken')
+const i18nCore = require('core.i18n')
 const torm = require('typeorm')
 
 /****************** 类和原型 *****************/
@@ -221,7 +221,7 @@ DAD.sysapi.rejectKycL3 = async function ({ User }) {
 }
 
 DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
-  if (phone && Internation.validatePhone({ phone })) {
+  if (phone && i18nCore.validatePhone({ phone })) {
     let user = await DAD.findOne({ phone })
     let _state = user ? 'OLD_USER' : 'NEW_USER'
     let uuid = user ? user.uuid : ticCrypto.randomUuid()
@@ -242,7 +242,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
 }
 
 DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
-  if (phone && Internation.validatePhone({ phone })) {
+  if (phone && i18nCore.validatePhone({ phone })) {
     // 用户在更换新手机
     if (phone === _passtokenSource.phone) {
       return { _state: 'NEWPHONE_IS_OLD' }
@@ -252,7 +252,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   }
 
   let passcode = ticCrypto.randomNumber({ length: 6 })
-  let passcodePhone = Internation.validatePhone({ phone }) ? phone : _passtokenSource.phone
+  let passcodePhone = i18nCore.validatePhone({ phone }) ? phone : _passtokenSource.phone
   let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
   wo.log.info('passcode = ' + passcode)
   wo.log.info('phone = ' + passcodePhone)
@@ -547,7 +547,7 @@ DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passt
 
 DAD.api.logout = async function ({ _passtokenSource }) {
   // 虽然现在什么也不需要后台操作，但将来也许后台把logout计入日志
-  wo.webServerSocket.removeUserSocket(_passtokenSource.uuid)
+  wo.serverWebsocket.removeUserSocket(_passtokenSource.uuid)
 
   return { _state: 'INPUT_MALFORMED' }
 }
