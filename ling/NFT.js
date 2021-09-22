@@ -16,12 +16,14 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       // aiid: { type: 'int', generated: true, primary: true },
       // uuid: { type: String, generated: 'uuid', unique: true },
       hash: { type: String, nullable: false, generated: 'uuid', primary: true},
-      creator_cipher: { type: 'simple-json', default: '{}', nullable: true },
-      creator_pubkey: { type: String, default: '', nullable: true, comment: '原始创作者' },
-      owner_cipher: { type: 'simple-json', default: '{}', nullable: true },
-      owner_pubkey: { type: String, default: '', nullable: true, comment: '当前拥有者' },
-      proxy_cipher: { type: 'simple-json', default: '{}', nullable: true },
-      proxy_pubkey: { type: String, default: '', nullable: true, comment: '当前代理者' },
+      creator_address: { type: String, default: null, nullable: true, comment: '原始创作者' },
+      creator_cipher: { type: 'simple-json', default: null, nullable: true },
+      owner_address: { type: String, default: null, nullable: true, comment: '当前拥有者' },
+      owner_cipher: { type: 'simple-json', default: null, nullable: true },
+      owner_list: { type: 'simple-json', default: null, nullable: true },
+      proxy_address: { type: String, default: null, nullable: true, comment: '当前代理者' },
+      proxy_cipher: { type: 'simple-json', default: null, nullable: true },
+      proxy_list: { type: 'simple-json', default: null, nullable: true },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
@@ -44,11 +46,35 @@ DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
 }
 
 DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
-  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secword).seckey, keytype: 'pwd' })
+  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
   console.log('proxy_cipher===', proxy_cipher)
   // to check cid 是否已存在
   await DAD.insert({ creator_cipher, proxy_cipher })
   return { _state: 'SUCCESS', proxy_cipher }
+}
+
+DAD.api.sealCid2 = async ({ _passtokenSource, cid, type, creator_address, creator_cipher }) => {
+  let result
+  if (type==='ALL_BY_USER') {
+    result = await DAD.insert({ creator_address, creator_cipher, owner_address: creator_address, owner_cipher: creator_cipher })
+  }else if (type==='ALL_BY_PROXY') {
+    const userNow = wo.User.findOne({uuid: _passtokenSource.uuid})
+
+    result = await DAD.insert({
+      creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: userNow.coinAddress.TIC.path }),
+      creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+      proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
+      proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+    })
+  }else if (type==='HALF_BY_PROXY') {
+    result = await DAD.insert({
+      creator_address,
+      creator_cipher,
+      proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
+      proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+    })
+  }
+  return {_state:'SUCCESS', result }
 }
 
 DAD.api.getNftList = async () => {
@@ -57,6 +83,6 @@ DAD.api.getNftList = async () => {
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envi.secword).seckey, keytype: 'pwd' })
+  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
   return { _state: 'SUCCESS', plaindata }
 }

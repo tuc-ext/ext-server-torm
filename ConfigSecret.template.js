@@ -5,7 +5,8 @@
 
 module.exports={
   tokenKey: '？？？？p[aerjklasdf9q34@#$-SCDAW',
-  secword: '？？？？十二字的助记词',
+  secwordSys: '用于作为平台加密nft',
+  secwordUser: '用于创建用户的HD钱包'
   SMS: {
     dxton:{
       urlChina:'http://sms.106jiekou.com/utf8/sms.aspx?account=？？？？&password=？？？？',

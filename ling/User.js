@@ -400,34 +400,40 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     _passtokenSource.uuid &&
     passwordClient
   ) {
-    let passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
-    let registerTimeUnix = Date.now()
+    const passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
+    const registerTimeUnix = Date.now()
 
-    let pathBTC = ticCrypto.seed2path(registerTimeUnix + _passtokenSource.uuid, { coin: 'BTC' })
-    let pathETH = ticCrypto.seed2path(registerTimeUnix + _passtokenSource.uuid, { coin: 'ETH' })
+    const seed = registerTimeUnix + _passtokenSource.uuid
+    const pathBTC = ticCrypto.seed2path(seed, { coin: 'BTC' })
+    const pathETH = ticCrypto.seed2path(seed, { coin: 'ETH' })
+    const pathEXT = ticCrypto.seed2path(seed, { coin: 'TIC' })
     let coinAddress = {
       BTC: {
         path: pathBTC,
-        address: ticCrypto.secword2account(wo.envi.secword, { coin: 'BTC', path: pathBTC }).address,
+        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'BTC', path: pathBTC }),
       },
       ETH: {
         path: pathETH,
-        address: ticCrypto.secword2account(wo.envi.secword, { coin: 'ETH', path: pathETH }).address,
+        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'ETH', path: pathETH }),
       },
+      EXT: { 
+        path: pathEXT,
+        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: pathEXT }),
+      }
     }
 
-    let txReward = wo.Trade.create({
-      uuidUser: _passtokenSource.uuid,
-      uuidOther: 'SYSTEM',
-      txGroup: 'REWARD_TX',
-      txType: 'REWARD_REGIST',
-      amount: 10 * wo.Trade.getExchangeRate({}),
-      amountMining: 10 * wo.Trade.getExchangeRate({}), // 奖金是通过注册行为凭空挖出的
-      exchangeRate: wo.Trade.getExchangeRate({}),
-      txTime: new Date(registerTimeUnix),
-      txTimeUnix: registerTimeUnix,
-    })
-    txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+    // let txReward = wo.Trade.create({
+    //   uuidUser: _passtokenSource.uuid,
+    //   uuidOther: 'SYSTEM',
+    //   txGroup: 'REWARD_TX',
+    //   txType: 'REWARD_REGIST',
+    //   amount: 10 * wo.Trade.getExchangeRate({}),
+    //   amountMining: 10 * wo.Trade.getExchangeRate({}), // 奖金是通过注册行为凭空挖出的
+    //   exchangeRate: wo.Trade.getExchangeRate({}),
+    //   txTime: new Date(registerTimeUnix),
+    //   txTimeUnix: registerTimeUnix,
+    // })
+    // txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
 
     let user = DAD.create({
       uuid: _passtokenSource.uuid,
@@ -444,14 +450,14 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
 
-    let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
-    await torm.getManager().transaction(async (txman) => {
-      await txman.save(txReward)
-      await txman.save(user)
-      if (aiidInviter > 0) {
-        await txman.increment(DAD, { aiid: aiidInviter }, 'communityNumber', 1)
-      }
-    })
+    // let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
+    // await torm.getManager().transaction(async (txman) => {
+    //   await txman.save(txReward)
+    //   await txman.save(user)
+    //   if (aiidInviter > 0) {
+    //     await txman.increment(DAD, { aiid: aiidInviter }, 'communityNumber', 1)
+    //   }
+    // })
 
     if (user) {
       wo.EventCenter.emit('User.REGISTER_SUCCESS', { uuid: _passtokenSource.uuid })
