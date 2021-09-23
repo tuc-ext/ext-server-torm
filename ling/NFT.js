@@ -55,11 +55,8 @@ DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
 
 DAD.api.sealCid2 = async ({ _passtokenSource, cid, type, creator_address, creator_cipher }) => {
   let result
-  if (type==='ALL_BY_USER') {
-    result = await DAD.insert({ creator_address, creator_cipher, owner_address: creator_address, owner_cipher: creator_cipher })
-  }else if (type==='ALL_BY_PROXY') {
+  if (type==='ALL_BY_PROXY') {
     const userNow = wo.User.findOne({uuid: _passtokenSource.uuid})
-
     result = await DAD.insert({
       creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: userNow.coinAddress.TIC.path }),
       creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
@@ -67,12 +64,16 @@ DAD.api.sealCid2 = async ({ _passtokenSource, cid, type, creator_address, creato
       proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
     })
   }else if (type==='HALF_BY_PROXY') {
+    // todo 验证 creator_cipher 的正确性
     result = await DAD.insert({
       creator_address,
       creator_cipher,
       proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
       proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
     })
+  }else if (type==='ALL_BY_USER') {
+    // todo 验证 creator_cipher 的正确性
+    result = await DAD.insert({ creator_address, creator_cipher, })
   }
   return {_state:'SUCCESS', result }
 }

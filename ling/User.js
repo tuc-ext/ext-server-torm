@@ -406,7 +406,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     const seed = registerTimeUnix + _passtokenSource.uuid
     const pathBTC = ticCrypto.seed2path(seed, { coin: 'BTC' })
     const pathETH = ticCrypto.seed2path(seed, { coin: 'ETH' })
-    const pathEXT = ticCrypto.seed2path(seed, { coin: 'TIC' })
+    const pathEXT = ticCrypto.seed2path(seed, { coin: 'EXT' })
     let coinAddress = {
       BTC: {
         path: pathBTC,
@@ -418,7 +418,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       },
       EXT: { 
         path: pathEXT,
-        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: pathEXT }),
+        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: pathEXT }),
       }
     }
 
@@ -435,7 +435,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     // })
     // txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
 
-    let user = DAD.create({
+    let user = DAD.save({
       uuid: _passtokenSource.uuid,
       phone: phone,
       passwordServer,
@@ -446,8 +446,8 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       registerTimeUnix,
       lang: lang,
       citizen: citizen,
-      balance: 10 * wo.Trade.getExchangeRate({}),
-      rewardSum: 10 * wo.Trade.getExchangeRate({}),
+//      balance: 10 * wo.Trade.getExchangeRate({}),
+//      rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
 
     // let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
