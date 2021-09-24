@@ -151,9 +151,9 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
 
     // 再检查推荐人
     let user = await DAD.findOne({ uuid: User.uuid })
-    let inviterAiid = ticCrypto.regcode2aiid(user.regcode)
+    let inviterAiid = wo.tool.regcode2aiid(user.regcode)
     if (inviterAiid > 0) {
-      let inviter = await DAD.findOne({ aiid: ticCrypto.regcode2aiid(user.regcode) })
+      let inviter = await DAD.findOne({ aiid: wo.tool.regcode2aiid(user.regcode) })
       let rate = wo.Trade.getExchangeRate()
       let reward = rate * 5
       let passTime = new Date()
@@ -357,7 +357,7 @@ DAD.api.verifyPasscodeAndRegcode = async function ({ _passtokenSource, passcode,
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  let aiid = ticCrypto.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
+  let aiid = wo.tool.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
   if (aiid === null) {
     // 非法的regcode
     return { _state: 'REGCODE_MALFORMED' }
@@ -450,7 +450,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
 //      rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
 
-    // let aiidInviter = ticCrypto.regcode2aiid(_passtokenSource.regcode.toLowerCase())
+    // let aiidInviter = wo.tool.regcode2aiid(_passtokenSource.regcode.toLowerCase())
     // await torm.getManager().transaction(async (txman) => {
     //   await txman.save(txReward)
     //   await txman.save(user)
