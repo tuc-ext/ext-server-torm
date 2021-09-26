@@ -54,7 +54,7 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
   }
 
   static async normalize(user = {}) {
-    user.inviterCode = ticCrypto.aiid2regcode(user.aiid) // 我的邀请码 // 只给onlineUser
+    user.inviterCode = wo.tool.aiid2regcode(user.aiid) // 我的邀请码 // 只给onlineUser
     //    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
     delete user.passwordServer
@@ -637,7 +637,7 @@ DAD.api.getCommunityMembers = async ({ _passtokenSource = {}, order = { register
   let result = { _state: 'ERROR' }
   if (_passtokenSource.uuid) {
     let me = await DAD.findOne({ uuid: _passtokenSource.uuid })
-    let [memberArray, count] = await DAD.findAndCount({ where: { regcode: ticCrypto.aiid2regcode(me.aiid) }, order, skip, take })
+    let [memberArray, count] = await DAD.findAndCount({ where: { regcode: wo.tool.aiid2regcode(me.aiid) }, order, skip, take })
     if (Array.isArray(memberArray)) {
       for (let member of memberArray) {
         delete member.aiid
