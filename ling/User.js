@@ -58,6 +58,9 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
     //    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
     delete user.passwordServer
+    for (let coin in user.coinAddress) {
+      delete user.coinAddress[coin].path
+    }
     return user
   }
 })
@@ -406,6 +409,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     const seed = registerTimeUnix + _passtokenSource.uuid
     const pathBTC = ticCrypto.seed2path(seed, { coin: 'BTC' })
     const pathETH = ticCrypto.seed2path(seed, { coin: 'ETH' })
+    const pathTIC = ticCrypto.seed2path(seed, { coin: 'TIC' })
     const pathEXT = ticCrypto.seed2path(seed, { coin: 'EXT' })
     let coinAddress = {
       BTC: {
@@ -415,6 +419,10 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       ETH: {
         path: pathETH,
         address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'ETH', path: pathETH }),
+      },
+      TIC: {
+        path: pathTIC,
+        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: pathTIC }),
       },
       EXT: { 
         path: pathEXT,

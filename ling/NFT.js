@@ -18,9 +18,9 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       hash: { type: String, nullable: false, generated: 'uuid', primary: true},
       creator_address: { type: String, default: null, nullable: true, comment: '原始创作者' },
       creator_cipher: { type: 'simple-json', default: null, nullable: true },
-      owner_address: { type: String, default: null, nullable: true, comment: '当前拥有者' },
-      owner_cipher: { type: 'simple-json', default: null, nullable: true },
-      owner_list: { type: 'simple-json', default: null, nullable: true },
+      // owner_address: { type: String, default: null, nullable: true, comment: '当前拥有者' },
+      // owner_cipher: { type: 'simple-json', default: null, nullable: true },
+      // owner_list: { type: 'simple-json', default: null, nullable: true },
       proxy_address: { type: String, default: null, nullable: true, comment: '当前代理者' },
       proxy_cipher: { type: 'simple-json', default: null, nullable: true },
       proxy_list: { type: 'simple-json', default: null, nullable: true },
@@ -45,7 +45,7 @@ DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
   return { _state: 'SUCCESS', cid: cid.toString() }
 }
 
-DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
+DAD.api.sealCid_old = async ({ creator_cipher, cid } = {}) => {
   let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
   console.log('proxy_cipher===', proxy_cipher)
   // to check cid 是否已存在
@@ -53,12 +53,12 @@ DAD.api.sealCid = async ({ creator_cipher, cid } = {}) => {
   return { _state: 'SUCCESS', proxy_cipher }
 }
 
-DAD.api.sealCid2 = async ({ _passtokenSource, cid, type, creator_address, creator_cipher }) => {
+DAD.api.sealCid = async ({ _passtokenSource, cid, type, creator_address, creator_cipher }) => {
   let result
   if (type==='ALL_BY_PROXY') {
-    const userNow = wo.User.findOne({uuid: _passtokenSource.uuid})
+    const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
     result = await DAD.insert({
-      creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: userNow.coinAddress.TIC.path }),
+      creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
       creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
       proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
       proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
