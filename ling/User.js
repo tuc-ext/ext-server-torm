@@ -443,7 +443,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     // })
     // txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
 
-    let user = DAD.save({
+    let user = await DAD.save({
       uuid: _passtokenSource.uuid,
       phone: phone,
       passwordServer,
