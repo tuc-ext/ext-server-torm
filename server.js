@@ -95,10 +95,7 @@ function runServer() {
       indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     const { apiVersion, apiWho, apiTodo } = req.params
-    console.info(`👇 👇 👇 👇 👇 👇 👇 👇`)
-    console.info(`[ Request ${apiVersion}/${apiWho}/${apiTodo} indata ] `)
-    console.log(indata)
-    console.log('👆-👆-👆-👆-👆-👆-👆-👆')
+    console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👆 👆')
 
     indata._req = req
     indata._res = res
@@ -111,10 +108,7 @@ function runServer() {
     if (typeof wo[apiWho]?.[apiVersion]?.[apiTodo] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiTodo)) {
       try {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
-        console.info(`⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️ ⬇️`)
-        console.info(`[ Response ${apiVersion}/${apiWho}/${apiTodo} outdata ] `)
-        console.log(outdata)
-        console.log('⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️-⬆️')
+        console.info(`⬇️ ${apiVersion}/${apiWho}/${apiTodo} ⬇️ `, outdata, ' ⬆️ ⬆️')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
         wo.log.info(exception)
