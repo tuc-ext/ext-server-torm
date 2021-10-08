@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const torm = require('typeorm')
+const ipfs = require('ipfs-core')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
@@ -21,8 +22,10 @@ async function initWorld() {
 
   wo.EventCenter = new (require('events'))()
 
+  wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
+
   wo.System = require('./ling/System.js')
-  wo.NFT = await require('./ling/NFT.js').init()
+  wo.NFT = await require('./ling/NFT.js')
   wo.User = require('./ling/User.js')
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
@@ -96,9 +99,6 @@ function runServer() {
     }
     const { apiVersion, apiWho, apiTodo } = req.params
     console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👆 👆')
-
-    indata._req = req
-    indata._res = res
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。

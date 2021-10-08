@@ -2,7 +2,6 @@
 
 const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
-const IPFS = require('ipfs-core')
 
 // 叫做 ASSET?
 
@@ -29,20 +28,15 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
   }
 })
 
-DAD.init = async () => {
-  DAD.ipfs = await IPFS.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
-  return DAD
-}
-
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
 DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
   console.info('data=', contentData)
-  const { path, cid, size } = await DAD.ipfs.add(contentData)
+  const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
   console.info('cid=', cid)
-
-  return { _state: 'SUCCESS', cid: cid.toString() }
+  if (cid) return { _state: 'SUCCESS', cid: cid.toString() }
+  else return { _state: 'ERROR' }
 }
 
 DAD.api.sealCid_old = async ({ creator_cipher, cid } = {}) => {
