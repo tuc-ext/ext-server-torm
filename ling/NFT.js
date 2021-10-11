@@ -31,6 +31,18 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
+DAD.api.content2nft = async ({ _passtokenSource, contentData } = {}) => {
+  const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
+  const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
+  const nft = await DAD.insert({
+    creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
+    creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+    proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
+    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+  })
+  return {_state: 'SUCCESS', nft, cid: cid.toString()}
+}
+
 DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
   console.info('data=', contentData)
   const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
