@@ -98,7 +98,7 @@ function runServer() {
       indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     const { apiVersion, apiWho, apiTodo } = req.params
-    console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👆 👆')
+    console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
@@ -108,7 +108,7 @@ function runServer() {
     if (typeof wo[apiWho]?.[apiVersion]?.[apiTodo] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiTodo)) {
       try {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
-        console.info(`⬇️ ${apiVersion}/${apiWho}/${apiTodo} ⬇️ `, outdata, ' ⬆️ ⬆️')
+        console.info(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 `, outdata, ' 👆 👆')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
         wo.log.info(exception)
