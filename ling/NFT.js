@@ -15,6 +15,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       // aiid: { type: 'int', generated: true, primary: true },
       // uuid: { type: String, generated: 'uuid', unique: true },
       hash: { type: String, nullable: false, generated: 'uuid', primary: true},
+      creationTitle: { type: String, default: '', nullable: true },
       creator_address: { type: String, default: null, nullable: true, comment: '原始创作者' },
       creator_cipher: { type: 'simple-json', default: null, nullable: true },
       // owner_address: { type: String, default: null, nullable: true, comment: '当前拥有者' },
@@ -31,15 +32,22 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.content2nft = async ({ _passtokenSource, contentData } = {}) => {
+DAD.api.content2nft = async ({ _passtokenSource, contentData, creationTitle } = {}) => {
+  if (!_passtokenSource?.uuid){
+    return {_state: 'ERROR_USER_OFFLINE' }
+  }
+
   const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
-  const nft = await DAD.insert({
+
+  const nft = await DAD.save({
     creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+    creator_cipher: await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
     proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
+    creationTitle
   })
+
   return {_state: 'SUCCESS', nft, cid: cid.toString()}
 }
 
