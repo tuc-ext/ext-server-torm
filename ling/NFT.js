@@ -97,7 +97,7 @@ DAD.api.sealCid = async ({ _passtokenSource, cid, type, creator_address, creator
 }
 
 DAD.api.getNftList = async () => {
-  const nftList = await DAD.find({order:{creationTimeUnix: 'DESC'}})
+  const nftList = await DAD.find({order:{creationTimeUnix: 'DESC'}, take:5})
   return { _state: 'SUCCESS', nftList }
 }
 
