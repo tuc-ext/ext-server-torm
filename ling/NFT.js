@@ -24,6 +24,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       proxy_address: { type: String, default: null, nullable: true, comment: '当前代理者' },
       proxy_cipher: { type: 'simple-json', default: null, nullable: true },
       proxy_list: { type: 'simple-json', default: null, nullable: true },
+      creationTimeUnix: { type: 'int', default: 0, nullable: true },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
@@ -37,18 +38,21 @@ DAD.api.content2nft = async ({ _passtokenSource, contentData, creationTitle } = 
     return {_state: 'ERROR_USER_OFFLINE' }
   }
 
-  const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
+  const { path, cid, size } = await wo.IPFS.add(contentData) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
+
+  const cidHex = cid.toString()
 
   const nft = await DAD.save({
     creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creator_cipher: await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+    creator_cipher: await ticCrypto.encrypt({data: {type: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
     proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
-    creationTitle
+    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
+    creationTitle,
+    creationTimeUnix: Date.now(),
   })
 
-  return {_state: 'SUCCESS', nft, cid: cid.toString()}
+  return {_state: 'SUCCESS', nft, cidHex}
 }
 
 DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
@@ -93,11 +97,11 @@ DAD.api.sealCid = async ({ _passtokenSource, cid, type, creator_address, creator
 }
 
 DAD.api.getNftList = async () => {
-  let nftList = await DAD.find()
+  const nftList = await DAD.find({order:{creationTimeUnix: 'DESC'}})
   return { _state: 'SUCCESS', nftList }
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  let plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
+  const plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
   return { _state: 'SUCCESS', plaindata }
 }
