@@ -262,7 +262,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   wo.log.info('uuid = ' + _passtokenSource.uuid)
   wo.log.info('passcodeHash = ' + passcodeHash)
   // send SMS
-  let sendResult = { sendState: 'DONE' }
+  let sendResult = { state: 'DONE' }
   if (process.env.NODE_ENV === 'production') {
     sendResult = await messenger.sendSms(passcodePhone, {
       vendor: 'aliyun',
@@ -272,7 +272,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
     })
   }
 
-  if (sendResult.sendState === 'DONE') {
+  if (sendResult.state === 'DONE') {
     let passcodeSentAt = Date.now()
     let passcodeExpireAt = Date.now() + 5 * 60 * 1000
     return {
