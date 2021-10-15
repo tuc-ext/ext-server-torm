@@ -2,6 +2,7 @@
 
 const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
+const ipfs = require('ipfs-core')
 
 // 叫做 ASSET?
 
@@ -38,10 +39,38 @@ DAD.api.content2nft = async ({ _passtokenSource, contentData, creationTitle } = 
     return {_state: 'ERROR_USER_OFFLINE' }
   }
 
-  const { path, cid, size } = await wo.IPFS.add(contentData) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
+  const { path, cid, size } = await wo.IPFS.add(contentData) // await wo.IPFS.add(require('ipfs-core').urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
+  const cidHex = cid.toString()
+
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
+  const nft = await DAD.save({
+    creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
+    creator_cipher: await ticCrypto.encrypt({data: {type: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+    proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
+    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
+    creationTitle,
+    creationTimeUnix: Date.now(),
+  })
+
+  return {_state: 'SUCCESS', nft, cidHex}
+}
+
+DAD.api.story2nft = async ({ _passtokenSource, creationStory, creationTitle } = {}) => {
+  if (!_passtokenSource?.uuid){
+    return {_state: 'ERROR_USER_OFFLINE' }
+  }
+
+  let ipfsResult
+  if (creationStory[0].text) {
+    ipfsResult = await wo.IPFS.add(creationStory[0].text)
+  }else if (creationStory[0].image){
+    ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].image))
+  }
+  const { path, cid, size } = ipfsResult
   const cidHex = cid.toString()
+
+  const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
   const nft = await DAD.save({
     creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
