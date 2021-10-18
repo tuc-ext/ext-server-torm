@@ -6,7 +6,7 @@ const ipfs = require('ipfs-core')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
-function configEnvironment(){
+function configEnvironment () {
   wo.envi = require('base.enviconfig').mergeConfig()
 
   if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
@@ -14,10 +14,10 @@ function configEnvironment(){
   if (!wo.envi.datastore.type) wo.envi.datastore.type = 'sqlite' // 默认为 sqlite
 }
 
-async function initWorld() {
+async function initWorld () {
   wo.log = require('base.logger')(wo.envi.logstore)
   wo.tool = require('core.tool')
-  
+
   wo.log.info('Loading classes ......')
 
   wo.EventCenter = new (require('events'))()
@@ -78,7 +78,7 @@ function runServer() {
       limits: { fileSize: 10485760 },
     }).single('file')
   )
-  server.use(require('express').static(path.join(__dirname, wo.envi.uploadroot).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
+  server.use(path.join('/', wo.envi.uploadroot).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.uploadroot).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
 
   /** * 路由中间件 ***/
