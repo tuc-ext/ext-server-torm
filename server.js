@@ -39,7 +39,7 @@ async function initWorld () {
   return wo
 }
 
-function runServer() {
+function runServer () {
   // 配置并启动 Web 服务
   wo.log.info('★★★★★★★★ 启动服务 ★★★★★★★★')
 
@@ -70,7 +70,7 @@ function runServer() {
           // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
           const fileNameExtension = path.extname(file.originalname)
           const _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {}
-          const filename = `${req.path.replace(/^\/api\d*/, '')}_${_passtokenSource.uuid}_${Date.now()}${fileNameExtension}`
+          const filename = `${_passtokenSource.uuid}_${Date.now()}${fileNameExtension}`
           cb(null, filename)
         },
       }),
@@ -100,6 +100,9 @@ function runServer() {
     const { apiVersion, apiWho, apiTodo } = req.params
     console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
 
+    wo._req = req
+    wo._res = res
+    
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')

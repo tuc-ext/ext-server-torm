@@ -1,13 +1,14 @@
 'use strict'
-const torm = require('typeorm')
+
 const enviconfig = require('base.enviconfig')
 
 const DAD = (module.exports = class System {})
 
+const wo = global.wo
+
 DAD.api = {}
 
 DAD.api.getConfiguration = async function () {
-
   const result = {
     _state: 'SUCCESS',
     configDynamic: enviconfig.getDynamicConfig(),
@@ -16,9 +17,15 @@ DAD.api.getConfiguration = async function () {
   return result
 }
 
-const my = {
-  async sum({ table, field, where } = {}) {
-    return (await torm.getRepository(table).createQueryBuilder().select(`SUM(${field})`, 'sum').where(where).getRawOne()).sum
-  },
-
+DAD.api.receiveFile = async function ({ _passtokenSource }) {
+  if (_passtokenSource?.isOnline) {
+    const file = wo?._req?.file
+    if (file) {
+      return Object.assign(file, { _state: 'SUCCESS' })
+    } else {
+      return { _state: 'BACKEND_FAIL_FILE_NOT_RECEIVED' }
+    }
+  } else {
+    return { _state: 'BACKEND_USER_NOT_ONLINE' }
+  }
 }
