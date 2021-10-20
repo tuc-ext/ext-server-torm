@@ -19,8 +19,9 @@ DAD.api.getConfiguration = async function () {
 
 DAD.api.receiveFile = async function ({ _passtokenSource }) {
   if (_passtokenSource?.isOnline) {
-    const file = wo?._req?.file
-    if (file) {
+    const file = wo._req?.file
+    if (file?.path) {
+      file.path = file.path.replace('\\', '/')
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
       return { _state: 'BACKEND_FAIL_FILE_NOT_RECEIVED' }

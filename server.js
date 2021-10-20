@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
+const uuid = require('uuid')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
@@ -67,10 +68,9 @@ function runServer () {
           cb(null, folder)
         },
         filename: function (req, file, cb) {
-          // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。
+          // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。必要的信息请从 req.headers 传递。
           const fileNameExtension = path.extname(file.originalname)
-          const _passtokenSource = webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {}
-          const filename = `${_passtokenSource.uuid}_${Date.now()}${fileNameExtension}`
+          const filename = `${Date.now()}_${uuid.v4()}${fileNameExtension}`
           cb(null, filename)
         },
       }),
@@ -80,11 +80,11 @@ function runServer () {
   )
   server.use(path.join('/', wo.envi.uploadroot).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.uploadroot).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
-
   /** * 路由中间件 ***/
 
   server.all('/:apiVersion/:apiWho/:apiTodo', async function (req, res) {
-    // API 格式：http://address:port/api/Block/getBlockList
+    wo._req = req
+    wo._res = res
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
@@ -100,9 +100,6 @@ function runServer () {
     const { apiVersion, apiWho, apiTodo } = req.params
     console.info(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
 
-    wo._req = req
-    wo._res = res
-    
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
     // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
