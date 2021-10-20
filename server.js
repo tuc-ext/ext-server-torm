@@ -3,7 +3,6 @@ const fs = require('fs')
 const path = require('path')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
-const uuid = require('uuid')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
@@ -23,11 +22,12 @@ async function initWorld () {
 
   wo.EventCenter = new (require('events'))()
 
-  wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
-
+  wo.FileTransfer = require('base.FileTransfer.server')
   wo.System = require('./ling/System.js')
   wo.NFT = await require('./ling/NFT.js')
   wo.User = require('./ling/User.js')
+
+  wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
   wo.log.info(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
   await torm.createConnection(
@@ -56,28 +56,7 @@ function runServer () {
   server.use(require('cookie-parser')())
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   // server.use(require('serve-favicon')(path.join(__dirname, 'public', 'favicon.ico')))
-
-  const Multer = require('multer')
-  server.use(
-    Multer({
-      // dest:'./File/', // 这样，不能自定义文件名。
-      storage: Multer.diskStorage({
-        destination: function (req, file, cb) {
-          // 如果直接提供字符串，Multer会负责创建该目录。如果提供函数，你要负责确保该目录存在。
-          const folder = wo.envi.uploadroot // 目录是相对于本应用的入口js的，即相对于 server.js 的位置。
-          cb(null, folder)
-        },
-        filename: function (req, file, cb) {
-          // 注意，req.body 也许还没有信息，因为这取决于客户端发送body和file的顺序。必要的信息请从 req.headers 传递。
-          const fileNameExtension = path.extname(file.originalname)
-          const filename = `${Date.now()}_${uuid.v4()}${fileNameExtension}`
-          cb(null, filename)
-        },
-      }),
-      // fileFilter:function(req, file, cb) {},
-      limits: { fileSize: 10485760 },
-    }).single('file')
-  )
+  server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
   server.use(path.join('/', wo.envi.uploadroot).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.uploadroot).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
   /** * 路由中间件 ***/
@@ -111,10 +90,11 @@ function runServer () {
         console.info(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 `, outdata, ' 👆 👆')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
-        wo.log.info(exception)
+        console.info(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_EXCEPTION = `, exception, ' 👆 👆')
         res.json({ _state: 'BACKEND_EXCEPTION' })
       }
     } else {
+      console.info(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_API_UNKNOWN`, ' 👆 👆')
       res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
@@ -136,8 +116,8 @@ function runServer () {
   /** * 启动 Web 服务 ***/
   let webServer
   let portHttp = wo.envi.port || 80
-  let portHttps = wo.envi.port || 443
-  let ipv4 = require('base.nettool').getMyIp()
+  const portHttps = wo.envi.port || 443
+  const ipv4 = require('base.nettool').getMyIp()
   if (wo.envi.protocol === 'http') {
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
@@ -161,7 +141,7 @@ function runServer () {
         if (err) wo.log.info(err)
         else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
-  } else if ('httpall' === wo.envi.protocol) {
+  } else if (wo.envi.protocol === 'httpall') {
     portHttp = 80
 
     require('http')
