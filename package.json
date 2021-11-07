@@ -11,7 +11,7 @@
     "boot": "npx run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
     "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
-    "backup": "tar czf backup/ext-backup-`date +%Y%m%d-%H%M%S`.tgz ConfigCustom.js ConfigDynamic.js ConfigSecret.js upload database",
+    "backup": "tar czf backup/ext-backup-`date +%Y%m%d-%H%M%S`.tgz Config*.js upload database",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbase,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
