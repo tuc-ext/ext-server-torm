@@ -11,7 +11,7 @@
     "boot": "npx run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
     "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
-    "ssl": "certbot certonly -d ext-server.bittic.org --standalone",
+    "backup": "tar czf backup/ext-backup-`date +%Y%m%d-%H%M%S`.tgz ConfigCustom.js ConfigDynamic.js ConfigSecret.js upload database",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbase,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
@@ -20,8 +20,9 @@
     "drive": "cross-env NODE_ENV=production nodemon server.js",
     "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
     "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
-    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext.$(date +%Y%m%d-%H%M%S).sqlite",
-    "db.upload": "scp ./database/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.$(date +%Y%m%d-%H%M%S).sqlite"
+    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
+    "db.upload": "scp ./database/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
+    "ssl": "certbot certonly -d ext-server.bittic.org --standalone"
   },
   "dependencies": {
     "base.FileTransfer.server": "git+https://git.faronear.org/npm/base.FileTransfer.server",

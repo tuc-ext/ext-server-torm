@@ -55,7 +55,6 @@ function runServer () {
   server.use(require('compression')())
   server.use(require('cookie-parser')())
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
-  // server.use(require('serve-favicon')(path.join(__dirname, 'public', 'favicon.ico')))
   server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
   server.use(path.join('/', wo.envi.uploadroot).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.uploadroot).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
