@@ -10,7 +10,7 @@ const DAD = (module.exports = class Action extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
-      hash: { type: String, nullable: false, generated: 'uuid', primary: true},
+      uuid: { type: String, nullable: false, generated: 'uuid', primary: true},
       type: { type: String, default: '', nullable: false }, // 创作，转让，付费解密，
       owner_script: { type: String, default: '', nullable: true},
       buyer_script: { type: String, default: '', nullable: true},

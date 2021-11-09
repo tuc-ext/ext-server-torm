@@ -13,9 +13,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
-      // aiid: { type: 'int', generated: true, primary: true },
-      // uuid: { type: String, generated: 'uuid', unique: true },
-      hash: { type: String, nullable: false, generated: 'uuid', primary: true},
+      uuid: { type: String, generated: 'uuid', primary: true},
       creationTitle: { type: String, default: '', nullable: true },
       creator_address: { type: String, default: null, nullable: true, comment: '原始创作者' },
       creator_cipher: { type: 'simple-json', default: null, nullable: true },
@@ -34,29 +32,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.content2nft = async ({ _passtokenSource, contentData, creationTitle } = {}) => {
-  if (!_passtokenSource?.uuid){
-    return {_state: 'ERROR_USER_OFFLINE' }
-  }
-
-  const { path, cid, size } = await wo.IPFS.add(contentData) // await wo.IPFS.add(require('ipfs-core').urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
-  const cidHex = cid.toString()
-
-  const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
-
-  const nft = await DAD.save({
-    creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creator_cipher: await ticCrypto.encrypt({data: {type: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
-    proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
-    creationTitle,
-    creationTimeUnix: Date.now(),
-  })
-
-  return {_state: 'SUCCESS', nft, cidHex}
-}
-
-DAD.api.story2nft = async ({ _passtokenSource, creationStory, creationTitle } = {}) => {
+DAD.api.story2nft_Agent = async ({ _passtokenSource, creationStory, creationTitle } = {}) => {
   if (!_passtokenSource?.uuid){
     return {_state: 'ERROR_USER_OFFLINE' }
   }
@@ -67,16 +43,16 @@ DAD.api.story2nft = async ({ _passtokenSource, creationStory, creationTitle } = 
   }else if (creationStory[0].image){
     ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].image))
   }
-  const { path, cid, size } = ipfsResult
+  const { path, cid, size, mode, mtime } = ipfsResult // mode==0644 for files, 0755 for directories; mtime?: { secs, nsecs }
   const cidHex = cid.toString()
 
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
   const nft = await DAD.save({
     creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creator_cipher: await ticCrypto.encrypt({data: {type: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+    creator_cipher: await ticCrypto.encrypt({data: {storeType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
     proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-    proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
+    proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   })
@@ -84,41 +60,33 @@ DAD.api.story2nft = async ({ _passtokenSource, creationStory, creationTitle } = 
   return {_state: 'SUCCESS', nft, cidHex}
 }
 
-DAD.api.getCid = async ({ _passtokenSource, contentData } = {}) => {
+DAD.api.getCidHex = async ({ _passtokenSource, contentData } = {}) => {
   console.info('data=', contentData)
   const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
   console.info('cid=', cid)
-  if (cid) return { _state: 'SUCCESS', cid: cid.toString() }
+  if (cid) return { _state: 'SUCCESS', cidHex: cid.toString() }
   else return { _state: 'ERROR' }
 }
 
-DAD.api.sealCid_old = async ({ creator_cipher, cid } = {}) => {
-  let proxy_cipher = await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
-  console.log('proxy_cipher===', proxy_cipher)
-  // to check cid 是否已存在
-  await DAD.insert({ creator_cipher, proxy_cipher })
-  return { _state: 'SUCCESS', proxy_cipher }
-}
-
-DAD.api.sealCid = async ({ _passtokenSource, cid, type, creator_address, creator_cipher }) => {
+DAD.api.sealCidHex = async ({ _passtokenSource, cidHex, sealType, creator_address, creator_cipher }) => {
   let result
-  if (type==='ALL_BY_PROXY') {
+  if (sealType==='ALL_BY_PROXY') {
     const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
     result = await DAD.insert({
       creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-      creator_cipher:  await ticCrypto.encrypt({data:{type:'ipfs', cid}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
+      creator_cipher:  await ticCrypto.encrypt({data:{storeType:'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
       proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-      proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+      proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
     })
-  }else if (type==='HALF_BY_PROXY') {
+  }else if (sealType==='HALF_BY_PROXY') {
     // todo 验证 creator_cipher 的正确性
     result = await DAD.insert({
       creator_address,
       creator_cipher,
       proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-      proxy_cipher: await ticCrypto.encrypt({ data: { type: 'ipfs', cid }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+      proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
     })
-  }else if (type==='ALL_BY_USER') {
+  }else if (sealType==='ALL_BY_CREATOR') {
     // todo 验证 creator_cipher 的正确性
     result = await DAD.insert({ creator_address, creator_cipher, })
   }
