@@ -21,7 +21,7 @@
     "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
     "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
     "deploy": "/faronear/fon/expect-deploy.sh ext-server.bittic.org adot /faronear/tuc-ext/ext.server.torm",
-    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc/ext.server.torm/database/ext.sqlite ./database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
+    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/database/ext.sqlite ./database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
     "db.upload": "rsync --rsync-path='sudo rsync' ./database/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
     "ssl": "certbot certonly -d ext-server.bittic.org --standalone"
   },
