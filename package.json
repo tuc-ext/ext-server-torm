@@ -57,7 +57,7 @@
   "devDependencies": {
     "pm2": "^4.5.0",
     "rimraf": "^3.0.2",
-    "npm i run-script-os && run-script-os": "^1.1.6",
+    "run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
     "supervisor": "^0.12.0"
   }
