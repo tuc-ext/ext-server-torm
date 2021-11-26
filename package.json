@@ -8,10 +8,10 @@
     "npm": "6.9.0"
   },
   "scripts": {
-    "boot": "npx run-script-os",
+    "boot": "npm i run-script-os && run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
     "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
-    "backup": "tar czf backup/ext-backup-`date +%Y%m%d-%H%M%S`.tgz Config*.js upload database",
+    "backup": "tar czf backup/ext-backup-`date +%Y%m%d-%H%M%S`.tgz Config*.js upload database logbase",
     "debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "debug.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbase,database --inspect-brk -- server.js",
     "dev": "cross-env NODE_ENV=development nodemon server.js",
@@ -57,7 +57,7 @@
   "devDependencies": {
     "pm2": "^4.5.0",
     "rimraf": "^3.0.2",
-    "run-script-os": "^1.1.6",
+    "npm i run-script-os && run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
     "supervisor": "^0.12.0"
   }
