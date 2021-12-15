@@ -17,3 +17,10 @@
 转让：要提供买家和卖家各自的签名
 
 解密：提供支付证明。
+
+## 兼容
+- win11 + node16|17.2 + python 3.9.9: fail at bcrypto. 
+- win11 + node16|17.2 (+ python 3.9.9 可选已装或未装，不影响) + python 2.7.16(手工安装): pass! 似乎编译bcrypto时会去 C:\python27\ 目录下找 python.exe
+- win11 + node14 + python 3.9.9｜2.7.16｜同时存在: pass
+- deb11 + node16 + python 2.7.18: pass 
+- mac10.15 + node14|16 + python 2.7.16: pass

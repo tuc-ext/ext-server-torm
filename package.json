@@ -17,9 +17,9 @@
     "dev": "cross-env NODE_ENV=development nodemon server.js",
     "dev.sup": "cross-env NODE_ENV=development supervisor -i node_modules,logbase,database -- server.js",
     "dev.pm2": "cross-env NODE_ENV=development pm2 start server.js --name ext.server.torm",
-    "drive": "cross-env NODE_ENV=production nodemon server.js",
-    "drive.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
-    "drive.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
+    "serve": "cross-env NODE_ENV=production nodemon server.js",
+    "serve.sup": "cross-env NODE_ENV=production supervisor -i node_modules,logbase,database -- server.js",
+    "serve.pm2": "cross-env NODE_ENV=production pm2 start server.js --name ext.server.torm",
     "deploy": "/faronear/fon/expect-deploy.sh ext-server.bittic.org adot /faronear/tuc-ext/ext.server.torm",
     "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/database/ext.sqlite ./database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
     "db.upload": "rsync --rsync-path='sudo rsync' ./database/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/database/ext-$(date +%Y%m%d-%H%M%S).sqlite",
@@ -55,7 +55,7 @@
     "ws": "^7.3.0"
   },
   "devDependencies": {
-    "pm2": "^4.5.0",
+    "pm2": "^5.1.2",
     "rimraf": "^3.0.2",
     "run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
