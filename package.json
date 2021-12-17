@@ -8,6 +8,7 @@
     "npm": "6.9.0"
   },
   "scripts": {
+    "autostart": "npm run serve.pm2",
     "boot": "npm i run-script-os && run-script-os",
     "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
     "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
