@@ -114,11 +114,10 @@ function runServer () {
 
   /** * 启动 Web 服务 ***/
   let webServer
-  let portHttp = wo.envi.port || 80
-  const portHttps = wo.envi.port || 443
   const ipv4 = require('base.nettool').getMyIp()
   if (wo.envi.protocol === 'http') {
-    // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
+    const portHttp = wo.envi.port || 80
+      // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
@@ -126,6 +125,7 @@ function runServer () {
         else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
       })
   } else if (wo.envi.protocol === 'https') {
+    const portHttps = wo.envi.port || 443
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
@@ -141,7 +141,8 @@ function runServer () {
         else wo.log.info(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   } else if (wo.envi.protocol === 'httpall') {
-    portHttp = 80
+    const portHttp = wo.envi.port?.portHttp || 80
+    const portHttps = wo.envi.port?.portHttps || 443
 
     require('http')
       .createServer(
