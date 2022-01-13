@@ -11,7 +11,7 @@ test*
 *.rdb
 backup/*.tgz
 database/*.sqlite
-logbase/*.log*
+_logbase/*.log*
 upload/*
 ConfigCustom.js
 ConfigDynamic.js

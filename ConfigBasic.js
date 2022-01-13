@@ -18,7 +18,7 @@ module.exports = {
   port: 60000 + parseInt(coretool.name2port('ext')), // 本节点的 Web服务端口号
   // 数据库设置
   datastore: { type: 'sqlite', database: 'database/ext.sqlite' },
-  logstore: { type: 'file', root: 'logbase', file: 'ext-server.log' },
+  logstore: { type: 'file', root: '_logbase', file: 'ext-server.log' },
 
   uploadroot: 'upload',
 
