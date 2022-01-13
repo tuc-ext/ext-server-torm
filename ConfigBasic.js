@@ -17,8 +17,8 @@ module.exports = {
   host: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
   port: 60000 + parseInt(coretool.name2port('ext')), // 本节点的 Web服务端口号
   // 数据库设置
-  datastore: { type: 'sqlite', database: 'database/ext.sqlite' },
-  logstore: { type: 'file', root: '_logbase', file: 'ext-server.log' },
+  datastore: { type: 'sqlite', database: '_datastore/ext.sqlite' },
+  logstore: { type: 'file', root: '_logstore', file: 'ext-server.log' },
 
   uploadroot: 'upload',
 

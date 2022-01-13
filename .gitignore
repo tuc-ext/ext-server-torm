@@ -10,8 +10,8 @@ test*
 *.db
 *.rdb
 backup/*.tgz
-database/*.sqlite
-_logbase/*.log*
+_datastore/*.sqlite
+_logstore/*.log*
 upload/*
 ConfigCustom.js
 ConfigDynamic.js
