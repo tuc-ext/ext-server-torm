@@ -12,7 +12,7 @@ test*
 _archive/*.tgz
 _datastore/*.sqlite
 _logstore/*.log*
-upload/*
+_filestore/*
 ConfigCustom.js
 ConfigDynamic.js
 ConfigSecret.js

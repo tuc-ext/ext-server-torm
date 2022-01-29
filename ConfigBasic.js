@@ -20,7 +20,7 @@ module.exports = {
   datastore: { type: 'sqlite', database: '_datastore/ext.sqlite' },
   logstore: { type: 'file', root: '_logstore', file: 'ext-server.log' },
 
-  uploadroot: 'upload',
+  filestore: '_filestore',
 
   production: {
     protocol: 'https',
