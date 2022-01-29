@@ -9,10 +9,11 @@ test*
 .idea
 *.db
 *.rdb
-_archive/*.tgz
-_datastore/*.sqlite
-_logstore/*.log*
+_archive/*
+_datastore/*
+_logstore/*
 _filestore/*
 ConfigCustom.js
 ConfigDynamic.js
 ConfigSecret.js
+!.gitkeep
