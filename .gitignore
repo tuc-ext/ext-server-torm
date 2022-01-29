@@ -9,7 +9,7 @@ test*
 .idea
 *.db
 *.rdb
-backup/*.tgz
+_archive/*.tgz
 _datastore/*.sqlite
 _logstore/*.log*
 upload/*
