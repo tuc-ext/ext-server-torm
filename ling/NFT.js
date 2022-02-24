@@ -14,17 +14,20 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     target: this,
     columns: {
       uuid: { type: String, generated: 'uuid', primary: true},
+      extokenHash: { type: String, default: '', nullable: false },
       creationTitle: { type: String, default: '', nullable: true },
-      creator_address: { type: String, default: null, nullable: true, comment: '原始创作者' },
-      creator_cipher: { type: 'simple-json', default: null, nullable: true },
-      // owner_address: { type: String, default: null, nullable: true, comment: '当前拥有者' },
-      // owner_cipher: { type: 'simple-json', default: null, nullable: true },
-      // owner_list: { type: 'simple-json', default: null, nullable: true },
-      proxy_address: { type: String, default: null, nullable: true, comment: '当前代理者' },
-      proxy_cipher: { type: 'simple-json', default: null, nullable: true },
-      proxy_list: { type: 'simple-json', default: null, nullable: true },
+      sealType: { type: String, default: 'AGENT', nullable: false },
+      creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者' },
+      creatorCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '创作者永远可以解封' },
+      ownerAddress: { type: String, default: null, nullable: true, comment: '当前拥有者' },
+      ownerCidSeal: { type: 'simple-json', default: null, nullable: true },
+//      // ownerList: { type: 'simple-json', default: null, nullable: true },
+      agentAddress: { type: String, default: null, nullable: true, comment: '当前代理人。无代理时为空' },
+      agentCidSeal: { type: 'simple-json', default: null, nullable: true },
+//      proxyList: { type: 'simple-json', default: null, nullable: true },
       creationTimeUnix: { type: 'int', default: 0, nullable: true },
-      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+      price: { type: 'int', default: null, nullable: true, comment:'转让所有权的价格。null 代表不转让' },
+//      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
 })
@@ -32,7 +35,7 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
 
-DAD.api.story2nft_Agent = async ({ _passtokenSource, creationStory, creationTitle } = {}) => {
+DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitle } = {}) => {
   if (!_passtokenSource?.uuid){
     return {_state: 'ERROR_USER_OFFLINE' }
   }
@@ -42,6 +45,8 @@ DAD.api.story2nft_Agent = async ({ _passtokenSource, creationStory, creationTitl
     ipfsResult = await wo.IPFS.add(creationStory[0].text)
   }else if (creationStory[0].image){
     ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].image))
+  }else if (creationStory[0].video){
+    ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].video))
   }
   const { path, cid, size, mode, mtime } = ipfsResult // mode==0644 for files, 0755 for directories; mtime?: { secs, nsecs }
   const cidHex = cid.toString()
@@ -49,46 +54,64 @@ DAD.api.story2nft_Agent = async ({ _passtokenSource, creationStory, creationTitl
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
   const nft = await DAD.save({
-    creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creator_cipher: await ticCrypto.encrypt({data: {storeType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
-    proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-    proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey }),
+    sealType: 'AGENT',
+    creatorAddress: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
+    creatorCidSeal: await ticCrypto.encrypt({data: {storeType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
+    agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent),
+    agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   })
 
+  nft.ownerAddress = nft.creatorAddress
+  nft.ownerCidSeal = nft.creatorCidSeal
+
   return {_state: 'SUCCESS', nft, cidHex}
 }
 
-DAD.api.getCidHex = async ({ _passtokenSource, contentData } = {}) => {
-  console.info('data=', contentData)
-  const { path, cid, size } = await wo.IPFS.add({path: 'uu.txt', content: contentData}) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
-  console.info('cid=', cid)
+DAD.api.story2cidHex = async ({_passtokenSource, creationStory } = {}) =>{
+  let ipfsResult
+  if (creationStory[0].text) {
+    ipfsResult = await wo.IPFS.add(creationStory[0].text)
+  }else if (creationStory[0].image){
+    ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].image)) // await wo.IPFS.add(IPFS.urlSource('https://vkceyugu.cdn.bspapp.com/VKCEYUGU-eac905a3-f5f5-498c-847b-882770fa36ee/1d759fa3-1635-4c87-b016-f32bd65928d7.jpg'))
+  }else if (creationStory[0].video){
+    ipfsResult = await wo.IPFS.add(ipfs.urlSource(creationStory[0].video))
+  }
+  const { path, cid, size, mode, mtime } = ipfsResult // mode==0644 for files, 0755 for directories; mtime?: { secs, nsecs }
+
   if (cid) return { _state: 'SUCCESS', cidHex: cid.toString() }
   else return { _state: 'ERROR' }
 }
 
-DAD.api.sealCidHex = async ({ _passtokenSource, cidHex, sealType, creator_address, creator_cipher }) => {
+DAD.api.cidSeal2nft_self = async ({_passtokenSource, creatorAddress, creatorCidSeal, creatorSig, creatorPubkey, creationTitle }) => {
+  // verify(creatorCidSeal, creatorSig, creatorPubkey) && pubkey2address(creatorPubkey)===creatorAddress
+  // nft.ownerCidSeal = nft.agentCidSeal = nft.creatorCidSeal
+  // nft.sealType = 'SELF'
+}
+
+
+DAD.api.sealCidHex = async ({ _passtokenSource, cidHex, sealType, creatorAddress, creatorCidSeal }) => {
   let result
   if (sealType==='ALL_BY_PROXY') {
     const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
     result = await DAD.insert({
-      creator_address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-      creator_cipher:  await ticCrypto.encrypt({data:{storeType:'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey}),
-      proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-      proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+      creatorAddress: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
+      creatorCidSeal:  await ticCrypto.encrypt({data:{storeType:'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
+      agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent),
+      agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey })
     })
   }else if (sealType==='HALF_BY_PROXY') {
-    // todo 验证 creator_cipher 的正确性
+    // todo 验证 creatorCidSeal 的正确性
     result = await DAD.insert({
-      creator_address,
-      creator_cipher,
-      proxy_address: ticCrypto.secword2address(wo.envi.secwordSys),
-      proxy_cipher: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey })
+      creatorAddress,
+      creatorCidSeal,
+      agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent),
+      agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey })
     })
   }else if (sealType==='ALL_BY_CREATOR') {
-    // todo 验证 creator_cipher 的正确性
-    result = await DAD.insert({ creator_address, creator_cipher, })
+    // todo 验证 creatorCidSeal 的正确性
+    result = await DAD.insert({ creatorAddress, creatorCidSeal, })
   }
   return {_state:'SUCCESS', result }
 }
@@ -99,6 +122,6 @@ DAD.api.getNftList = async () => {
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  const plaindata = await ticCrypto.decrypt({ data: nft.proxy_cipher, key: ticCrypto.secword2keypair(wo.envi.secwordSys).seckey, keytype: 'pwd' })
+  const plaindata = await ticCrypto.decrypt({ data: nft.agentCidSeal, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey, keytype: 'pwd' })
   return { _state: 'SUCCESS', plaindata }
 }

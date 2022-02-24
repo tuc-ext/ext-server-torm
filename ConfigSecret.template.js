@@ -5,7 +5,7 @@
 
 module.exports = {
   tokenKey: '？？？？p[aerjklasdf9q34@#$-SCDAW',
-  secwordSys: '礼 戴 盘 汁 环 蒋 景 奉 眼 孔 西 虎',
+  secwordAgent: '礼 戴 盘 汁 环 蒋 景 奉 眼 孔 西 虎',
   secwordUser: '解 杆 解 者 秋 捉 多 几 虑 悟 皇 长',
   SMS: {
     dxton: {
