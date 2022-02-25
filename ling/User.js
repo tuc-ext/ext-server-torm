@@ -69,9 +69,9 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
 DAD.api = DAD.api1 = {}
 DAD.sysapi = {}
 
-DAD.api.changePortrait = async function ({ _passtokenSource, _req } = {}) {
+DAD.api.uploadPortrait = async function ({ _passtokenSource } = {}) { // receive image by server and update server database 
   if (_passtokenSource && _passtokenSource.isOnline) {
-    let file = _req.file
+    let file = wo._req.file
     if (file && /^image\//.test(file.mimetype)) {
       await DAD.update({ uuid: _passtokenSource.uuid }, { portrait: file.filename })
       return Object.assign(file, { _state: 'SUCCESS' })
@@ -82,29 +82,13 @@ DAD.api.changePortrait = async function ({ _passtokenSource, _req } = {}) {
     return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
   }
 }
-DAD.api.changePortrait2Cloud = async ({ _passtokenSource, User: { portrait } = {} } = {}) => {
+DAD.api.updatePortrait = async ({ _passtokenSource, User: { portrait } = {} } = {}) => {
   if (_passtokenSource && _passtokenSource.isOnline) {
     if (portrait) {
       await DAD.update({ uuid: _passtokenSource.uuid }, { portrait: portrait })
       return { _state: 'SUCCESS' }
     } else {
       return { _state: 'FILE_NOT_EXIST' }
-    }
-  } else {
-    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
-  }
-}
-
-DAD.api.uploadIdCard = async function ({ _passtokenSource, side, _req }) {
-  if (_passtokenSource && _passtokenSource.isOnline && ['Cover', 'Back', 'Selfie'].indexOf(side)) {
-    let file = _req.file
-    if (file && /^image\//.test(file.mimetype)) {
-      let obj = {}
-      obj[`idCard${side}`] = _req.file.filename
-      await DAD.update({ uuid: _passtokenSource.uuid }, obj)
-      return Object.assign(file, { _state: 'SUCCESS' })
-    } else {
-      return { _state: 'BACKEND_FAIL_FILE_NOT_IMAGE' }
     }
   } else {
     return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
