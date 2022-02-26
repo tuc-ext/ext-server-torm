@@ -122,6 +122,11 @@ DAD.api.getNftList = async () => {
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  const plaindata = await ticCrypto.decrypt({ data: nft.agentCidSeal, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey, keytype: 'pwd' })
-  return { _state: 'SUCCESS', plaindata }
+  const agentCidString = await ticCrypto.decrypt({ data: nft.agentCidSeal, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey, keytype: 'pwd' })
+  const agentCid = JSON.parse(agentCidString)
+  let creationContent = ''
+  for await (const chunk of wo.IPFS.cat(agentCid.cidHex)) {
+    creationContent = creationContent + chunk.toString()
+  }
+  return { _state: 'SUCCESS', creation: { creationContent, cidHex: agentCid.cidHex }}
 }
