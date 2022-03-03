@@ -155,7 +155,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
         txTime: passTime,
         txTimeUnix: passTime.valueOf(),
       })
-      txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+      txReward.txHash = ticCrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
       await txman.save(txReward)
 
       await txman.update(
@@ -425,7 +425,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     //   txTime: new Date(registerTimeUnix),
     //   txTimeUnix: registerTimeUnix,
     // })
-    // txReward.txHash = ticCrypto.hash(wo.tool.sortAndFilterJson({ fields: txReward.constructor.schema.columns, entity: txReward, exclude: ['aiid', 'uuid'] }))
+    // txReward.txHash = ticCrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
 
     let user = await DAD.save({
       uuid: _passtokenSource.uuid,
