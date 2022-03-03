@@ -13,8 +13,8 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
-      uuid: { type: String, generated: 'uuid', primary: true},
-      extokenHash: { type: String, default: '', nullable: false },
+//      uuid: { type: String, generated: 'uuid', primary: true},
+      hash: { type: String, primary: true },
       creationTitle: { type: String, default: '', nullable: true },
       sealType: { type: String, default: 'AGENT', nullable: false },
       creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者' },
@@ -53,7 +53,7 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
 
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
-  const nft = await DAD.save({
+  const nft = {
     sealType: 'AGENT',
     creatorAddress: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
     creatorCidSeal: await ticCrypto.encrypt({data: {storeType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
@@ -61,9 +61,11 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
     agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
-  })
+  }
   nft.ownerAddress = nft.creatorAddress
   nft.ownerCidSeal = nft.creatorCidSeal
+  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft, cidHex}
 }
@@ -85,7 +87,7 @@ DAD.api.story2cidHex = async ({_passtokenSource, creationStory } = {}) =>{
 
 DAD.api.selfCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidSeal, creatorSig, creatorPubkey, creationTitle }) => {
   // todo: verify(creatorCidSeal, creatorSig, creatorPubkey) && pubkey2address(creatorPubkey)===creatorAddress
-  const nft = await DAD.save({
+  const nft = {
     sealType: 'SELF',
     creatorAddress,
     creatorCidSeal,
@@ -95,14 +97,16 @@ DAD.api.selfCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidSe
     agentCidSeal: creatorCidSeal,
     creationTitle,
     creationTimeUnix: Date.now(),
-  })
+  }
+  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft}
 }
 
 DAD.api.jointCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidSeal, creatorSig, creatorPubkey, creationTitle, cidHex }) => {
   // todo: verify(creatorCidSeal, creatorSig, creatorPubkey) && pubkey2address(creatorPubkey)===creatorAddress
-  const nft = await DAD.save({
+  const nft = {
     sealType: 'JOINT',
     creatorAddress,
     creatorCidSeal,
@@ -112,7 +116,9 @@ DAD.api.jointCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidS
     agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
-  })
+  }
+  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft}
 }
