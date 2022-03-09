@@ -248,10 +248,11 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   // send SMS
   let sendResult = { _state: 'SMS_SENT_SUCCESS' }
   if (process.env.NODE_ENV === 'production') {
-    sendResult = await messenger.sendSms(passcodePhone, {
+    sendResult = await messenger.sendSms({
+      phone: passcodePhone,
       vendor: 'aliyun',
       msgParam: { code: passcode },
-      templateCode: 'SMS_142465215',
+      msgTemplate: 'SMS_142465215',
       signName: 'LOG',
     })
   }
