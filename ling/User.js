@@ -241,10 +241,10 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   let passcode = ticCrypto.randomNumber({ length: 6 })
   let passcodePhone = i18nCore.validatePhone({ phone }) ? phone : _passtokenSource.phone
   let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
-  wo.log('passcode = ' + passcode)
-  wo.log('phone = ' + passcodePhone)
-  wo.log('uuid = ' + _passtokenSource.uuid)
-  wo.log('passcodeHash = ' + passcodeHash)
+  wo.cclog('passcode = ' + passcode)
+  wo.cclog('phone = ' + passcodePhone)
+  wo.cclog('uuid = ' + _passtokenSource.uuid)
+  wo.cclog('passcodeHash = ' + passcodeHash)
   // send SMS
   let sendResult = { _state: 'SMS_SENT_SUCCESS' }
   if (process.env.NODE_ENV === 'production') {
@@ -376,8 +376,8 @@ DAD.api.verifyPasscodeAndRegcode = async function ({ _passtokenSource, passcode,
 }
 
 DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passwordClient, phone, lang, citizen }) {
-  wo.log(`${__filename} register::::::: _passtokenSource.uuid = ${_passtokenSource.uuid}`)
-  wo.log(`${__filename} register::::::: passwordClient = ${passwordClient}`)
+  wo.cclog(`${__filename} register::::::: _passtokenSource.uuid = ${_passtokenSource.uuid}`)
+  wo.cclog(`${__filename} register::::::: passwordClient = ${passwordClient}`)
   if (
     _passtokenSource &&
     _passtokenSource.identifyState === 'NEW_USER' &&

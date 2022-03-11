@@ -15,10 +15,10 @@ function configEnvironment () {
 }
 
 async function initWorld () {
-  wo.log = require('base.tool/tool4log.js').colog
+  wo.cclog = require('base.tool/tool4log.js').cclog
   wo.tool = require('core.tool')
 
-  wo.log('Loading classes ......')
+  wo.cclog('Loading classes ......')
 
   wo.EventCenter = new (require('events'))()
 
@@ -29,7 +29,7 @@ async function initWorld () {
 
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
-  wo.log(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
+  wo.cclog(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
   await torm.createConnection(
     Object.assign(wo.envi.datastore, {
       entities: [new torm.EntitySchema(wo.NFT.schema), new torm.EntitySchema(wo.User.schema)],
@@ -42,7 +42,7 @@ async function initWorld () {
 
 function runServer () {
   // 配置并启动 Web 服务
-  wo.log('★★★★★★★★ 启动服务 ★★★★★★★★')
+  wo.cclog('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
   const webtoken = require('base.webtoken')
@@ -76,7 +76,7 @@ function runServer () {
       indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     const { apiVersion, apiWho, apiTodo } = req.params
-    wo.log(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
+    wo.cclog(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
@@ -86,14 +86,14 @@ function runServer () {
     if (typeof wo[apiWho]?.[apiVersion]?.[apiTodo] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiTodo)) {
       try {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
-        wo.log(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 `, outdata, ' 👆 👆')
+        wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 `, outdata, ' 👆 👆')
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
-        wo.log(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_EXCEPTION = `, exception, ' 👆 👆')
+        wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_EXCEPTION = `, exception, ' 👆 👆')
         res.json({ _state: 'BACKEND_EXCEPTION' })
       }
     } else {
-      wo.log(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_API_UNKNOWN`, ' 👆 👆')
+      wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_API_UNKNOWN`, ' 👆 👆')
       res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
@@ -121,8 +121,8 @@ function runServer () {
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
-        if (err) wo.log(err)
-        else wo.log(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
+        if (err) wo.cclog(err)
+        else wo.cclog(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
       })
   } else if (wo.envi.protocol === 'https') {
     const portHttps = wo.envi.port || 443
@@ -137,8 +137,8 @@ function runServer () {
         server
       )
       .listen(portHttps, function (err) {
-        if (err) wo.log(err)
-        else wo.log(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
+        if (err) wo.cclog(err)
+        else wo.cclog(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   } else if (wo.envi.protocol === 'httpall') {
     const portHttp = wo.envi.port?.portHttp || 80
@@ -151,8 +151,8 @@ function runServer () {
         })
       )
       .listen(portHttp, function (err) {
-        if (err) wo.log(err)
-        else wo.log(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.prodev} environment`)
+        if (err) wo.cclog(err)
+        else wo.cclog(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.prodev} environment`)
       })
     webServer = require('https')
       .createServer(
@@ -164,8 +164,8 @@ function runServer () {
         server
       )
       .listen(portHttps, function (err) {
-        if (err) wo.log(err)
-        else wo.log(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
+        if (err) wo.cclog(err)
+        else wo.cclog(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   }
 
