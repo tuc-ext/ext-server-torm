@@ -77,7 +77,7 @@ function runServer () {
       indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     const { apiVersion, apiWho, apiTodo } = req.params
-    console.log(colors.bgGray({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.green({ indata }))
+    console.log(colors.blue({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.bgBlue({ indata }))
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
@@ -87,14 +87,14 @@ function runServer () {
     if (typeof wo[apiWho]?.[apiVersion]?.[apiTodo] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiTodo)) {
       try {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
-        console.info(colors.bgGrey({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.blue({ outdata }))
+        console.info(colors.green({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.bgGreen({ outdata }))
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
-        console.error(colors.bgGray({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.red({ exception }))
+        console.error(colors.red({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.bgRed({ exception }))
         res.json({ _state: 'BACKEND_EXCEPTION' })
       }
     } else {
-      console.warn(colors.bgGrey({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.yellow({ error: 'BACKEND_API_UNKNOWN' }))
+      console.warn(colors.magenta({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.bgMagenta({ error: 'BACKEND_API_UNKNOWN' }))
       res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
