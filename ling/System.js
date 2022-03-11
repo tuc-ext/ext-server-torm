@@ -12,7 +12,6 @@ module.exports = class System {
         _state: 'SUCCESS',
         configDynamic: enviconfig.getDynamicConfig(),
       }
-      console.log(result)
       return result
     },
     

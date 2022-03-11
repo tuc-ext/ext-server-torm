@@ -18,7 +18,7 @@ module.exports = {
   port: 60000 + parseInt(coretool.name2port('ext')), // 本节点的 Web服务端口号
   // 数据库设置
   datastore: { type: 'sqlite', database: '_datastore/ext.sqlite' },
-  logstore: { type: 'file', root: '_logstore', file: 'ext-server.log' },
+  // logstore: { type: 'file', root: '_logstore', file: 'ext-server.log' }, // 换用 pm2 的日志记录
 
   filestore: '_filestore',
 

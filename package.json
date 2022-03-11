@@ -29,9 +29,8 @@
   "dependencies": {
     "base.enviconfig": "git+https://git.faronear.org/npm/base.enviconfig",
     "base.FileTransfer.server": "git+https://git.faronear.org/npm/base.FileTransfer.server",
-    "base.logger": "git+https://git.faronear.org/npm/base.logger",
     "base.messenger": "git+https://git.faronear.org/npm/base.messenger",
-    "base.nettool": "git+https://git.faronear.org/npm/base.nettool",
+    "base.tool": "git+https://git.faronear.org/npm/base.tool",
     "base.websocket.server": "git+https://git.faronear.org/npm/base.websocket.server",
     "base.webtoken": "git+https://git.faronear.org/npm/base.webtoken",
     "body-parser": "^1.16.1",
