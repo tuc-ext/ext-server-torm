@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
+const colors = require('colors')
 
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
@@ -76,7 +77,7 @@ function runServer () {
       indata[key] = req.headers['content-type'] === 'application/json' ? req.body[key] : wo.tool.parseJsonPossible(req.body[key])
     }
     const { apiVersion, apiWho, apiTodo } = req.params
-    wo.cclog(`👇 ${apiVersion}/${apiWho}/${apiTodo} 👇 `, indata, ' 👇 👇')
+    console.log(colors.bgGray({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.green({ indata }))
 
     res.setHeader('charset', 'utf-8')
     // res.setHeader('Access-Control-Allow-Origin', '*') // 用了 Cors中间件，就不需要手工再设置了。
@@ -86,14 +87,14 @@ function runServer () {
     if (typeof wo[apiWho]?.[apiVersion]?.[apiTodo] === 'function' && wo[apiWho][apiVersion].hasOwnProperty(apiTodo)) {
       try {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
-        wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 `, outdata, ' 👆 👆')
+        console.info(colors.bgGrey({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.blue({ outdata }))
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (exception) {
-        wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_EXCEPTION = `, exception, ' 👆 👆')
+        console.error(colors.bgGray({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.red({ exception }))
         res.json({ _state: 'BACKEND_EXCEPTION' })
       }
     } else {
-      wo.cclog(`👆 ${apiVersion}/${apiWho}/${apiTodo} 👆 BACKEND_API_UNKNOWN`, ' 👆 👆')
+      console.warn(colors.bgGrey({time:new Date().toJSON(), api:`${apiVersion}/${apiWho}/${apiTodo}`}), colors.yellow({ error: 'BACKEND_API_UNKNOWN' }))
       res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
