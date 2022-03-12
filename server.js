@@ -16,7 +16,7 @@ function configEnvironment () {
 }
 
 async function initWorld () {
-  wo.cclog = require('base.tool/tool4log.js').cclog
+  Object.assign(wo, require('base.tool/tool4log.js'))
   wo.tool = require('core.tool')
 
   wo.cclog('Loading classes ......')
