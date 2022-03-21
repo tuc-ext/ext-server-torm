@@ -13,18 +13,18 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
+      // todo:  cidSeal改名为uri-seal。uri 可以是数字的例如ipfs，也可以是物理的例如国家公证系统。
 //      uuid: { type: String, generated: 'uuid', primary: true},
       hash: { type: String, primary: true },
       creationTitle: { type: String, default: '', nullable: true },
       sealType: { type: String, default: 'AGENT', nullable: false },
-      creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者' },
+      creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者，永远不变' },
       creatorCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '创作者永远可以解封' },
-      ownerAddress: { type: String, default: null, nullable: true, comment: '当前拥有者' },
-      ownerCidSeal: { type: 'simple-json', default: null, nullable: true },
-//      // ownerList: { type: 'simple-json', default: null, nullable: true },
+      ownerAddress: { type: String, default: null, nullable: true, comment: '当前拥有者，可以转移' },
+      ownerCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前拥有者可以解封' },
       agentAddress: { type: String, default: null, nullable: true, comment: '当前代理人。无代理时为空' },
-      agentCidSeal: { type: 'simple-json', default: null, nullable: true },
-//      proxyList: { type: 'simple-json', default: null, nullable: true },
+      agentCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前代理人可以解封' },
+      openCid: { type: 'simple-json', default: null, nullable: true, comment: '不加密，任何人可以直接访问的CID' },
       creationTimeUnix: { type: 'int', default: 0, nullable: true },
       price: { type: 'int', default: null, nullable: true, comment:'转让所有权的价格。null 代表不转让' },
 //      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
@@ -56,9 +56,9 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
   const nft = {
     sealType: 'AGENT',
     creatorAddress: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creatorCidSeal: await ticCrypto.encrypt({data: {storeType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
+    creatorCidSeal: await ticCrypto.encrypt({data: {uriType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
     agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent, { coin: 'EXT'}),
-    agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
+    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   }
@@ -113,7 +113,7 @@ DAD.api.jointCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidS
     ownerAddress: creatorAddress,
     ownerCidSeal: creatorCidSeal,
     agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent, { coin: 'EXT'}),
-    agentCidSeal: await ticCrypto.encrypt({ data: { storeType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
+    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   }
