@@ -89,9 +89,9 @@ function runServer () {
         const outdata = await wo[apiWho][apiVersion][apiTodo](indata)
         console.info(colors.green({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgGreen({ outdata }))
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
-      } catch (exception) {
-        console.error(colors.red({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgRed({ _state: 'BACKEND_EXCEPTION', exception }))
-        res.json({ _state: 'BACKEND_EXCEPTION', exception })
+      } catch (error) {
+        console.error(colors.red({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgRed({ _state: 'BACKEND_EXCEPTION', error }))
+        res.json({ _state: 'BACKEND_EXCEPTION', error })
       }
     } else {
       console.warn(colors.magenta({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgMagenta({ _state: 'BACKEND_API_UNKNOWN' }))

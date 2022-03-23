@@ -250,10 +250,9 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   if (process.env.NODE_ENV === 'production') {
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
-      vendor: 'aliyun',
+      vendor: 'ALIYUN',
       msgParam: { code: passcode },
-      msgTemplate: 'SMS_142465215',
-      signName: 'LOG',
+      msgTemplate: wo.envi.SMS.ALIYUN.TEMPLATE_PASSCODE_REGISTER_NEWUSER,
     })
   }
 
@@ -281,35 +280,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
   return { _state: 'PASSCODE_UNSENT' }
 }
 
-DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode }) {
-  if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
-    return { _state: 'PASSCODE_EXPIRED' }
-  }
-  if (!/^\d{6}$/.test(passcode)) {
-    return { _state: 'PASSCODE_MALFORMED' }
-  }
-  if (
-    _passtokenSource.phone === _passtokenSource.passcodePhone &&
-    ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash
-  ) {
-    let expire = Date.now() + 5 * 60 * 1000
-    return {
-      _state: 'VERIFY_SUCCESS',
-      verifyExpireAt: expire,
-      _passtoken: webtoken.createToken(
-        Object.assign(_passtokenSource, {
-          verifyState: 'VERIFY_SUCCESS',
-          verifyExpireAt: expire,
-        }),
-        wo.envi.tokenKey
-      ),
-    }
-  } else {
-    return { _state: 'VERIFY_FAILED' }
-  }
-}
-
-DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
+DAD.api.verifyPasscodeToChangePhone = async function ({ _passtokenSource, passcode }) {
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
@@ -319,6 +290,7 @@ DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
   if (ticCrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
     return { _state: 'VERIFY_FAILED' }
   }
+
   if (_passtokenSource.phone === _passtokenSource.passcodePhone) {
     return { _state: 'NEWPHONE_IS_OLD' }
   }
@@ -341,37 +313,42 @@ DAD.api.verifyAndChangePhone = async function ({ _passtokenSource, passcode }) {
   }
 }
 
-DAD.api.verifyPasscodeAndRegcode = async function ({ _passtokenSource, passcode, regcode } = {}) {
+DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode, regcode } = {}) {
   if (_passtokenSource && Date.now() > _passtokenSource.passcodeExpireAt) {
     return { _state: 'PASSCODE_EXPIRED' }
   }
-  let aiid = wo.tool.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
-  if (aiid === null) {
-    // 非法的regcode
-    return { _state: 'REGCODE_MALFORMED' }
-  } else if (aiid > (await DAD.count())) {
-    return { _state: 'REGCODE_USER_NOTEXIST' }
-  }
-  if (/^\d{6}$/.test(passcode) && _passtokenSource.phone === _passtokenSource.passcodePhone) {
-    if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) === _passtokenSource.passcodeHash) {
-      let expire = Date.now() + 5 * 60 * 1000
-      return {
-        _state: 'VERIFY_SUCCESS',
-        verifyExpireAt: expire,
-        _passtoken: webtoken.createToken(
-          Object.assign(_passtokenSource, {
-            regcode: regcode,
-            verifyState: 'VERIFY_SUCCESS',
-            verifyExpireAt: expire,
-          }),
-          wo.envi.tokenKey
-        ),
-      }
-    } else {
-      return { _state: 'VERIFY_FAILED' }
-    }
-  } else {
+  if (!/^\d{6}$/.test(passcode)) {
     return { _state: 'PASSCODE_MALFORMED' }
+  }
+  if (_passtokenSource.phone === _passtokenSource.passcodePhone) {
+    return { _state: 'PASSCODE_PHONE_MISMATCH' }
+  }
+  if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
+    return { _state: 'VERIFY_FAILED' }
+  }
+
+  if (regcode) { // regcode 可以为空，但如果存在，就必须是有效的。
+    const aiid = wo.tool.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
+    if (aiid === null) {
+      // 非法的regcode
+      return { _state: 'REGCODE_MALFORMED' }
+    } else if (aiid > (await DAD.count())) {
+      return { _state: 'REGCODE_USER_NOTEXIST' }
+    }
+  }
+
+  let expire = Date.now() + 5 * 60 * 1000
+  return {
+    _state: 'VERIFY_SUCCESS',
+    verifyExpireAt: expire,
+    _passtoken: webtoken.createToken(
+      Object.assign(_passtokenSource, {
+        regcode: regcode,
+        verifyState: 'VERIFY_SUCCESS',
+        verifyExpireAt: expire,
+      }),
+      wo.envi.tokenKey
+    ),
   }
 }
 
@@ -432,7 +409,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       uuid: _passtokenSource.uuid,
       phone: phone,
       passwordServer,
-      regcode: _passtokenSource.regcode.toLowerCase(),
+      regcode: _passtokenSource.regcode?.toLowerCase(),
       nickname: `----${phone.substr(-4)}`,
       coinAddress,
       whenRegister: new Date(registerTimeUnix),

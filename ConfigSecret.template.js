@@ -8,13 +8,18 @@ module.exports = {
   secwordAgent: '礼 戴 盘 汁 环 蒋 景 奉 眼 孔 西 虎',
   secwordUser: '解 杆 解 者 秋 捉 多 几 虑 悟 皇 长',
   SMS: {
-    dxton: {
+    DXTON: {
       urlChina: 'http://sms.106jiekou.com/utf8/sms.aspx?account=？？？？&password=？？？？',
       urlWorld: 'http://sms.106jiekou.com/utf8/worldapi.aspx?account=？？？？&password=？？？？',
     },
-    aliyun: {
+    ALIYUN: {
+      signName: '???',
       accessKeyId: '？？？？',
       secretAccessKey: '？？？？',
+      TEMPLATE_PASSCODE_REGISTER_NEWUSER: ' ?????? ',
+      TEMPLATE_PASSCODE_RESET_PASSWORD: ' ?????? ',
+      TEMPLATE_PASSCODE_CHANGE_PHONE: ' ?????? ',
+      TEMPLATE_PASSCODE_GENERAL: ' ?????? ',
     }
   },
 }
