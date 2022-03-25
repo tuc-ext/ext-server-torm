@@ -94,14 +94,14 @@ function runServer () {
         res.json({ _state: 'BACKEND_EXCEPTION', error })
       }
     } else {
-      console.warn(colors.magenta({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgMagenta({ _state: 'BACKEND_API_UNKNOWN' }))
+      console.warn(colors.yellow({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgYellow({ _state: 'BACKEND_API_UNKNOWN' }))
       res.json({ _state: 'BACKEND_API_UNKNOWN' })
     }
   })
 
   server.all('*', function (req, res) {
     /* 错误的API调用进入这里 */
-    console.warn(colors.magenta({ time: new Date().toJSON(), api: req.url }), colors.bgMagenta({ _state: 'BACKEND_API_MALFORMED' }))
+    console.warn(colors.yellow({ time: new Date().toJSON(), api: req.url }), colors.bgYellow({ _state: 'BACKEND_API_MALFORMED' }))
     res.json({ _state: 'BACKEND_API_MALFORMED' })
   })
 

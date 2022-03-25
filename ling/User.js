@@ -228,26 +228,31 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
-  if (phone && i18nCore.validatePhone({ phone })) {
+DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo?.env?.prodev } = {}) {
+  if (phoneNew) {
     // 用户在更换新手机
-    if (phone === _passtokenSource.phone) {
-      return { _state: 'NEWPHONE_IS_OLD' }
-    } else if ((await DAD.count({ phone: phone })) >= 1) {
+    if (!i18nCore.validatePhone({ phoneNew })) {
+      return { _state: 'NEWPHONE_MALFORMED' }
+    } else if (phoneNew === _passtokenSource.phone) {
+      return { _state: 'NEWPHONE_EQUAL_OLDPHONE' }
+    } else if ((await DAD.count({ phone: phoneNew })) >= 1) {
       return { _state: 'NEWPHONE_EXISTED' }
     }
   }
 
-  let passcode = ticCrypto.randomNumber({ length: 6 })
-  let passcodePhone = i18nCore.validatePhone({ phone }) ? phone : _passtokenSource.phone
-  let passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
-  wo.cclog('passcode = ' + passcode)
-  wo.cclog('phone = ' + passcodePhone)
-  wo.cclog('uuid = ' + _passtokenSource.uuid)
-  wo.cclog('passcodeHash = ' + passcodeHash)
+  const passcode = ticCrypto.randomNumber({ length: 6 })
+  const passcodePhone = phoneNew || _passtokenSource.phone
+  const passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
+  wo.ccinfo({
+    passcodePhone,
+    passcode,
+    passcodeHash,
+    uuid: _passtokenSource.uuid,
+  })
+
   // send SMS
   let sendResult = { _state: 'SMS_SENT_SUCCESS' }
-  if (process.env.NODE_ENV === 'production') {
+  if (prodev === 'production') {
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
       vendor: 'ALIYUN',
@@ -267,9 +272,9 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone }) {
       passcodeExpireAt,
       _passtoken: webtoken.createToken(
         Object.assign(_passtokenSource, {
+          passcodeState: 'PASSCODE_SENT',
           passcodePhone,
           passcodeHash,
-          passcodeState: 'PASSCODE_SENT',
           passcodeSentAt,
           passcodeExpireAt,
         }),
@@ -292,7 +297,7 @@ DAD.api.verifyPasscodeToChangePhone = async function ({ _passtokenSource, passco
   }
 
   if (_passtokenSource.phone === _passtokenSource.passcodePhone) {
-    return { _state: 'NEWPHONE_IS_OLD' }
+    return { _state: 'NEWPHONE_EQUAL_OLDPHONE' }
   }
   if ((await DAD.count({ phone: _passtokenSource.passcodePhone })) >= 1) {
     return { _state: 'NEWPHONE_EXISTED' }
@@ -320,7 +325,7 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode, regcode }
   if (!/^\d{6}$/.test(passcode)) {
     return { _state: 'PASSCODE_MALFORMED' }
   }
-  if (_passtokenSource.phone === _passtokenSource.passcodePhone) {
+  if (_passtokenSource.phone !== _passtokenSource.passcodePhone) {
     return { _state: 'PASSCODE_PHONE_MISMATCH' }
   }
   if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
