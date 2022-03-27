@@ -228,7 +228,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo?.env?.prodev } = {}) {
+DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, purpose, prodev = wo?.env?.prodev } = {}) {
   if (phoneNew) {
     // 用户在更换新手机
     if (!i18nCore.validatePhone({ phoneNew })) {
@@ -255,9 +255,9 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo
   if (prodev === 'production') {
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
-      vendor: 'ALIYUN',
-      msgParam: { code: passcode },
-      msgTemplate: wo.envi.SMS.ALIYUN.TEMPLATE_PASSCODE_REGISTER_NEWUSER,
+      vendor: wo.envi.SMS.vendor,
+      msgParam: { passcode, purpose },
+      msgTemplate: wo.envi.SMS[wo.envi.SMS.vendor].TEMPLATE_PASSCODE_GENERAL_PURPOSE,
     })
   }
 

@@ -10,8 +10,8 @@
   "scripts": {
     "autostart": "npm run serve.pm2",
     "boot": "npm i run-script-os && run-script-os",
-    "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i",
-    "boot:windows": "npx rimraf node_modules package-lock.json & npm i",
+    "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i -f",
+    "boot:windows": "npx rimraf node_modules package-lock.json & npm i -f",
     "archive": "tar czf _archive/ext-archive-`date +%Y%m%d-%H%M%S`.tgz Config*.js _filestore _datastore _logstore",
     "check": "cross-env NODE_ENV=development node --inspect-brk server.js",
     "check.sup": "cross-env NODE_ENV=development supervisor -i node_modules,_logstore,_datastore --inspect-brk -- server.js",
