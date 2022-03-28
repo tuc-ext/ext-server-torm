@@ -18,10 +18,6 @@ module.exports = {
       accessKeyId: '',
       secretAccessKey: '',
       TEMPLATE_PASSCODE_SIMPLEST: '',
-      TEMPLATE_PASSCODE_REGISTER_NEWUSER: '',
-      TEMPLATE_PASSCODE_RESET_PASSWORD: '',
-      TEMPLATE_PASSCODE_CHANGE_PHONE: '',
-      TEMPLATE_PASSCODE_GENERAL_PURPOSE: '',
     },
     TENCENT: { // https://cloud.tencent.com/document/product/382/43197
       appid: '',
