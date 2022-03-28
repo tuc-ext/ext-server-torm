@@ -4,27 +4,29 @@
 **/
 
 module.exports = {
-  tokenKey: '？？？？p[aerjklasdf9q34@#$-SCDAW',
+  tokenKey: 'p[aerjklasdf9q34@#$-SCDAW',
   secwordAgent: '礼 戴 盘 汁 环 蒋 景 奉 眼 孔 西 虎',
   secwordUser: '解 杆 解 者 秋 捉 多 几 虑 悟 皇 长',
   SMS: {
     vendor: '',
     DXTON: {
-      urlChina: 'http://sms.106jiekou.com/utf8/sms.aspx?account=？？？？&password=？？？？',
-      urlWorld: 'http://sms.106jiekou.com/utf8/worldapi.aspx?account=？？？？&password=？？？？',
+      urlChina: 'http://sms.106jiekou.com/utf8/sms.aspx?account=&password=',
+      urlWorld: 'http://sms.106jiekou.com/utf8/worldapi.aspx?account=&password=',
     },
     ALIYUN: {
-      signName: '???',
-      accessKeyId: '？？？？',
-      secretAccessKey: '？？？？',
-      TEMPLATE_PASSCODE_REGISTER_NEWUSER: ' ?????? ',
-      TEMPLATE_PASSCODE_RESET_PASSWORD: ' ?????? ',
-      TEMPLATE_PASSCODE_CHANGE_PHONE: ' ?????? ',
-      TEMPLATE_PASSCODE_GENERAL_PURPOSE: ' ?????? ',
+      signName: '',
+      accessKeyId: '',
+      secretAccessKey: '',
+      TEMPLATE_PASSCODE_SIMPLEST: '',
+      TEMPLATE_PASSCODE_REGISTER_NEWUSER: '',
+      TEMPLATE_PASSCODE_RESET_PASSWORD: '',
+      TEMPLATE_PASSCODE_CHANGE_PHONE: '',
+      TEMPLATE_PASSCODE_GENERAL_PURPOSE: '',
     },
     TENCENT: { // https://cloud.tencent.com/document/product/382/43197
       appid: '',
       signName: '',
+      TEMPLATE_PASSCODE_SIMPLEST: '',
       credential: {
         /* 必填：腾讯云账户密钥对secretId，secretKey。
          * 这里采用的是从环境变量读取的方式，需要在环境变量中先设置这两个值。
@@ -35,7 +37,7 @@ module.exports = {
         secretKey: process.env.secretKey,
       },
       /* 必填：地域信息，可以直接填写字符串ap-guangzhou，支持的地域列表参考 https://cloud.tencent.com/document/api/382/52071#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8 */
-      region: "ap-guangzhou", // ap-beijing, ap-nanjing
+      region: "ap-nanjing", // ap-beijing, ap-nanjing, ap-guangzhou
       /* 非必填:
         * 客户端配置对象，可以指定超时时间等配置 */
       profile: {

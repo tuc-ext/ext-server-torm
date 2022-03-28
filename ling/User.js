@@ -256,8 +256,8 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, purpose, pr
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
       vendor: wo.envi.SMS.vendor,
-      msgParam: { passcode, purpose },
-      msgTemplate: wo.envi.SMS[wo.envi.SMS.vendor].TEMPLATE_PASSCODE_GENERAL_PURPOSE,
+      msgParam: { passcode },
+      msgTemplate: wo.envi.SMS[wo.envi.SMS.vendor].TEMPLATE_PASSCODE_SIMPLEST,
     })
   }
 
