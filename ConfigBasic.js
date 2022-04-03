@@ -9,7 +9,7 @@ module.exports = {
     ['Data_Store', '-d, --Data_Store <string>', 'Permanent storage in JSON string.'],
     ['Base_Hostname', '-H, --Base_Hostname <string>', 'Host ip or domain name.'],
     ['Base_Port', '-p, --Base_Port <number>', 'HTTP port number.'],
-    ['Base_Protocol', '-P, --Base_Protocol <string>', 'Web Server protocol: http|https|httpall.'],
+    ['Base_Protocol', '-P, --Base_Protocol <string>', 'Base server protocol: http|https|httpall.'],
     ['Base_Ssl', '--Base_Ssl <string>', 'SSL options in JSON string.'],
   ],
 

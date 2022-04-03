@@ -10,7 +10,7 @@ const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空�
 function configEnvironment () {
   wo.envi = require('base.enviconfig').mergeConfig()
 
-  if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
+  if (typeof wo.envi.Base_Ssl === 'string') wo.envi.Base_Ssl = eval(`(${wo.envi.Base_Ssl})`)
   if (typeof wo.envi.Data_Store === 'string') wo.envi.Data_Store = eval(`(${wo.envi.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   if (!wo.envi.Data_Store.type) wo.envi.Data_Store.type = 'sqlite' // 默认为 sqlite
 }
@@ -118,57 +118,57 @@ function runServer () {
   /** * 启动 Web 服务 ***/
   let webServer
   const ipv4 = require('base.tool/tool4net.js').getMyIp()
-  if (wo.envi.protocol === 'http') {
-    const portHttp = wo.envi.port || 80
+  if (wo.envi.Base_Protocol === 'http') {
+    const portHttp = wo.envi.Base_Port || 80
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envi.Base_Protocol}://${wo.envi.Base_Hostname}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
       })
-  } else if (wo.envi.protocol === 'https') {
-    const portHttps = wo.envi.port || 443
+  } else if (wo.envi.Base_Protocol === 'https') {
+    const portHttps = wo.envi.Base_Port || 443
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envi.ssl.file.key),
-          cert: fs.readFileSync(wo.envi.ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envi.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envi.Base_Ssl.file.key),
+          cert: fs.readFileSync(wo.envi.Base_Ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envi.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envi.protocol}://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envi.Base_Protocol}://${wo.envi.Base_Hostname}:${portHttps} for ${wo.envi.prodev} environment`)
       })
-  } else if (wo.envi.protocol === 'httpall') {
-    const portHttp = wo.envi.port?.portHttp || 80
-    const portHttps = wo.envi.port?.portHttps || 443
+  } else if (wo.envi.Base_Protocol === 'httpall') {
+    const portHttp = wo.envi.Base_Port?.portHttp || 80
+    const portHttps = wo.envi.Base_Port?.portHttps || 443
 
     require('http')
       .createServer(
         server.all('*', function (ask, reply) {
-          reply.redirect(`https://${wo.envi.host}:${portHttps}`)
+          reply.redirect(`https://${wo.envi.Base_Hostname}:${portHttps}`)
         })
       )
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envi.protocol}] http://${wo.envi.host}:${portHttp} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envi.Base_Protocol}] http://${wo.envi.Base_Hostname}:${portHttp} for ${wo.envi.prodev} environment`)
       })
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envi.ssl.file.key),
-          cert: fs.readFileSync(wo.envi.ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envi.ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envi.Base_Ssl.file.key),
+          cert: fs.readFileSync(wo.envi.Base_Ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envi.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envi.protocol}] https://${wo.envi.host}:${portHttps} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envi.Base_Protocol}] https://${wo.envi.Base_Hostname}:${portHttps} for ${wo.envi.prodev} environment`)
       })
   }
 
