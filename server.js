@@ -11,8 +11,8 @@ function configEnvironment () {
   wo.envi = require('base.enviconfig').mergeConfig()
 
   if (typeof wo.envi.ssl === 'string') wo.envi.ssl = eval(`(${wo.envi.ssl})`)
-  if (typeof wo.envi.datastore === 'string') wo.envi.datastore = eval(`(${wo.envi.datastore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-  if (!wo.envi.datastore.type) wo.envi.datastore.type = 'sqlite' // 默认为 sqlite
+  if (typeof wo.envi.Data_Store === 'string') wo.envi.Data_Store = eval(`(${wo.envi.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  if (!wo.envi.Data_Store.type) wo.envi.Data_Store.type = 'sqlite' // 默认为 sqlite
 }
 
 async function initWorld () {
@@ -30,9 +30,9 @@ async function initWorld () {
 
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
-  wo.cclog(`Initializing datastore ${JSON.stringify(wo.envi.datastore)} ......`)
+  wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envi.Data_Store)} ......`)
   await torm.createConnection(
-    Object.assign(wo.envi.datastore, {
+    Object.assign(wo.envi.Data_Store, {
       entities: [new torm.EntitySchema(wo.NFT.schema), new torm.EntitySchema(wo.User.schema)],
       synchronize: true, // wo.envi.prodev !== 'production' ? true : false,
     })
@@ -57,7 +57,7 @@ function runServer () {
   server.use(require('cookie-parser')())
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
-  server.use(path.join('/', wo.envi.filestore).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.filestore).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
+  server.use(path.join('/', wo.envi.File_Store).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.File_Store).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
   /** * 路由中间件 ***/
 
