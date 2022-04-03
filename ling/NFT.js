@@ -55,10 +55,10 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
 
   const nft = {
     sealType: 'AGENT',
-    creatorAddress: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creatorCidSeal: await ticCrypto.encrypt({data: {uriType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey}),
-    agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent, { coin: 'EXT'}),
-    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
+    creatorAddress: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
+    creatorCidSeal: await ticCrypto.encrypt({data: {uriType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey}),
+    agentAddress: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT'}),
+    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   }
@@ -112,8 +112,8 @@ DAD.api.jointCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidS
     creatorCidSeal,
     ownerAddress: creatorAddress,
     ownerCidSeal: creatorCidSeal,
-    agentAddress: ticCrypto.secword2address(wo.envi.secwordAgent, { coin: 'EXT'}),
-    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey }),
+    agentAddress: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT'}),
+    agentCidSeal: await ticCrypto.encrypt({ data: { uriType: 'ipfs', cidHex }, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
     creationTitle,
     creationTimeUnix: Date.now(),
   }
@@ -129,10 +129,10 @@ DAD.api.getNftList = async () => {
 }
 
 DAD.api.unsealNft = async ({ nft }) => {
-  if ( ticCrypto.secword2address(wo.envi.secwordAgent, { coin: 'EXT'}) !== nft.agentAddress ) {
+  if ( ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT'}) !== nft.agentAddress ) {
     return { _state: 'FAIL_NOT_AGENT' }
   }
-  const agentCidString = await ticCrypto.decrypt({ data: nft.agentCidSeal, key: ticCrypto.secword2keypair(wo.envi.secwordAgent).seckey, keytype: 'pwd' })
+  const agentCidString = await ticCrypto.decrypt({ data: nft.agentCidSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey, keytype: 'pwd' })
   const agentCid = JSON.parse(agentCidString)
   let creationContent = ''
   for await (const chunk of wo.IPFS.cat(agentCid.cidHex)) {

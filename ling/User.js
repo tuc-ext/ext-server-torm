@@ -221,7 +221,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
           uuid,
           identifyState: _state,
         },
-        wo.envi.tokenKey
+        wo.envar.tokenKey
       ),
     }
   }
@@ -255,9 +255,9 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo
   if (prodev === 'production') {
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
-      vendor: wo.envi.SMS.vendor,
+      vendor: wo.envar.SMS.vendor,
       msgParam: { passcode },
-      msgTemplate: wo.envi.SMS[wo.envi.SMS.vendor].TEMPLATE_PASSCODE_SIMPLEST,
+      msgTemplate: wo.envar.SMS[wo.envar.SMS.vendor].TEMPLATE_PASSCODE_SIMPLEST,
     })
   }
 
@@ -278,7 +278,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo
           passcodeSentAt,
           passcodeExpireAt,
         }),
-        wo.envi.tokenKey
+        wo.envar.tokenKey
       ),
     }
   }
@@ -313,7 +313,7 @@ DAD.api.verifyPasscodeToChangePhone = async function ({ _passtokenSource, passco
       Object.assign(_passtokenSource, {
         phone: _passtokenSource.passcodePhone,
       }),
-      wo.envi.tokenKey
+      wo.envar.tokenKey
     ),
   }
 }
@@ -352,7 +352,7 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode, regcode }
         verifyState: 'VERIFY_SUCCESS',
         verifyExpireAt: expire,
       }),
-      wo.envi.tokenKey
+      wo.envar.tokenKey
     ),
   }
 }
@@ -381,19 +381,19 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     let coinAddress = {
       BTC: {
         path: pathBTC,
-        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'BTC', path: pathBTC }),
+        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }),
       },
       ETH: {
         path: pathETH,
-        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'ETH', path: pathETH }),
+        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }),
       },
       TIC: {
         path: pathTIC,
-        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'TIC', path: pathTIC }),
+        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }),
       },
       EXT: { 
         path: pathEXT,
-        address: ticCrypto.secword2address(wo.envi.secwordUser, { coin: 'EXT', path: pathEXT }),
+        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: pathEXT }),
       }
     }
 
@@ -448,7 +448,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
             onlineSince: new Date(),
             onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
           },
-          wo.envi.tokenKey
+          wo.envar.tokenKey
         ),
       }
     } else {
@@ -477,7 +477,7 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
               onlineSince: Date.now(),
               onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
             },
-            wo.envi.tokenKey
+            wo.envar.tokenKey
           ),
         }
       } else {
@@ -509,7 +509,7 @@ DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passt
               onlineSince: Date.now(),
               onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
             },
-            wo.envi.tokenKey
+            wo.envar.tokenKey
           ),
         }
       } else {
@@ -569,7 +569,7 @@ DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewC
           onlineSince: Date.now(),
           onlineExpireAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
         },
-        wo.envi.tokenKey
+        wo.envar.tokenKey
       ),
     }
   }

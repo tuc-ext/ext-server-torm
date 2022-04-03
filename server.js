@@ -8,11 +8,11 @@ const colors = require('colors')
 const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
-  wo.envi = require('base.enviconfig').mergeConfig()
+  wo.envar = require('base.enviconfig').mergeConfig()
 
-  if (typeof wo.envi.Base_Ssl === 'string') wo.envi.Base_Ssl = eval(`(${wo.envi.Base_Ssl})`)
-  if (typeof wo.envi.Data_Store === 'string') wo.envi.Data_Store = eval(`(${wo.envi.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-  if (!wo.envi.Data_Store.type) wo.envi.Data_Store.type = 'sqlite' // 默认为 sqlite
+  if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
+  if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  if (!wo.envar.Data_Store.type) wo.envar.Data_Store.type = 'sqlite' // 默认为 sqlite
 }
 
 async function initWorld () {
@@ -30,11 +30,11 @@ async function initWorld () {
 
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
-  wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envi.Data_Store)} ......`)
+  wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.Data_Store)} ......`)
   await torm.createConnection(
-    Object.assign(wo.envi.Data_Store, {
+    Object.assign(wo.envar.Data_Store, {
       entities: [new torm.EntitySchema(wo.NFT.schema), new torm.EntitySchema(wo.User.schema)],
-      synchronize: true, // wo.envi.prodev !== 'production' ? true : false,
+      synchronize: true, // wo.envar.prodev !== 'production' ? true : false,
     })
   )
 
@@ -50,14 +50,14 @@ function runServer () {
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(wo.envi.prodev === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/_logstore', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')(wo.envar.prodev === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/_logstore', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())
   server.use(require('cookie-parser')())
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
-  server.use(path.join('/', wo.envi.File_Store).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envi.File_Store).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
+  server.use(path.join('/', wo.envar.File_Store).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envar.File_Store).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
   /** * 路由中间件 ***/
 
@@ -67,7 +67,7 @@ function runServer () {
 
     /* 把前端传来的json参数，重新解码成对象 */
     // 要求客户端配合使用 contentType: 'application/json'，即可正确传递数据，不需要做 json2obj 转换。
-    const indata = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envi.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
+    const indata = { _passtokenSource: webtoken.verifyToken(req.headers._passtoken, wo.envar.tokenKey) || {} } // todo: 考虑把参数放入 { indata: {} }
     for (const key in req.query) {
       // GET 方法传来的参数.
       indata[key] = wo.tool.parseJsonPossible(req.query[key])
@@ -106,7 +106,7 @@ function runServer () {
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
-  if (wo.envi.prodev === 'development') {
+  if (wo.envar.prodev === 'development') {
     server.use(
       require('errorhandler')({
         dumpExceptions: true,
@@ -118,57 +118,57 @@ function runServer () {
   /** * 启动 Web 服务 ***/
   let webServer
   const ipv4 = require('base.tool/tool4net.js').getMyIp()
-  if (wo.envi.Base_Protocol === 'http') {
-    const portHttp = wo.envi.Base_Port || 80
+  if (wo.envar.Base_Protocol === 'http') {
+    const portHttp = wo.envar.Base_Port || 80
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envi.Base_Protocol}://${wo.envi.Base_Hostname}:${portHttp} with IPv4=${ipv4} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4} for ${wo.envar.prodev} environment`)
       })
-  } else if (wo.envi.Base_Protocol === 'https') {
-    const portHttps = wo.envi.Base_Port || 443
+  } else if (wo.envar.Base_Protocol === 'https') {
+    const portHttps = wo.envar.Base_Port || 443
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envi.Base_Ssl.file.key),
-          cert: fs.readFileSync(wo.envi.Base_Ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envi.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envar.Base_Ssl.file.key),
+          cert: fs.readFileSync(wo.envar.Base_Ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envar.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envi.Base_Protocol}://${wo.envi.Base_Hostname}:${portHttps} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttps} for ${wo.envar.prodev} environment`)
       })
-  } else if (wo.envi.Base_Protocol === 'httpall') {
-    const portHttp = wo.envi.Base_Port?.portHttp || 80
-    const portHttps = wo.envi.Base_Port?.portHttps || 443
+  } else if (wo.envar.Base_Protocol === 'httpall') {
+    const portHttp = wo.envar.Base_Port?.portHttp || 80
+    const portHttps = wo.envar.Base_Port?.portHttps || 443
 
     require('http')
       .createServer(
         server.all('*', function (ask, reply) {
-          reply.redirect(`https://${wo.envi.Base_Hostname}:${portHttps}`)
+          reply.redirect(`https://${wo.envar.Base_Hostname}:${portHttps}`)
         })
       )
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envi.Base_Protocol}] http://${wo.envi.Base_Hostname}:${portHttp} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] http://${wo.envar.Base_Hostname}:${portHttp} for ${wo.envar.prodev} environment`)
       })
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envi.Base_Ssl.file.key),
-          cert: fs.readFileSync(wo.envi.Base_Ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envi.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envar.Base_Ssl.file.key),
+          cert: fs.readFileSync(wo.envar.Base_Ssl.file.cert),
+          // ca: [ fs.readFileSync(wo.envar.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envi.Base_Protocol}] https://${wo.envi.Base_Hostname}:${portHttps} for ${wo.envi.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] https://${wo.envar.Base_Hostname}:${portHttps} for ${wo.envar.prodev} environment`)
       })
   }
 
