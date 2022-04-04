@@ -22,8 +22,8 @@
     "serve": "npx cross-env NODE_ENV=production nodemon server.js",
     "serve.sup": "npx cross-env NODE_ENV=production npx supervisor -i node_modules,_logstore,_datastore -- server.js",
     "serve.pm2": "npx cross-env NODE_ENV=production npx pm2 start server.js --name ext.server.torm",
-    "db.download": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/ext.sqlite ./_datastore/ext-$(date +%Y%m%d-%H%M%S).sqlite",
-    "db.upload": "rsync --rsync-path='sudo rsync' ./_datastore/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/ext-$(date +%Y%m%d-%H%M%S).sqlite",
+    "pull.datastore": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/ext.sqlite ./_datastore/ext-$(date +%Y%m%d-%H%M%S).sqlite",
+    "push.datastore": "rsync --rsync-path='sudo rsync' ./_datastore/ext.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/ext-$(date +%Y%m%d-%H%M%S).sqlite",
     "ssl": "certbot certonly -d ext-server.bittic.org --standalone"
   },
   "dependencies": {

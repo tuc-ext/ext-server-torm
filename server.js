@@ -4,21 +4,21 @@ const path = require('path')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
 const colors = require('colors')
+const enviconfig = require('base.enviconfig')
 
-const wo = (global.wo = {}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = global.wo = Object.assign(require('base.tool/tool4log.js'), {tool: require('core.tool')}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
-  wo.envar = require('base.enviconfig').mergeConfig()
+  wo.envar = enviconfig.mergeConfig()
 
   if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
   if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   if (!wo.envar.Data_Store.type) wo.envar.Data_Store.type = 'sqlite' // 默认为 sqlite
+
+  wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(enviconfig.maskSecret())))
 }
 
 async function initWorld () {
-  Object.assign(wo, require('base.tool/tool4log.js'))
-  wo.tool = require('core.tool')
-
   wo.cclog('Loading classes ......')
 
   wo.EventCenter = new (require('events'))()
