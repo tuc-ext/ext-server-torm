@@ -1,6 +1,7 @@
 'use strict'
 
 const coretool = require('core.tool')
+const Sys_Code_Name = 'ext'
 
 module.exports = {
   // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。
@@ -15,16 +16,16 @@ module.exports = {
 
   Base_Protocol: 'http', // http|https|httpall
   Base_Hostname: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
-  Base_Port: 60000 + parseInt(coretool.name2port('ext')), // 本节点的 Web服务端口号
+  Base_Port: 60000 + parseInt(coretool.name2port(Sys_Code_Name)), // 本节点的 Web服务端口号
   // 数据库设置
-  Data_Store: { type: 'sqlite', database: '_datastore/ext.sqlite' },
+  Data_Store: { type: 'sqlite', database: `_datastore/${Sys_Code_Name}.sqlite` },
   // Log_Store: { type: 'file', root: '_logstore', file: 'ext-server.log' }, // 换用 pm2 的日志记录
 
   File_Store: '_filestore',
 
   production: {
     Base_Protocol: 'https',
-    Base_Hostname: 'ext-server.bittic.org',
+    Base_Hostname: `${Sys_Code_Name}-server.bittic.org`,
     Base_Ssl: {
       type: 'file', // file
       file: {
