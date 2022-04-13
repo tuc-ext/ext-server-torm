@@ -4,14 +4,14 @@
 **/
 
 module.exports = {
-  tokenKey: 'p[aerjklasdf9q34@#$-SCDAW',
-  secwordAgent: '礼 戴 盘 汁 环 蒋 景 奉 眼 孔 西 虎',
-  secwordUser: '解 杆 解 者 秋 捉 多 几 虑 悟 皇 长',
+  tokenKey: '',
+  secwordAgent: '',
+  secwordUser: '',
   SMS: {
     vendor: '',
     DXTON: {
-      urlChina: 'http://sms.106jiekou.com/utf8/sms.aspx?account=&password=',
-      urlWorld: 'http://sms.106jiekou.com/utf8/worldapi.aspx?account=&password=',
+      urlChina: 'http://sms.106jiekou.com/utf8/sms.aspx?account=       &password=      ',
+      urlWorld: 'http://sms.106jiekou.com/utf8/worldapi.aspx?account=       &password=      ',
     },
     ALIYUN: {
       signName: '',
