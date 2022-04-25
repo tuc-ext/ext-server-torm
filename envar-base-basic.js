@@ -23,7 +23,7 @@ module.exports = {
 
   File_Store: '_filestore',
 
-  production: {
+  ENV_PRODUCTION: {
     Base_Protocol: 'https',
     Base_Hostname: `${Sys_Code_Name}-server.bittic.org`,
     Base_Ssl: {
