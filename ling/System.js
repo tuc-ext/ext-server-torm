@@ -7,10 +7,10 @@ module.exports = class System {
   
   static api = {
 
-    async getConfiguration () {
+    async getUserEnvar () {
       const result = {
         _state: 'SUCCESS',
-        configDynamic: enviconfig.getDynamicConfig(),
+        envarDynamic: enviconfig.getDynamicEnvar(),
       }
       return result
     },

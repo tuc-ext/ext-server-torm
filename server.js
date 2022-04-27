@@ -9,7 +9,7 @@ const enviconfig = require('base.enviconfig')
 const wo = global.wo = Object.assign(require('base.tool/tool4log.js'), {tool: require('core.tool')}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
-  wo.envar = enviconfig.mergeConfig()
+  wo.envar = enviconfig.configEnvar()
 
   if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
   if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
