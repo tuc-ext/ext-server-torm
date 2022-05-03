@@ -76,10 +76,10 @@ DAD.api.uploadPortrait = async function ({ _passtokenSource } = {}) { // receive
       await DAD.update({ uuid: _passtokenSource.uuid }, { portrait: file.filename })
       return Object.assign(file, { _state: 'SUCCESS' })
     } else {
-      return { _state: 'BACKEND_FAIL_FILE_NOT_IMAGE' }
+      return { _state: 'BASEND_FAIL_FILE_NOT_IMAGE' }
     }
   } else {
-    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
+    return { _state: 'BASEND_FAIL_USER_NOT_ONLINE' }
   }
 }
 DAD.api.updatePortrait = async ({ _passtokenSource, User: { portrait } = {} } = {}) => {
@@ -91,7 +91,7 @@ DAD.api.updatePortrait = async ({ _passtokenSource, User: { portrait } = {} } = 
       return { _state: 'FILE_NOT_EXIST' }
     }
   } else {
-    return { _state: 'BACKEND_FAIL_USER_NOT_ONLINE' }
+    return { _state: 'BASEND_FAIL_USER_NOT_ONLINE' }
   }
 }
 

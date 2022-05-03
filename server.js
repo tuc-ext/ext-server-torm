@@ -90,19 +90,19 @@ function runServer () {
         console.info(colors.green({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgGreen({ outdata }))
         res.json(outdata) // 似乎 json(...) 相当于 send(JSON.stringify(...))。如果json(undefined或nothing)会什么也不输出给前端，可能导致前端默默出错；json(null/NaN/Infinity)会输出null给前端（因为JSON.stringify(NaN/Infinity)返回"null"）。
       } catch (error) {
-        console.error(colors.red({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgRed({ _state: 'BACKEND_EXCEPTION', error }))
-        res.json({ _state: 'BACKEND_EXCEPTION', error })
+        console.error(colors.red({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgRed({ _state: 'BASEND_EXCEPTION', error }))
+        res.json({ _state: 'BASEND_EXCEPTION', error })
       }
     } else {
-      console.warn(colors.yellow({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgYellow({ _state: 'BACKEND_API_UNKNOWN' }))
-      res.json({ _state: 'BACKEND_API_UNKNOWN' })
+      console.warn(colors.yellow({ time: new Date().toJSON(), api: `${apiVersion}/${apiWho}/${apiTodo}` }), colors.bgYellow({ _state: 'BASEND_API_UNKNOWN' }))
+      res.json({ _state: 'BASEND_API_UNKNOWN' })
     }
   })
 
   server.all('*', function (req, res) {
     /* 错误的API调用进入这里 */
-    console.warn(colors.yellow({ time: new Date().toJSON(), api: req.url }), colors.bgYellow({ _state: 'BACKEND_API_MALFORMED' }))
-    res.json({ _state: 'BACKEND_API_MALFORMED' })
+    console.warn(colors.yellow({ time: new Date().toJSON(), api: req.url }), colors.bgYellow({ _state: 'BASEND_API_MALFORMED' }))
+    res.json({ _state: 'BASEND_API_MALFORMED' })
   })
 
   // 错误处理中间件应当在路由加载之后才能加载
