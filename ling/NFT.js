@@ -15,7 +15,8 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
     columns: {
       // todo:  cidSeal改名为uri-seal。uri 可以是数字的例如ipfs，也可以是物理的例如国家公证系统。
 //      uuid: { type: String, generated: 'uuid', primary: true},
-      hash: { type: String, primary: true },
+      tokenHash: { type: String, primary: true, comment: 'token meta data hash' },
+      creatureHash: { type: String, default: null, nullable: true, comment: 'cid hash' },
       creationTitle: { type: String, default: '', nullable: true },
       sealType: { type: String, default: 'AGENT', nullable: false },
       creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者，永远不变' },
@@ -24,9 +25,10 @@ const DAD = (module.exports = class NFT extends torm.BaseEntity {
       ownerCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前拥有者可以解封' },
       agentAddress: { type: String, default: null, nullable: true, comment: '当前代理人。无代理时为空' },
       agentCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前代理人可以解封' },
-      openCid: { type: 'simple-json', default: null, nullable: true, comment: '不加密，任何人可以直接访问的CID' },
-      creationTimeUnix: { type: 'int', default: 0, nullable: true },
-      price: { type: 'int', default: null, nullable: true, comment:'转让所有权的价格。null 代表不转让' },
+      creatingTimeUnix: { type: 'int', default: 0, nullable: true },
+      tokenizingTimeUnix: { type: 'int', default: 0, nullable: true, comment: '制作成token的时刻' },
+      feeToChangeOwner: { type: 'int', default: null, nullable: true, comment:'转让所有权的价格。0/null 代表不转让' },
+      feeToUnseal: { type: 'int', default: null, nullable: true, comment: '解开封印的价格。0代表无限制，向所有人开放' },
 //      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
@@ -54,6 +56,7 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
   const userNow = await wo.User.findOne({uuid: _passtokenSource.uuid})
 
   const nft = {
+    creatureHash: ticCrypto.hash(cidHex),
     sealType: 'AGENT',
     creatorAddress: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
     creatorCidSeal: await ticCrypto.encrypt({data: {uriType: 'ipfs', cidHex}, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey}),
@@ -64,7 +67,7 @@ DAD.api.story2nft_agent = async ({ _passtokenSource, creationStory, creationTitl
   }
   nft.ownerAddress = nft.creatorAddress
   nft.ownerCidSeal = nft.creatorCidSeal
-  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  nft.tokenHash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['tokenHash'] }))
   await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft, cidHex}
@@ -98,7 +101,7 @@ DAD.api.selfCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidSe
     creationTitle,
     creationTimeUnix: Date.now(),
   }
-  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  nft.tokenHash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['tokenHash'] }))
   await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft}
@@ -117,7 +120,7 @@ DAD.api.jointCidSeal2nft = async ({_passtokenSource, creatorAddress, creatorCidS
     creationTitle,
     creationTimeUnix: Date.now(),
   }
-  nft.hash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['hash'] }))
+  nft.tokenHash = ticCrypto.hash(wo.tool.stringifyOrdered(nft, { schemaColumns: DAD.schema.columns, excludeKeys:['tokenHash'] }))
   await DAD.save(nft)
 
   return {_state: 'SUCCESS', nft}

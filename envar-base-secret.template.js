@@ -4,6 +4,7 @@
 **/
 
 module.exports = {
+  prodev: process.env.NODE_ENV || 'production', // 如果用在uniCloud里，存在 process.env，但是不存在 process.env.NODE_ENV，因此自己定义一个默认环境。
   tokenKey: '',
   secwordAgent: '',
   secwordUser: '',

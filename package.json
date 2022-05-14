@@ -9,9 +9,7 @@
   },
   "scripts": {
     "autostart": "npm run serve.pm2",
-    "boot": "npm i run-script-os && run-script-os",
-    "boot:nix": "rm -fr node_modules && rm -fr package-lock.json && npm i -f",
-    "boot:windows": "npx rimraf node_modules package-lock.json & npm i -f",
+    "boot": "npx rimraf node_modules package-lock.json & npm i -f",
     "archive": "tar czf _archive/archive-`date +%Y%m%d-%H%M%S`.tgz envar-base-*.js _filestore _datastore _logstore",
     "check": "npx cross-env NODE_ENV=development node --inspect-brk server.js",
     "demo": "npx cross-env NODE_ENV=production nodemon server.js",
@@ -53,8 +51,6 @@
   "devDependencies": {
     "cross-env": "^7.0.2",
     "pm2": "^5.1.2",
-    "rimraf": "^3.0.2",
-    "run-script-os": "^1.1.6",
     "standardx": "^6.0.0",
     "supervisor": "^0.12.0"
   }
