@@ -288,7 +288,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prod
       ),
     }
   }
-  return { _state: 'PASSCODE_UNSENT' }
+  return { _state: 'PASSCODE_UNSENT', sendResult }
 }
 
 DAD.api.verifyPasscodeToChangePhone = async function ({ _passtokenSource, passcode }) {

@@ -74,7 +74,7 @@ DAD.api.creation_to_ccid = async ({ cStoryRaw } = {}) => {
     ipfsResult.push(result)
   }
 
-  const { path, cid, size, mode, mtime } = ipfsResult[cStoryRaw.length] || {} // mode==0o644=420 for files, 0o755=493 for directories; mtime?: { secs, nsecs }. 如果 add 时没有提供path，则返回path=cid.toString()
+  const { path, cid, size, mode, mtime } = ipfsResult[ipfsFiles.length] || {} // mode==0o644=420 for files, 0o755=493 for directories; mtime?: { secs, nsecs }. 如果 add 时没有提供path，则返回path=cid.toString()
 
   if (cid) return { _state: 'SUCCESS', storyCcid: cid.toString() }
   else return { _state: 'ERROR' }
