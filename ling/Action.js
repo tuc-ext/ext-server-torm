@@ -4,7 +4,7 @@ const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class Action extends torm.BaseEntity {
+const DAD = (module.exports = class Action {
   // 构建类
   static schema = {
     name: this.name,

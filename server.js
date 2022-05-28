@@ -6,7 +6,7 @@ const ipfs = require('ipfs-core')
 const colors = require('colors')
 const enviconfig = require('base.enviconfig')
 
-const wo = global.wo = Object.assign(require('base.tool/tool4log.js'), {tool: require('core.tool')}) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = global.wo = Object.assign(require('base.tool/tool4log.js'), { tool: require('core.tool') }) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = enviconfig.mergeEnvar()
@@ -25,7 +25,7 @@ async function initWorld () {
 
   wo.FileTransfer = require('base.FileTransfer.server')
   wo.System = require('./ling/System.js')
-  wo.NFT = await require('./ling/NFT.js')
+  wo.Creation = await require('./ling/Creation.js')
   wo.User = require('./ling/User.js')
 
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
@@ -33,7 +33,7 @@ async function initWorld () {
   wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.Data_Store)} ......`)
   await torm.createConnection(
     Object.assign(wo.envar.Data_Store, {
-      entities: [new torm.EntitySchema(wo.NFT.schema), new torm.EntitySchema(wo.User.schema)],
+      entities: [new torm.EntitySchema(wo.User.schema), new torm.EntitySchema(wo.Creation.TrokenSchema), new torm.EntitySchema(wo.Creation.CreationSchema)],
       synchronize: true, // wo.envar.prodev !== 'production' ? true : false,
     })
   )
@@ -50,7 +50,7 @@ function runServer () {
 
   /** * 通用中间件 ***/
 
-  server.use(require('morgan')(wo.envar.prodev === 'development' ? 'dev' : 'combined')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/_logstore', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
+  server.use(require('morgan')('dev')) // , {stream:require('fs').createWriteStream(path.join(__dirname+'/_logstore', 'http.log'), {flags: 'a', defaultEncoding: 'utf8'})})) // format: combined, common, dev, short, tiny.
   server.use(require('method-override')())
   server.use(require('cors')())
   server.use(require('compression')())
@@ -125,7 +125,7 @@ function runServer () {
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4} for ${wo.envar.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4}`)
       })
   } else if (wo.envar.Base_Protocol === 'https') {
     const portHttps = wo.envar.Base_Port || 443
@@ -141,7 +141,7 @@ function runServer () {
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttps} for ${wo.envar.prodev} environment`)
+        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttps} with IPv4=${ipv4}`)
       })
   } else if (wo.envar.Base_Protocol === 'httpall') {
     const portHttp = wo.envar.Base_Port?.portHttp || 80
@@ -155,7 +155,7 @@ function runServer () {
       )
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] http://${wo.envar.Base_Hostname}:${portHttp} for ${wo.envar.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] http://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4}`)
       })
     webServer = require('https')
       .createServer(
@@ -168,7 +168,7 @@ function runServer () {
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] https://${wo.envar.Base_Hostname}:${portHttps} for ${wo.envar.prodev} environment`)
+        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] https://${wo.envar.Base_Hostname}:${portHttps} with IPv4=${ipv4}`)
       })
   }
 

@@ -228,7 +228,13 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   return { _state: 'INPUT_MALFORMED' }
 }
 
-DAD.api.sendPasscode = async function ({ _passtokenSource, phoneNew, prodev = wo?.env?.prodev } = {}) {
+DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prodev = wo?.env?.prodev } = {}) {
+  if (!_passtokenSource.uuid || !_passtokenSource.phone) {
+    return { _state: 'PASSTOKEN_INVALID' }
+  }else if (_passtokenSource.phone !== phone) {
+    return { _state: 'PHONE_MISMATCH_PASSTOKEN' }
+  }
+
   if (phoneNew) {
     // 用户在更换新手机
     if (!i18nCore.validatePhone({ phoneNew })) {
