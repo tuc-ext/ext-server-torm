@@ -91,7 +91,7 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
   }
 
   const { _state, storyCcid } = await DAD.api.creation_to_ccid({ cStoryRaw })
-  const storyCcidHash = ticCrypto.cosh_to_cid({ cosh: ticCrypto.hash(str), cidBase: 'b32', cidVersion:1, cidCodec:'raw' })
+  const storyCcidHash = ticCrypto.cosh_to_cid({ cosh: ticCrypto.hash(storyCcid), cidBase: 'b32', cidVersion:1, cidCodec:'raw' })
 
   let creationNow = await torm.getRepository('Creation').findOne({ storyCcidHash })
   if (creationNow) {
