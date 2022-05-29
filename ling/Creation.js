@@ -70,7 +70,8 @@ DAD.api.creation_to_ccid = async ({ cStoryRaw } = {}) => {
       ipfsFiles.push(fileObject)
     }
   }
-  for await (const result of wo.IPFS.addAll(ipfsFiles, { cidVersion: 0, hashAlg: 'sha2-256', onlyHash: false, pin: true })) {
+  // 注意，经过筛选后 ipfsFiles.length 可能不等于 cStoryRaw.length
+  for await (const result of wo.IPFS.addAll(ipfsFiles, { cidVersion: 1, hashAlg: 'sha2-256', onlyHash: false, pin: true })) {
     ipfsResult.push(result)
   }
 
@@ -196,12 +197,25 @@ DAD.api.mint_creation_by_joint = async ({ _passtokenSource, creatorAddress, crea
 }
 
 DAD.api.get_creation_list = async () => {
-  const creationList = await torm.getRepository('Creation').find({ order: { createTimeUnix: 'DESC' }, take: 10 })
-  for (let creation of creationList) {
-    let troken = await torm.getRepository('Troken').findOne({ storyCcidHash: creation.storyCcidHash })
-    creation.troken = troken
-    creation.cStoryRaw = null // 不能把 cStoryRaw 返回给没有订阅的用户
+  const creationList = await torm.getRepository('Creation').createQueryBuilder('creation')
+    .leftJoinAndSelect('Troken', 'troken', 'troken.storyCcidHash=creation.storyCcidHash')
+    .leftJoinAndSelect(wo.User, 'creator', 'creator.uuid=creation.creatorUuid')
+    .select(['creation.*', 'troken.*', 'creator.portrait, creator.nickname'])
+//    .where('story.placeUuid=:placeUuid', { placeUuid })
+//    .offset(0)
+    .limit(10)
+    .orderBy('creation.createTimeUnix', 'DESC')
+//    .printSql()
+    .getRawMany()
+  if (Array.isArray(creationList)) {
+    creationList.forEach((creation, index) => {
+      creation.cStoryRaw = undefined  // 不能把 cStoryRaw 返回给没有订阅的用户
+      creation.creatorCidSeal = JSON.parse(creation.creatorCidSeal)
+      creation.ownerCidSeal = JSON.parse(creation.ownerCidSeal)
+      creation.agentCidSeal = JSON.parse(creation.agentCidSeal)
+    })
   }
+
   return { _state: 'SUCCESS', creationList }
 }
 
