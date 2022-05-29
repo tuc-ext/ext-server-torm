@@ -421,7 +421,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
       phone: phone,
       passwordServer,
       regcode: _passtokenSource.regcode?.toLowerCase(),
-      nickname: `----${phone.substr(-4)}`,
+      nickname: `${_passtokenSource.uuid.slice(-6)}`,
       coinAddress,
       whenRegister: new Date(registerTimeUnix),
       registerTimeUnix,
