@@ -308,7 +308,7 @@ DAD.api.get_comment_list = async ({ _passtokenSource, commentTarget, skip = 0, l
     .createQueryBuilder('comment')
     .leftJoinAndSelect(wo.User, 'author', 'author.uuid=comment.authorUuid')
     .select(['comment.*', 'author.portrait, author.nickname'])
-    //    .where('story.placeUuid=:placeUuid', { placeUuid })
+    .where('comment.commentTarget=:commentTarget', { commentTarget })
     .offset(skip)
     .limit(limit)
     .orderBy('comment.commentTimeUnix', 'DESC')
