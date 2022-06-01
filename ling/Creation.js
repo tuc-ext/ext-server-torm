@@ -4,7 +4,11 @@ const ticCrypto = require('tic.crypto')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
 
-// 叫做 ASSET?
+/**
+ * 铸造：从内容到ccid
+ * 加密：cidSeal
+ * 封印：troken
+ */
 
 /****************** 类和原型 *****************/
 const DAD = (module.exports = class Creation {
@@ -23,10 +27,10 @@ const DAD = (module.exports = class Creation {
       ownerCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前拥有者可以解密' },
       agentAddress: { type: String, default: null, nullable: true, comment: '当前代理人。无代理时为空' },
       agentCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前代理人可以解密' },
-      howToOwn: { type: 'simple-json', default: null, nullable: true, comment: '' },
-      howToUnseal: {
+      howtoTakeover: { type: 'simple-json', default: null, nullable: true, comment: '' },
+      howtoSubscribe: {
         type: 'simple-json',
-        default: null,
+        default: '[]',
         nullable: true,
         comment: '计划可容纳多种解锁/支付方案，例如 [{price,currency,channel,amount,targetAddress}, {puzzle/数学题/script}]',
       },
@@ -47,6 +51,17 @@ const DAD = (module.exports = class Creation {
       storyCcid: { type: String, default: null, nullable: true, comment: '用来直接访问IPFS中的 content' },
       createTimeUnix: { type: 'int', default: 0, nullable: true, comment: '' },
       //      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
+    },
+  }
+
+  static CommentSchema = {
+    name: 'Comment',
+    columns: {
+      commentHash: { type: String, primary: true },
+      commentStory: { type: 'simple-json', default: '[]', nullable: false },
+      commentTarget: { type: String, nullable: false },
+      commentTimeUnix: { type: 'int', default: 0, nullable: true },
+      authorUuid: { type: String, nullable: false },
     },
   }
 })
@@ -81,7 +96,7 @@ DAD.api.creation_to_ccid = async ({ cStoryRaw } = {}) => {
   else return { _state: 'ERROR' }
 }
 
-DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, cCover } = {}) => {
+DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, cCover, priceAmountSubscriber, priceCurrencySubscriber } = {}) => {
   if (!_passtokenSource?.uuid) {
     return { _state: 'ERROR_USER_OFFLINE' }
   }
@@ -92,7 +107,7 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
   }
 
   const { _state, storyCcid } = await DAD.api.creation_to_ccid({ cStoryRaw })
-  const storyCcidHash = ticCrypto.cosh_to_cid({ cosh: ticCrypto.hash(storyCcid), cidBase: 'b32', cidVersion:1, cidCodec:'raw' })
+  const storyCcidHash = ticCrypto.cosh_to_cid({ cosh: ticCrypto.hash(storyCcid), cidBase: 'b32', cidVersion: 1, cidCodec: 'raw' })
 
   let creationNow = await torm.getRepository('Creation').findOne({ storyCcidHash })
   if (creationNow) {
@@ -106,6 +121,9 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
     creatorCidSeal: await ticCrypto.encrypt({ data: cidToSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
     agentAddress: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }),
     agentCidSeal: await ticCrypto.encrypt({ data: cidToSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
+    howtoSubscribe: [
+      { type: 'PAY', amount: priceAmountSubscriber, currency: priceCurrencySubscriber, payToAddress: wo.envar.systemCoinAddressSet[priceCurrencySubscriber] },
+    ],
     mintTimeUnix: Date.now(),
   }
   troken.ownerAddress = troken.creatorAddress
@@ -196,20 +214,24 @@ DAD.api.mint_creation_by_joint = async ({ _passtokenSource, creatorAddress, crea
   return { _state: 'SUCCESS', troken }
 }
 
-DAD.api.get_creation_list = async () => {
-  const creationList = await torm.getRepository('Creation').createQueryBuilder('creation')
+DAD.api.get_creation_list = async ({ limit = 10, skip = 0 }) => {
+  const creationList = await torm
+    .getRepository('Creation')
+    .createQueryBuilder('creation')
     .leftJoinAndSelect('Troken', 'troken', 'troken.storyCcidHash=creation.storyCcidHash')
     .leftJoinAndSelect(wo.User, 'creator', 'creator.uuid=creation.creatorUuid')
     .select(['creation.*', 'troken.*', 'creator.portrait, creator.nickname'])
-//    .where('story.placeUuid=:placeUuid', { placeUuid })
-//    .offset(0)
-    .limit(10)
+    //    .where('story.placeUuid=:placeUuid', { placeUuid })
+    //    .offset(skip)
+    .limit(limit)
     .orderBy('creation.createTimeUnix', 'DESC')
-//    .printSql()
+    //    .printSql()
     .getRawMany()
   if (Array.isArray(creationList)) {
     creationList.forEach((creation, index) => {
-      creation.cStoryRaw = undefined  // 不能把 cStoryRaw 返回给没有订阅的用户
+      creation.cStoryRaw = undefined // 不能把 cStoryRaw 返回给没有订阅的用户
+      creation.storyCcid = undefined
+      creation.howtoSubscribe = JSON.parse(creation.howtoSubscribe)
       creation.creatorCidSeal = JSON.parse(creation.creatorCidSeal)
       creation.ownerCidSeal = JSON.parse(creation.ownerCidSeal)
       creation.agentCidSeal = JSON.parse(creation.agentCidSeal)
@@ -266,4 +288,36 @@ DAD.api.unseal_troken = async ({ _passtokenSource, troken }) => {
   creation.cStoryRaw = null
   creation.cStory = cStory
   return { _state: 'SUCCESS', creation }
+}
+
+DAD.api.comment_creation = async ({ _passtokenSource, commentStory, commentTarget } = {}) => {
+  const comment = {
+    commentStory,
+    commentTarget,
+    authorUuid: _passtokenSource.uuid,
+    commentTimeUnix: Date.now(),
+  }
+  comment.commentHash = wo.tool.stringifyOrdered(comment, { schemaColumns: DAD.CommentSchema.columns })
+  await torm.getRepository('Comment').save(comment)
+  return { _state: 'SUCCESS', comment }
+}
+
+DAD.api.get_comment_list = async ({ _passtokenSource, commentTarget, skip = 0, limit = 10 }) => {
+  const commentList = await torm
+    .getRepository('Comment')
+    .createQueryBuilder('comment')
+    .leftJoinAndSelect(wo.User, 'author', 'author.uuid=comment.authorUuid')
+    .select(['comment.*', 'author.portrait, author.nickname'])
+    //    .where('story.placeUuid=:placeUuid', { placeUuid })
+    .offset(skip)
+    .limit(limit)
+    .orderBy('comment.commentTimeUnix', 'DESC')
+    //    .printSql()
+    .getRawMany()
+  if (Array.isArray(commentList)) {
+    commentList.forEach((comment, index) => {
+      comment.commentStory = JSON.parse(comment.commentStory)
+    })
+  }
+  return { _state: 'SUCCESS', commentList }
 }

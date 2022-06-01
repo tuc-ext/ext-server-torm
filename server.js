@@ -5,8 +5,9 @@ const torm = require('typeorm')
 const ipfs = require('ipfs-core')
 const colors = require('colors')
 const enviconfig = require('base.enviconfig')
+const ticCrypto = require('tic.crypto')
 
-const wo = global.wo = Object.assign(require('base.tool/tool4log.js'), { tool: require('core.tool') }) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = (global.wo = Object.assign(require('base.tool/tool4log.js'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = enviconfig.mergeEnvar()
@@ -14,6 +15,10 @@ function configEnvironment () {
   if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
   if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   if (!wo.envar.Data_Store.type) wo.envar.Data_Store.type = 'sqlite' // 默认为 sqlite
+  wo.envar.systemCoinAddressSet = {
+    ETH: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
+    BTC: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
+  }
 
   wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(enviconfig.maskSecret())))
 }
@@ -33,7 +38,12 @@ async function initWorld () {
   wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.Data_Store)} ......`)
   await torm.createConnection(
     Object.assign(wo.envar.Data_Store, {
-      entities: [new torm.EntitySchema(wo.User.schema), new torm.EntitySchema(wo.Creation.TrokenSchema), new torm.EntitySchema(wo.Creation.CreationSchema)],
+      entities: [
+        new torm.EntitySchema(wo.User.schema),
+        new torm.EntitySchema(wo.Creation.TrokenSchema),
+        new torm.EntitySchema(wo.Creation.CreationSchema),
+        new torm.EntitySchema(wo.Creation.CommentSchema),
+      ],
       synchronize: true, // wo.envar.prodev !== 'production' ? true : false,
     })
   )
@@ -57,7 +67,10 @@ function runServer () {
   server.use(require('cookie-parser')())
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
-  server.use(path.join('/', wo.envar.File_Store).replace('\\', '/'), require('express').static(path.join(__dirname, wo.envar.File_Store).replace('\\', '/'), { index: 'index.html' })) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
+  server.use(
+    path.join('/', wo.envar.File_Store).replace('\\', '/'),
+    require('express').static(path.join(__dirname, wo.envar.File_Store).replace('\\', '/'), { index: 'index.html' })
+  ) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
   /** * 路由中间件 ***/
 
@@ -178,7 +191,7 @@ function runServer () {
   return webServer
 }
 
-;(async function start() {
+;(async function start () {
   configEnvironment()
   await initWorld()
   runServer()
