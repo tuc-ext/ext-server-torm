@@ -18,6 +18,8 @@ function configEnvironment () {
   wo.envar.systemCoinAddressSet = {
     ETH: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
     BTC: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
+    TIC: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'TIC' }),
+    PEX: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'PEX' }),
   }
 
   wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(enviconfig.maskSecret())))

@@ -16,6 +16,7 @@ const DAD = (module.exports = class Creation {
   static TrokenSchema = {
     name: 'Troken',
     columns: {
+      version: { type: String, default: '1', nullable: false },
       trokenCcid: { type: String, primary: true, comment: 'troken hash。为了主键存放在数据库中，但不在去中心的IPFS中。' },
       lastTokenCcid: { type: String, default: null, nullable: true, unique: true, comment: '用于串联起 IPFS 里，同一个 ccid 对应的多个 troken 的修改历史。' },
       storyCcidHash: { type: String, default: '', nullable: true, comment: '同一个值，可对应存在多个troken，因为主人修改title/price等。' },
@@ -115,19 +116,23 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
   }
 
   const cidToSeal = { addressType: 'IPFS', ccid: storyCcid }
+  const cidSealedCreator = await ticCrypto.encrypt({
+    data: cidToSeal,
+    key: ticCrypto.secword2keypair(wo.envar.secwordUser, { coin: 'PEX', path: userNow.coinAccount.PEX.path }).seckey,
+  })
   const troken = {
     storyCcidHash,
-    creatorAddress: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: userNow.coinAddress.EXT.path }),
-    creatorCidSeal: await ticCrypto.encrypt({ data: cidToSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
-    agentAddress: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }),
-    agentCidSeal: await ticCrypto.encrypt({ data: cidToSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
+    creatorAddress: userNow.coinAccount.PEX.address,
+    creatorCidSeal: cidSealedCreator,
+    ownerAddress: userNow.coinAccount.PEX.address,
+    ownerCidSeal: cidSealedCreator,
+    agentAddress: wo.envar.systemCoinAddressSet.PEX,
+    agentCidSeal: await ticCrypto.encrypt({ data: cidToSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey }),
     howtoSubscribe: [
       { type: 'PAY', amount: priceAmountSubscriber, currency: priceCurrencySubscriber, payToAddress: wo.envar.systemCoinAddressSet[priceCurrencySubscriber] },
     ],
     mintTimeUnix: Date.now(),
   }
-  troken.ownerAddress = troken.creatorAddress
-  troken.ownerCidSeal = troken.creatorCidSeal
   const { path, cid: trokenCid, mode } = await wo.IPFS.add(
     wo.tool.stringifyOrdered(troken, { schemaColumns: DAD.TrokenSchema.columns, excludeKeys: ['trokenCcid'] }),
     {
@@ -195,7 +200,10 @@ DAD.api.mint_creation_by_joint = async ({ _passtokenSource, creatorAddress, crea
     ownerAddress: creatorAddress,
     ownerCidSeal: creatorCidSeal,
     agentAddress: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }),
-    agentCidSeal: await ticCrypto.encrypt({ data: { addressType: 'IPFS', ccid: storyCcid }, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey }),
+    agentCidSeal: await ticCrypto.encrypt({
+      data: { addressType: 'IPFS', ccid: storyCcid },
+      key: ticCrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey,
+    }),
     cTitle,
     mintTimeUnix: Date.now(),
   }
@@ -266,7 +274,11 @@ DAD.api.unseal_troken = async ({ _passtokenSource, troken }) => {
   if (ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }) !== troken.agentAddress) {
     return { _state: 'FAIL_NOT_AGENT' }
   }
-  const agentCidString = await ticCrypto.decrypt({ data: troken.agentCidSeal, key: ticCrypto.secword2keypair(wo.envar.secwordAgent).seckey, keytype: 'pwd' })
+  const agentCidString = await ticCrypto.decrypt({
+    data: troken.agentCidSeal,
+    key: ticCrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey,
+    keytype: 'pwd',
+  })
   const agentCid = JSON.parse(agentCidString)
   let cStory = []
   for await (const sectionFile of wo.IPFS.ls(agentCid.ccid)) {

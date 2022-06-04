@@ -12,8 +12,9 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
     name: this.name,
     target: this,
     columns: {
-      aiid: { type: Number, primary: true, generated: true },
+      aiid: { type: Number, primary: true, generated: true, comment: '这个字段就是为了和mysql等习惯用法兼容，但这个字段本身在本应用里并没有用到。' },
       uuid: { type: String, unique: true, generated: 'uuid' },
+      // randomSecword: { type: String, unique: true, nullable: true, comment: '[20220602] 设计这个字段，是给 coinAccount 的生成添加一个随机量，并在返回给客户端时删除掉。' },
       phone: { type: String, unique: true },
       passwordServer: { type: String, default: null },
       regcode: { type: String, default: null, comment: '我的邀请人的邀请码，不是我的邀请码' },
@@ -32,20 +33,12 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
       idCardSelfie: { type: String, default: null },
       whenRegister: { type: Date, default: null },
       registerTimeUnix: { type: 'int', default: null },
-      coinAddress: { type: 'simple-json', default: '{}' },
+      coinAccount: { type: 'simple-json', default: '{}' },
       payChannel: { type: 'simple-json', default: '{}', nullable: true },
-      balance: { type: 'real', default: 0 },
-      frozenBalance: { type: 'real', default: 0 },
+      coinBalance: { type: 'real', default: 0 },
       rewardSum: { type: 'real', default: 0 },
-      estateProfitSum: { type: 'real', default: 0 },
-      estateFeeSum: { type: 'real', default: 0 },
-      estateTaxSum: { type: 'real', default: 0 },
-      estateHoldingNumber: { type: 'int', default: 0 },
-      estateHoldingCost: { type: 'real', default: 0 },
-      estateHoldingValue: { type: 'real', default: 0 },
-      estateHoldingProfit: { type: 'real', default: 0 },
       depositUsdtSum: { type: 'real', default: 0 },
-      depositLogSum: { type: 'real', default: 0 },
+      depositPexSum: { type: 'real', default: 0 },
       communityNumber: { type: 'int', default: 0 },
       communityNumberKyc: { type: 'int', default: 0 },
       communityRewardSum: { type: 'real', default: 0 },
@@ -53,14 +46,12 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
     },
   }
 
-  static async normalize(user = {}) {
+  static async normalize (user = {}) {
     user.inviterCode = wo.tool.aiid2regcode(user.aiid) // 我的邀请码 // 只给onlineUser
-    //    user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
+    // user.communityNumberKyc = await DAD.count({regcode: user.inviterCode, kycStateL1: 'PASSED', kycStateL2: 'PASSED'}) || 0
     delete user.aiid
+    // delete user.randomSecword
     delete user.passwordServer
-    for (let coin in user.coinAddress) {
-      delete user.coinAddress[coin].path
-    }
     return user
   }
 })
@@ -69,7 +60,8 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
 DAD.api = DAD.api1 = {}
 DAD.sysapi = {}
 
-DAD.api.uploadPortrait = async function ({ _passtokenSource } = {}) { // receive image by server and update server database 
+DAD.api.uploadPortrait = async function ({ _passtokenSource } = {}) {
+  // receive image by server and update server database
   if (_passtokenSource && _passtokenSource.isOnline) {
     let file = wo._req.file
     if (file && /^image\//.test(file.mimetype)) {
@@ -155,14 +147,16 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
         txTime: passTime,
         txTimeUnix: passTime.valueOf(),
       })
-      txReward.txHash = ticCrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
+      txReward.txHash = ticCrypto.hash(
+        wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] })
+      )
       await txman.save(txReward)
 
       await txman.update(
         DAD,
         { uuid: inviter.uuid },
         {
-          balance: inviter.balance + reward,
+          coinBalance: inviter.coinBalance + reward,
           communityNumberKyc: inviter.communityNumberKyc + 1,
           communityRewardSum: inviter.communityRewardSum + reward,
           rewardSum: inviter.rewardSum + reward,
@@ -231,7 +225,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
 DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prodev = wo?.env?.prodev } = {}) {
   if (!_passtokenSource.uuid || !_passtokenSource.phone) {
     return { _state: 'PASSTOKEN_INVALID' }
-  }else if (_passtokenSource.phone !== phone) {
+  } else if (_passtokenSource.phone !== phone) {
     return { _state: 'PHONE_MISMATCH_PASSTOKEN' }
   }
 
@@ -338,7 +332,8 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode, regcode }
     return { _state: 'VERIFY_FAILED' }
   }
 
-  if (regcode) { // regcode 可以为空，但如果存在，就必须是有效的。
+  if (regcode) {
+    // regcode 可以为空，但如果存在，就必须是有效的。
     const aiid = wo.tool.regcode2aiid(regcode.toLowerCase()) // 我的注册码（=我的邀请人的邀请码）
     if (aiid === null) {
       // 非法的regcode
@@ -377,30 +372,19 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     passwordClient
   ) {
     const passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
+    //    const randomSecword = ticCrypto.randomSecword()
     const registerTimeUnix = Date.now()
 
-    const seed = registerTimeUnix + _passtokenSource.uuid
-    const pathBTC = ticCrypto.seed2path(seed, { coin: 'BTC' })
-    const pathETH = ticCrypto.seed2path(seed, { coin: 'ETH' })
-    const pathTIC = ticCrypto.seed2path(seed, { coin: 'TIC' })
-    const pathEXT = ticCrypto.seed2path(seed, { coin: 'EXT' })
-    let coinAddress = {
-      BTC: {
-        path: pathBTC,
-        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }),
-      },
-      ETH: {
-        path: pathETH,
-        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }),
-      },
-      TIC: {
-        path: pathTIC,
-        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }),
-      },
-      EXT: { 
-        path: pathEXT,
-        address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: pathEXT }),
-      }
+    const seed = wo.envar.secwordUser + _passtokenSource.uuid // + randomSecword // 通过 wo.envar.secwordUser 让种子具有既确定又随机的特性
+    const pathBTC = ticCrypto.seed2path({ seed, coin: 'BTC' })
+    const pathETH = ticCrypto.seed2path({ seed, coin: 'ETH' })
+    const pathTIC = ticCrypto.seed2path({ seed, coin: 'TIC' })
+    const pathPEX = ticCrypto.seed2path({ seed, coin: 'PEX' })
+    let coinAccount = {
+      BTC: { path: pathBTC, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }) },
+      ETH: { path: pathETH, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }) },
+      TIC: { path: pathTIC, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }) },
+      PEX: { path: pathPEX, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'PEX', path: pathPEX }) },
     }
 
     // let txReward = wo.Trade.create({
@@ -418,17 +402,18 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
 
     let user = await DAD.save({
       uuid: _passtokenSource.uuid,
+      //      randomSecword: randomSecword,
       phone: phone,
       passwordServer,
       regcode: _passtokenSource.regcode?.toLowerCase(),
       nickname: `${_passtokenSource.uuid.slice(-6)}`,
-      coinAddress,
+      coinAccount,
       whenRegister: new Date(registerTimeUnix),
       registerTimeUnix,
       lang: lang,
       citizen: citizen,
-//      balance: 10 * wo.Trade.getExchangeRate({}),
-//      rewardSum: 10 * wo.Trade.getExchangeRate({}),
+      //      coinBalance: 10 * wo.Trade.getExchangeRate({}),
+      //      rewardSum: 10 * wo.Trade.getExchangeRate({}),
     })
 
     // let aiidInviter = wo.tool.regcode2aiid(_passtokenSource.regcode.toLowerCase())
