@@ -4,13 +4,13 @@ const path = require('path')
 const torm = require('typeorm')
 const ipfs = require('ipfs-core')
 const colors = require('colors')
-const enviconfig = require('base-envar-config')
+const basendEnvar = require('basend-envar')
 const ticCrypto = require('tic.crypto')
 
 const wo = (global.wo = Object.assign(require('base.tool/tool4log.js'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
-  wo.envar = enviconfig.merge_envar()
+  wo.envar = basendEnvar.merge_envar()
 
   if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
   if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
@@ -22,7 +22,7 @@ function configEnvironment () {
     PEX: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'PEX' }),
   }
 
-  wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(enviconfig.mask_secret_envar())))
+  wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(basendEnvar.mask_secret_envar())))
 }
 
 async function initWorld () {

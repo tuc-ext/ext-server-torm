@@ -22,7 +22,7 @@
     "ssl": "certbot certonly -d ext-server.bittic.org --standalone"
   },
   "dependencies": {
-    "base-envar-config": "git+https://git.faronear.org/npm/base-envar-config",
+    "basend-envar": "git+https://git.faronear.org/npm/basend-envar",
     "base.FileTransfer.server": "git+https://git.faronear.org/npm/base.FileTransfer.server",
     "base.messenger": "git+https://git.faronear.org/npm/base.messenger",
     "base.tool": "git+https://git.faronear.org/npm/base.tool",
