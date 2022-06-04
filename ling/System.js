@@ -1,6 +1,6 @@
 'use strict'
 
-const enviconfig = require('base.enviconfig')
+const enviconfig = require('base-envar-config')
 const wo = global.wo
 
 const DAD = (module.exports = class System {
@@ -8,7 +8,7 @@ const DAD = (module.exports = class System {
     async getUserEnvar () {
       const result = {
         _state: 'SUCCESS',
-        envarDynamic: enviconfig.getDynamicEnvar(),
+        envarDynamic: enviconfig.get_dynamic_envar(),
       }
       return result
     },
