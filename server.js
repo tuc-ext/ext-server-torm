@@ -7,7 +7,7 @@ const colors = require('colors')
 const basendEnvar = require('basend-envar')
 const ticCrypto = require('tic.crypto')
 
-const wo = (global.wo = Object.assign(require('corend-ColorConsole'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = (global.wo = Object.assign(require('corend-cocon'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = basendEnvar.merge_envar()

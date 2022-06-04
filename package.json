@@ -24,7 +24,7 @@
   "dependencies": {
     "basend-envar": "git+https://git.faronear.org/npm/basend-envar",
     "basend-fileload-server": "git+https://git.faronear.org/npm/basend-fileload-server",
-    "corend-ColorConsole": "git+https://git.faronear.org/npm/corend-ColorConsole",
+    "corend-cocon": "git+https://git.faronear.org/npm/corend-cocon",
     "basend-messenger": "git+https://git.faronear.org/npm/basend-messenger",
     "basend-netinfo": "git+https://git.faronear.org/npm/basend-netinfo",
     "basend-websocket-server": "git+https://git.faronear.org/npm/basend-websocket-server",
