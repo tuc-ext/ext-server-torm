@@ -7,14 +7,14 @@ const colors = require('colors')
 const basendEnvar = require('basend-envar')
 const ticrypto = require('tic-crypto')
 
-const wo = (global.wo = Object.assign(require('corend-cocon'), { tool: require('corend-toolkit') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = (global.wo = Object.assign(require('basend-cocon'), { tool: require('corend-toolkit') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = basendEnvar.merge_envar()
 
-  if (typeof wo.envar.Base_Ssl === 'string') wo.envar.Base_Ssl = eval(`(${wo.envar.Base_Ssl})`)
-  if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
-  if (!wo.envar.Data_Store.type) wo.envar.Data_Store.type = 'sqlite' // 默认为 sqlite
+  if (typeof wo.envar.servSsl === 'string') wo.envar.servSsl = eval(`(${wo.envar.servSsl})`)
+  if (typeof wo.envar.dataStore === 'string') wo.envar.dataStore = eval(`(${wo.envar.dataStore})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
+  if (!wo.envar.dataStore.type) wo.envar.dataStore.type = 'sqlite' // 默认为 sqlite
   wo.envar.systemCoinAddressSet = {
     ETH: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
     BTC: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
@@ -37,9 +37,9 @@ async function initWorld () {
 
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
-  wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.Data_Store)} ......`)
+  wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.dataStore)} ......`)
   await torm.createConnection(
-    Object.assign(wo.envar.Data_Store, {
+    Object.assign(wo.envar.dataStore, {
       entities: [
         new torm.EntitySchema(wo.User.schema),
         new torm.EntitySchema(wo.Creation.TrokenSchema),
@@ -133,57 +133,57 @@ function runServer () {
   /** * 启动 Web 服务 ***/
   let webServer
   const ipv4 = require('basend-netinfo').getMyIp()
-  if (wo.envar.Base_Protocol === 'http') {
-    const portHttp = wo.envar.Base_Port || 80
+  if (wo.envar.servProtocol === 'http') {
+    const portHttp = wo.envar.servPort || 80
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
     webServer = require('http')
       .createServer(server)
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4}`)
+        else wo.cclog(`Web Server listening on ${wo.envar.servProtocol}://${wo.envar.servHostname}:${portHttp} with IPv4=${ipv4}`)
       })
-  } else if (wo.envar.Base_Protocol === 'https') {
-    const portHttps = wo.envar.Base_Port || 443
+  } else if (wo.envar.servProtocol === 'https') {
+    const portHttps = wo.envar.servPort || 443
     // 启用 https。从 http或https 网页访问 https的ticnode/socket 都可以，socket.io 内容也是一致的。
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envar.Base_Ssl.file.key),
-          cert: fs.readFileSync(wo.envar.Base_Ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envar.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envar.servSsl.file.key),
+          cert: fs.readFileSync(wo.envar.servSsl.file.cert),
+          // ca: [ fs.readFileSync(wo.envar.servSsl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on ${wo.envar.Base_Protocol}://${wo.envar.Base_Hostname}:${portHttps} with IPv4=${ipv4}`)
+        else wo.cclog(`Web Server listening on ${wo.envar.servProtocol}://${wo.envar.servHostname}:${portHttps} with IPv4=${ipv4}`)
       })
-  } else if (wo.envar.Base_Protocol === 'httpall') {
-    const portHttp = wo.envar.Base_Port?.portHttp || 80
-    const portHttps = wo.envar.Base_Port?.portHttps || 443
+  } else if (wo.envar.servProtocol === 'httpall') {
+    const portHttp = wo.envar.servPort?.portHttp || 80
+    const portHttps = wo.envar.servPort?.portHttps || 443
 
     require('http')
       .createServer(
         server.all('*', function (ask, reply) {
-          reply.redirect(`https://${wo.envar.Base_Hostname}:${portHttps}`)
+          reply.redirect(`https://${wo.envar.servHostname}:${portHttps}`)
         })
       )
       .listen(portHttp, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] http://${wo.envar.Base_Hostname}:${portHttp} with IPv4=${ipv4}`)
+        else wo.cclog(`Web Server listening on [${wo.envar.servProtocol}] http://${wo.envar.servHostname}:${portHttp} with IPv4=${ipv4}`)
       })
     webServer = require('https')
       .createServer(
         {
-          key: fs.readFileSync(wo.envar.Base_Ssl.file.key),
-          cert: fs.readFileSync(wo.envar.Base_Ssl.file.cert),
-          // ca: [ fs.readFileSync(wo.envar.Base_Ssl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+          key: fs.readFileSync(wo.envar.servSsl.file.key),
+          cert: fs.readFileSync(wo.envar.servSsl.file.cert),
+          // ca: [ fs.readFileSync(wo.envar.servSsl.file.ca) ] // only for self-signed certificate: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
         },
         server
       )
       .listen(portHttps, function (err) {
         if (err) wo.cclog(err)
-        else wo.cclog(`Web Server listening on [${wo.envar.Base_Protocol}] https://${wo.envar.Base_Hostname}:${portHttps} with IPv4=${ipv4}`)
+        else wo.cclog(`Web Server listening on [${wo.envar.servProtocol}] https://${wo.envar.servHostname}:${portHttps} with IPv4=${ipv4}`)
       })
   }
 
