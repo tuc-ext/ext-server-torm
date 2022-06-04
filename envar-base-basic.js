@@ -1,6 +1,6 @@
 'use strict'
 
-const coretool = require('core.tool')
+const coretool = require('corend-toolkit')
 const Sys_Code_Name = 'ext'
 
 module.exports = {

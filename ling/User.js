@@ -1,8 +1,8 @@
 'use strict'
-const ticCrypto = require('tic.crypto')
+const ticrypto = require('tic-crypto')
 const messenger = require('basend-messenger')
 const webtoken = require('basend-webtoken')
-const i18nCore = require('core.i18n')
+const i18nCore = require('corend-i18n')
 const torm = require('typeorm')
 
 /****************** 类和原型 *****************/
@@ -147,9 +147,7 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
         txTime: passTime,
         txTimeUnix: passTime.valueOf(),
       })
-      txReward.txHash = ticCrypto.hash(
-        wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] })
-      )
+      txReward.txHash = ticrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
       await txman.save(txReward)
 
       await txman.update(
@@ -205,7 +203,7 @@ DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   if (phone && i18nCore.validatePhone({ phone })) {
     let user = await DAD.findOne({ phone })
     let _state = user ? 'OLD_USER' : 'NEW_USER'
-    let uuid = user ? user.uuid : ticCrypto.randomUuid()
+    let uuid = user ? user.uuid : ticrypto.randomUuid()
     return {
       _state,
       uuid,
@@ -240,9 +238,9 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prod
     }
   }
 
-  const passcode = ticCrypto.randomNumber({ length: 6 })
+  const passcode = ticrypto.randomNumber({ length: 6 })
   const passcodePhone = phoneNew || _passtokenSource.phone
-  const passcodeHash = ticCrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
+  const passcodeHash = ticrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
   wo.ccinfo({
     passcodePhone,
     passcode,
@@ -292,7 +290,7 @@ DAD.api.verifyPasscodeToChangePhone = async function ({ _passtokenSource, passco
   if (!/^\d{6}$/.test(passcode)) {
     return { _state: 'PASSCODE_MALFORMED' }
   }
-  if (ticCrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
+  if (ticrypto.hash(passcode + _passtokenSource.passcodePhone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
     return { _state: 'VERIFY_FAILED' }
   }
 
@@ -328,7 +326,7 @@ DAD.api.verifyPasscode = async function ({ _passtokenSource, passcode, regcode }
   if (_passtokenSource.phone !== _passtokenSource.passcodePhone) {
     return { _state: 'PASSCODE_PHONE_MISMATCH' }
   }
-  if (ticCrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
+  if (ticrypto.hash(passcode + _passtokenSource.phone + _passtokenSource.uuid) !== _passtokenSource.passcodeHash) {
     return { _state: 'VERIFY_FAILED' }
   }
 
@@ -371,20 +369,20 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     _passtokenSource.uuid &&
     passwordClient
   ) {
-    const passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
-    //    const randomSecword = ticCrypto.randomSecword()
+    const passwordServer = ticrypto.hash(passwordClient + _passtokenSource.uuid)
+    //    const randomSecword = ticrypto.randomSecword()
     const registerTimeUnix = Date.now()
 
     const seed = wo.envar.secwordUser + _passtokenSource.uuid // + randomSecword // 通过 wo.envar.secwordUser 让种子具有既确定又随机的特性
-    const pathBTC = ticCrypto.seed2path({ seed, coin: 'BTC' })
-    const pathETH = ticCrypto.seed2path({ seed, coin: 'ETH' })
-    const pathTIC = ticCrypto.seed2path({ seed, coin: 'TIC' })
-    const pathPEX = ticCrypto.seed2path({ seed, coin: 'PEX' })
+    const pathBTC = ticrypto.seed2path({ seed, coin: 'BTC' })
+    const pathETH = ticrypto.seed2path({ seed, coin: 'ETH' })
+    const pathTIC = ticrypto.seed2path({ seed, coin: 'TIC' })
+    const pathPEX = ticrypto.seed2path({ seed, coin: 'PEX' })
     let coinAccount = {
-      BTC: { path: pathBTC, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }) },
-      ETH: { path: pathETH, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }) },
-      TIC: { path: pathTIC, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }) },
-      PEX: { path: pathPEX, address: ticCrypto.secword2address(wo.envar.secwordUser, { coin: 'PEX', path: pathPEX }) },
+      BTC: { path: pathBTC, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }) },
+      ETH: { path: pathETH, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }) },
+      TIC: { path: pathTIC, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }) },
+      PEX: { path: pathPEX, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'PEX', path: pathPEX }) },
     }
 
     // let txReward = wo.Trade.create({
@@ -398,7 +396,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     //   txTime: new Date(registerTimeUnix),
     //   txTimeUnix: registerTimeUnix,
     // })
-    // txReward.txHash = ticCrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
+    // txReward.txHash = ticrypto.hash(wo.tool.stringifyOrdered(txReward, { schemaColumns: txReward.constructor.schema.columns, excludeKeys: ['aiid', 'uuid'] }))
 
     let user = await DAD.save({
       uuid: _passtokenSource.uuid,
@@ -452,7 +450,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
 
 DAD.api.autologin = async function ({ _passtokenSource } = {}) {
   if (_passtokenSource && _passtokenSource.isOnline && _passtokenSource.uuid && _passtokenSource.passwordClient) {
-    let passwordServer = ticCrypto.hash(_passtokenSource.passwordClient + _passtokenSource.uuid)
+    let passwordServer = ticrypto.hash(_passtokenSource.passwordClient + _passtokenSource.uuid)
     let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer && onlineUser.phone === _passtokenSource.phone) {
@@ -483,7 +481,7 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
 
 DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passtokenSource } = {}) {
   if (passwordClient && phone && _passtokenSource && _passtokenSource.uuid) {
-    let passwordServer = ticCrypto.hash(passwordClient + _passtokenSource.uuid)
+    let passwordServer = ticrypto.hash(passwordClient + _passtokenSource.uuid)
     let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer && onlineUser.phone === phone) {
@@ -533,7 +531,7 @@ DAD.api.resetPassword = async function ({ _passtokenSource = {}, phone = '', pas
     _passtokenSource.uuid &&
     passwordClient
   ) {
-    await DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticCrypto.hash(passwordClient + _passtokenSource.uuid) })
+    await DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticrypto.hash(passwordClient + _passtokenSource.uuid) })
     let updated = DAD.findOne({ uuid: _passtokenSource.uuid })
     if (updated) {
       return { _state: 'RESET_SUCCESS' }
@@ -547,8 +545,8 @@ DAD.api.resetPassword = async function ({ _passtokenSource = {}, phone = '', pas
 
 DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewClient }) => {
   let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
-  if (onlineUser.passwordServer === ticCrypto.hash(passwordClient + _passtokenSource.uuid)) {
-    DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticCrypto.hash(passwordNewClient + _passtokenSource.uuid) })
+  if (onlineUser.passwordServer === ticrypto.hash(passwordClient + _passtokenSource.uuid)) {
+    DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticrypto.hash(passwordNewClient + _passtokenSource.uuid) })
     return {
       _state: 'SUCCESS',
       _passtoken: webtoken.createToken(

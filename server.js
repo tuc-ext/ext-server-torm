@@ -5,9 +5,9 @@ const torm = require('typeorm')
 const ipfs = require('ipfs-core')
 const colors = require('colors')
 const basendEnvar = require('basend-envar')
-const ticCrypto = require('tic.crypto')
+const ticrypto = require('tic-crypto')
 
-const wo = (global.wo = Object.assign(require('corend-cocon'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = (global.wo = Object.assign(require('corend-cocon'), { tool: require('corend-toolkit') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = basendEnvar.merge_envar()
@@ -16,10 +16,10 @@ function configEnvironment () {
   if (typeof wo.envar.Data_Store === 'string') wo.envar.Data_Store = eval(`(${wo.envar.Data_Store})`) // 用 eval 代替 JSON.parse，使得可接受简化的JSON字符串
   if (!wo.envar.Data_Store.type) wo.envar.Data_Store.type = 'sqlite' // 默认为 sqlite
   wo.envar.systemCoinAddressSet = {
-    ETH: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
-    BTC: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
-    TIC: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'TIC' }),
-    PEX: ticCrypto.secword2address(wo.envar.secwordAgent, { coin: 'PEX' }),
+    ETH: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
+    BTC: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
+    TIC: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'TIC' }),
+    PEX: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'PEX' }),
   }
 
   wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(basendEnvar.mask_secret_envar())))

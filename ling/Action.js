@@ -1,6 +1,6 @@
 'use strict'
 
-const ticCrypto = require('tic.crypto')
+const ticrypto = require('tic-crypto')
 const torm = require('typeorm')
 
 /****************** 类和原型 *****************/
@@ -10,10 +10,10 @@ const DAD = (module.exports = class Action {
     name: this.name,
     target: this,
     columns: {
-      uuid: { type: String, nullable: false, generated: 'uuid', primary: true},
+      uuid: { type: String, nullable: false, generated: 'uuid', primary: true },
       type: { type: String, default: '', nullable: false }, // 创作，转让，付费解密，
-      owner_script: { type: String, default: '', nullable: true},
-      buyer_script: { type: String, default: '', nullable: true},
+      owner_script: { type: String, default: '', nullable: true },
+      buyer_script: { type: String, default: '', nullable: true },
       json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
     },
   }
@@ -21,4 +21,3 @@ const DAD = (module.exports = class Action {
 
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
-
