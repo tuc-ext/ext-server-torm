@@ -7,7 +7,7 @@ const colors = require('colors')
 const basendEnvar = require('basend-envar')
 const ticCrypto = require('tic.crypto')
 
-const wo = (global.wo = Object.assign(require('base.tool/tool4log.js'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
+const wo = (global.wo = Object.assign(require('corend-ColorConsole'), { tool: require('core.tool') })) // 代表 world或‘我’，是全局的命名空间，把各种类都放在这里，防止和其他库的冲突。
 
 function configEnvironment () {
   wo.envar = basendEnvar.merge_envar()
@@ -30,7 +30,7 @@ async function initWorld () {
 
   wo.EventCenter = new (require('events'))()
 
-  wo.FileTransfer = require('base.FileTransfer.server')
+  wo.FileTransfer = require('basend-fileload-server')
   wo.System = require('./ling/System.js')
   wo.Creation = await require('./ling/Creation.js')
   wo.User = require('./ling/User.js')
@@ -58,7 +58,7 @@ function runServer () {
   wo.cclog('★★★★★★★★ 启动服务 ★★★★★★★★')
 
   const server = require('express')()
-  const webtoken = require('base.webtoken')
+  const webtoken = require('basend-webtoken')
 
   /** * 通用中间件 ***/
 
@@ -132,7 +132,7 @@ function runServer () {
 
   /** * 启动 Web 服务 ***/
   let webServer
-  const ipv4 = require('base.tool/tool4net.js').getMyIp()
+  const ipv4 = require('basend-netinfo').getMyIp()
   if (wo.envar.Base_Protocol === 'http') {
     const portHttp = wo.envar.Base_Port || 80
     // 如果在本地localhost做开发，就启用 http。注意，从https网页，不能调用http的socket.io。Chrome/Firefox都报错：Mixed Content: The page at 'https://localhost/yuncai/' was loaded over HTTPS, but requested an insecure XMLHttpRequest endpoint 'http://localhost:6327/socket.io/?EIO=3&transport=polling&t=LoRcACR'. This request has been blocked; the content must be served over HTTPS.
@@ -188,7 +188,7 @@ function runServer () {
   }
 
   // 启动socket服务
-  wo.serverWebsocket = require('base.websocket.server').initSocket(webServer)
+  wo.serverWebsocket = require('basend-websocket-server').initSocket(webServer)
 
   return webServer
 }

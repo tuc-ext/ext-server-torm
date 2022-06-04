@@ -1,7 +1,7 @@
 'use strict'
 const ticCrypto = require('tic.crypto')
-const messenger = require('base.messenger')
-const webtoken = require('base.webtoken')
+const messenger = require('basend-messenger')
+const webtoken = require('basend-webtoken')
 const i18nCore = require('core.i18n')
 const torm = require('typeorm')
 
