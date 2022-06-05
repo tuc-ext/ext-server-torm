@@ -102,7 +102,7 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
     return { _state: 'ERROR_USER_OFFLINE' }
   }
 
-  const userNow = await wo.User.findOne({ uuid: _passtokenSource.uuid })
+  const userNow = await wo.User.findOneBy({ uuid: _passtokenSource.uuid })
   if (!userNow) {
     return { _state: 'ERROR_USER_NOTEXIST' }
   }
@@ -110,7 +110,7 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
   const { _state, storyCcid } = await DAD.api.creation_to_ccid({ cStoryRaw })
   const storyCcidHash = ticrypto.cosh_to_cid({ cosh: ticrypto.hash(storyCcid), cidBase: 'b32', cidVersion: 1, cidCodec: 'raw' })
 
-  let creationNow = await torm.getRepository('Creation').findOne({ storyCcidHash })
+  let creationNow = await torm.getRepository('Creation').findOneBy({ storyCcidHash })
   if (creationNow) {
     return { _state: 'ERROR_DUPLICATE_CREATION' }
   }
@@ -118,16 +118,16 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
   const cidToSeal = { addressType: 'IPFS', ccid: storyCcid }
   const cidSealedCreator = await ticrypto.encrypt({
     data: cidToSeal,
-    key: ticrypto.secword2keypair(wo.envar.secwordUser, { coin: 'PEX', path: userNow.coinAccount.PEX.path }).seckey,
+    key: ticrypto.secword2keypair(wo.envar.secwordUser, { coin: 'EXT', path: userNow.coinAccount.EXT.path }).seckey,
   })
   const troken = {
     storyCcidHash,
-    creatorAddress: userNow.coinAccount.PEX.address,
+    creatorAddress: userNow.coinAccount.EXT.address,
     creatorCidSeal: cidSealedCreator,
-    ownerAddress: userNow.coinAccount.PEX.address,
+    ownerAddress: userNow.coinAccount.EXT.address,
     ownerCidSeal: cidSealedCreator,
-    agentAddress: wo.envar.systemCoinAddressSet.PEX,
-    agentCidSeal: await ticrypto.encrypt({ data: cidToSeal, key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey }),
+    agentAddress: wo.envar.systemCoinAddressSet.EXT,
+    agentCidSeal: await ticrypto.encrypt({ data: cidToSeal, key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'EXT' }).seckey }),
     howtoSubscribe: [
       { type: 'PAY', amount: priceAmountSubscriber, currency: priceCurrencySubscriber, payToAddress: wo.envar.systemCoinAddressSet[priceCurrencySubscriber] },
     ],
@@ -202,7 +202,7 @@ DAD.api.mint_creation_by_joint = async ({ _passtokenSource, creatorAddress, crea
     agentAddress: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }),
     agentCidSeal: await ticrypto.encrypt({
       data: { addressType: 'IPFS', ccid: storyCcid },
-      key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey,
+      key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'EXT' }).seckey,
     }),
     cTitle,
     mintTimeUnix: Date.now(),
@@ -261,7 +261,7 @@ DAD.api.troken_to_raw_creation = async ({ _passtokenSource, troken } = {}) => {
   if (ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }) !== troken.agentAddress) {
     return { _state: 'FAIL_NOT_AGENT' }
   }
-  const creation = await torm.getRepository('Creation').findOne({ storyCcidHash: troken.storyCcidHash })
+  const creation = await torm.getRepository('Creation').findOneBy({ storyCcidHash: troken.storyCcidHash })
   creation.troken = troken
   return { _state: 'SUCCESS', creation }
 }
@@ -276,7 +276,7 @@ DAD.api.unseal_troken = async ({ _passtokenSource, troken }) => {
   }
   const agentCidString = await ticrypto.decrypt({
     data: troken.agentCidSeal,
-    key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'PEX' }).seckey,
+    key: ticrypto.secword2keypair(wo.envar.secwordAgent, { coin: 'EXT' }).seckey,
     keytype: 'pwd',
   })
   const agentCid = JSON.parse(agentCidString)

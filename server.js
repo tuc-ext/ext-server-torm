@@ -19,7 +19,7 @@ function configEnvironment () {
     ETH: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'ETH' }),
     BTC: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'BTC' }),
     TIC: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'TIC' }),
-    PEX: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'PEX' }),
+    EXT: ticrypto.secword2address(wo.envar.secwordAgent, { coin: 'EXT' }),
   }
 
   wo.cclog('Final Configuration = ', JSON.parse(wo.tool.stringifyOrdered(basendEnvar.mask_secret_envar())))
@@ -70,8 +70,8 @@ function runServer () {
   server.use(require('body-parser').json({ limit: '50mb', extended: true })) // 用于过滤 POST 参数
   server.use(wo.FileTransfer.MulterStore) // req 被 multer 处理后，req.file 为 { filename, originialname, path, mimetype, size }
   server.use(
-    path.join('/', wo.envar.File_Store).replace('\\', '/'),
-    require('express').static(path.join(__dirname, wo.envar.File_Store).replace('\\', '/'), { index: 'index.html' })
+    path.join('/', wo.envar.fileStore).replace('\\', '/'),
+    require('express').static(path.join(__dirname, wo.envar.fileStore).replace('\\', '/'), { index: 'index.html' })
   ) // 可以指定到 node应用之外的目录上。windows里要把 \ 换成 /。
 
   /** * 路由中间件 ***/

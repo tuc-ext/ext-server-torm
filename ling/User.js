@@ -52,6 +52,9 @@ const DAD = (module.exports = class User extends torm.BaseEntity {
     delete user.aiid
     // delete user.randomSecword
     delete user.passwordServer
+    for (let coin in user.coinAccount) {
+      delete user.coinAccount[coin].path
+    }
     return user
   }
 })
@@ -113,7 +116,7 @@ DAD.sysapi.rejectKycL1 = async function ({ User }) {
   return result
 }
 DAD.api.updateKycL2 = async function ({ _passtokenSource, User }) {
-  //  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+  //  let user = await DAD.findOneBy({ uuid: option._passtokenSource.uuid })
   if (User.idCardCover && User.idCardBack) {
     await DAD.update({ uuid: _passtokenSource.uuid }, Object.assign(User, { kycStateL2: 'SUBMITTED' }))
     return { _state: 'SUBMITTED' }
@@ -129,10 +132,10 @@ DAD.sysapi.passKycL2 = async function ({ User }) {
     result._state = 'SUCCESS'
 
     // 再检查推荐人
-    let user = await DAD.findOne({ uuid: User.uuid })
+    let user = await DAD.findOneBy({ uuid: User.uuid })
     let inviterAiid = wo.tool.regcode2aiid(user.regcode)
     if (inviterAiid > 0) {
-      let inviter = await DAD.findOne({ aiid: wo.tool.regcode2aiid(user.regcode) })
+      let inviter = await DAD.findOneBy({ aiid: wo.tool.regcode2aiid(user.regcode) })
       let rate = wo.Trade.getExchangeRate()
       let reward = rate * 5
       let passTime = new Date()
@@ -174,7 +177,7 @@ DAD.sysapi.rejectKycL2 = async function ({ User }) {
 }
 
 DAD.api.updateKycL3 = async function ({ _passtokenSource, User }) {
-  //  let user = await DAD.findOne({ uuid: option._passtokenSource.uuid })
+  //  let user = await DAD.findOneBy({ uuid: option._passtokenSource.uuid })
   if (User.idCardSelfie) {
     await DAD.update({ uuid: _passtokenSource.uuid }, { idCardSelfie: User.idCardSelfie, kycStateL3: 'SUBMITTED' })
     return { _state: 'SUBMITTED' }
@@ -201,7 +204,7 @@ DAD.sysapi.rejectKycL3 = async function ({ User }) {
 
 DAD.api.identify = DAD.api1.identify = async function ({ phone } = {}) {
   if (phone && i18nCore.validatePhone({ phone })) {
-    let user = await DAD.findOne({ phone })
+    let user = await DAD.findOneBy({ phone })
     let _state = user ? 'OLD_USER' : 'NEW_USER'
     let uuid = user ? user.uuid : ticrypto.randomUuid()
     return {
@@ -377,12 +380,12 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
     const pathBTC = ticrypto.seed2path({ seed, coin: 'BTC' })
     const pathETH = ticrypto.seed2path({ seed, coin: 'ETH' })
     const pathTIC = ticrypto.seed2path({ seed, coin: 'TIC' })
-    const pathPEX = ticrypto.seed2path({ seed, coin: 'PEX' })
+    const pathPEX = ticrypto.seed2path({ seed, coin: 'EXT' })
     let coinAccount = {
       BTC: { path: pathBTC, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'BTC', path: pathBTC }) },
       ETH: { path: pathETH, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'ETH', path: pathETH }) },
       TIC: { path: pathTIC, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'TIC', path: pathTIC }) },
-      PEX: { path: pathPEX, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'PEX', path: pathPEX }) },
+      EXT: { path: pathPEX, address: ticrypto.secword2address(wo.envar.secwordUser, { coin: 'EXT', path: pathPEX }) },
     }
 
     // let txReward = wo.Trade.create({
@@ -451,7 +454,7 @@ DAD.api.register = DAD.api1.register = async function ({ _passtokenSource, passw
 DAD.api.autologin = async function ({ _passtokenSource } = {}) {
   if (_passtokenSource && _passtokenSource.isOnline && _passtokenSource.uuid && _passtokenSource.passwordClient) {
     let passwordServer = ticrypto.hash(_passtokenSource.passwordClient + _passtokenSource.uuid)
-    let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
+    let onlineUser = await DAD.findOneBy({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer && onlineUser.phone === _passtokenSource.phone) {
         return {
@@ -482,7 +485,7 @@ DAD.api.autologin = async function ({ _passtokenSource } = {}) {
 DAD.api.login = DAD.api1.login = async function ({ passwordClient, phone, _passtokenSource } = {}) {
   if (passwordClient && phone && _passtokenSource && _passtokenSource.uuid) {
     let passwordServer = ticrypto.hash(passwordClient + _passtokenSource.uuid)
-    let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
+    let onlineUser = await DAD.findOneBy({ uuid: _passtokenSource.uuid })
     if (onlineUser) {
       if (onlineUser.passwordServer === passwordServer && onlineUser.phone === phone) {
         // 再次检查 phone，也许可以防止用户在一个客户端上修改了手机后，被在另一个客户端上恶意登录？
@@ -532,7 +535,7 @@ DAD.api.resetPassword = async function ({ _passtokenSource = {}, phone = '', pas
     passwordClient
   ) {
     await DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticrypto.hash(passwordClient + _passtokenSource.uuid) })
-    let updated = DAD.findOne({ uuid: _passtokenSource.uuid })
+    let updated = DAD.findOneBy({ uuid: _passtokenSource.uuid })
     if (updated) {
       return { _state: 'RESET_SUCCESS' }
     } else {
@@ -544,7 +547,7 @@ DAD.api.resetPassword = async function ({ _passtokenSource = {}, phone = '', pas
 }
 
 DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewClient }) => {
-  let onlineUser = await DAD.findOne({ uuid: _passtokenSource.uuid })
+  let onlineUser = await DAD.findOneBy({ uuid: _passtokenSource.uuid })
   if (onlineUser.passwordServer === ticrypto.hash(passwordClient + _passtokenSource.uuid)) {
     DAD.update({ uuid: _passtokenSource.uuid }, { passwordServer: ticrypto.hash(passwordNewClient + _passtokenSource.uuid) })
     return {
@@ -568,14 +571,14 @@ DAD.api.changePassword = async ({ _passtokenSource, passwordClient, passwordNewC
 DAD.api.setLang = async function ({ User, _passtokenSource } = {}) {
   if (User && User.lang && _passtokenSource && _passtokenSource.isOnline) {
     await DAD.update({ uuid: _passtokenSource.uuid }, { lang: User.lang })
-    let result = DAD.findOne({ uuid: _passtokenSource.uuid })
+    let result = DAD.findOneBy({ uuid: _passtokenSource.uuid })
     return result ? true : false
   }
 }
 
 DAD.api.updatePayChannel = async ({ channel, _passtokenSource } = {}) => {
   if (channel && _passtokenSource) {
-    let me = await DAD.findOne({ uuid: _passtokenSource.uuid })
+    let me = await DAD.findOneBy({ uuid: _passtokenSource.uuid })
     if (!me.payChannel) me.payChannel = {}
     me.payChannel[channel.type] = channel
     await DAD.update({ uuid: _passtokenSource.uuid }, { payChannel: me.payChannel })
@@ -600,7 +603,7 @@ DAD.sysapi.getUserArray = async ({ where, take = 10, order = { aiid: 'ASC' }, sk
 DAD.api.getCommunityMembers = async ({ _passtokenSource = {}, order = { registerTimeUnix: 'DESC' }, skip = 0, take = 10 } = {}) => {
   let result = { _state: 'ERROR' }
   if (_passtokenSource.uuid) {
-    let me = await DAD.findOne({ uuid: _passtokenSource.uuid })
+    let me = await DAD.findOneBy({ uuid: _passtokenSource.uuid })
     let [memberArray, count] = await DAD.findAndCount({ where: { regcode: wo.tool.aiid2regcode(me.aiid) }, order, skip, take })
     if (Array.isArray(memberArray)) {
       for (let member of memberArray) {

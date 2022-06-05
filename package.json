@@ -46,7 +46,7 @@
     "serve-favicon": "^2.5.0",
     "sqlite3": "^5.0.0",
     "tic-crypto": "git+https://git.faronear.org/npm/tic-crypto",
-    "typeorm": "^0.2.37",
+    "typeorm": "^0.3.6",
     "ws": "^7.3.0"
   },
   "devDependencies": {
