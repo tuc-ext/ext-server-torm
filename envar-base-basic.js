@@ -1,7 +1,7 @@
 'use strict'
 
 const coretool = require('corend-toolkit')
-const Sys_Code_Name = 'ext'
+const KEYNAME = 'ext'
 // const inDev = global.inDev || global.envar?.inDev || process.env.NODE_ENV !== 'production' // 用 production 测试，防止 NODE_ENV 未定义
 
 module.exports = {
@@ -16,8 +16,8 @@ module.exports = {
   ],
 
   servProtocol: inDev ? 'http' : 'https', // http|https|httpall
-  servHostname: inDev ? 'localhost' : `${Sys_Code_Name}-server.bittic.org`, // 本节点的从外部可访问的 IP or Hostname，用于告知外界怎样连接本机。因此不该是 127.0.0.1 或 localhost
-  servPort: 6000 + parseInt(coretool.name2port(Sys_Code_Name)), // api服务端口号
+  servHostname: inDev ? 'localhost' : `${KEYNAME}-server.bittic.org`, // 本节点的从外部可访问的 IP or Hostname，用于告知外界怎样连接本机。因此不该是 127.0.0.1 或 localhost
+  servPort: 6000 + parseInt(coretool.name2port(KEYNAME)), // api服务端口号
   servSsl: inDev
     ? undefined
     : {
