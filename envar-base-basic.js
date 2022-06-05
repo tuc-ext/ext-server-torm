@@ -2,7 +2,7 @@
 
 const coretool = require('corend-toolkit')
 const Sys_Code_Name = 'ext'
-const inDev = global.inDev || global.envar?.inDev || process.env.NODE_ENV === 'development'
+// const inDev = global.inDev || global.envar?.inDev || process.env.NODE_ENV !== 'production' // 用 production 测试，防止 NODE_ENV 未定义
 
 module.exports = {
   // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。
