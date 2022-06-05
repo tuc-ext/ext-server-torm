@@ -2,6 +2,7 @@
 
 const coretool = require('corend-toolkit')
 const Sys_Code_Name = 'ext'
+const inDev = global.inDev || global.envar?.inDev || process.env.NODE_ENV === 'development'
 
 module.exports = {
   // 全大写字母的，代表系统常量，不要在 userConfig 或命令行参数里覆盖。小写驼峰的，是用户可以覆盖的。
@@ -14,25 +15,21 @@ module.exports = {
     ['servSsl', '--servSsl <string>', 'SSL options in JSON string.'],
   ],
 
-  servProtocol: 'http', // http|https|httpall
-  servHostname: 'localhost', // 本节点的从外部可访问的 IP or Hostname，用于告知邻居节点怎样连接本机。因此不能是 127.0.0.1 或 localhost
-  servPort: 6000 + parseInt(coretool.name2port(Sys_Code_Name)), // 本节点的 Web服务端口号
+  servProtocol: inDev ? 'http' : 'https', // http|https|httpall
+  servHostname: inDev ? 'localhost' : `${Sys_Code_Name}-server.bittic.org`, // 本节点的从外部可访问的 IP or Hostname，用于告知外界怎样连接本机。因此不该是 127.0.0.1 或 localhost
+  servPort: 6000 + parseInt(coretool.name2port(Sys_Code_Name)), // api服务端口号
+  servSsl: inDev
+    ? undefined
+    : {
+        type: 'file',
+        file: {
+          key: 'ssl/privkey.pem',
+          cert: 'ssl/fullchain.pem',
+          ca: '',
+        },
+      },
   // 数据库设置
   dataStore: { type: 'sqlite', database: `_datastore/db.sqlite` },
-  // Log_Store: { type: 'file', root: '_logstore', file: 'ext-server.log' }, // 换用 pm2 的日志记录
-
-  File_Store: '_filestore',
-
-  ENV_PRODUCTION: {
-    servProtocol: 'https',
-    servHostname: `${Sys_Code_Name}-server.bittic.org`,
-    servSsl: {
-      type: 'file', // file
-      file: {
-        key: 'ssl/privkey.pem', // ssl key file,
-        cert: 'ssl/fullchain.pem', // ssl cert file,
-        ca: '', // ssl ca file,
-      },
-    },
-  },
+  // logStore: { type: 'file', root: '_logstore', file: 'ext-server.log' }, // 换用 pm2 的日志记录
+  fileStore: '_filestore',
 }
