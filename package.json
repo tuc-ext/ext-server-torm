@@ -1,5 +1,5 @@
 {
-  "name": "ext.server.torm",
+  "name": "ext-server-torm",
   "version": "0.1.0",
   "private": true,
   "author": "",
@@ -13,12 +13,12 @@
     "archive": "tar czf _archive/archive-`date +%Y%m%d-%H%M%S`.tgz envar-base-*.js _filestore _datastore _logstore",
     "check": "npx cross-env NODE_ENV=development node --inspect-brk server.js",
     "demo": "npx cross-env NODE_ENV=production nodemon server.js",
-    "deploy": "/faronear/fon/expect-deploy.sh ext-server.bittic.org adot /faronear/tuc-ext/ext.server.torm",
+    "deploy": "/faronear/fon/expect-deploy.sh ext-server.bittic.org adot /faronear/tuc-ext/ext-server-torm",
     "serve": "npx cross-env NODE_ENV=production nodemon server.js",
     "serve.sup": "npx cross-env NODE_ENV=production npx supervisor -i node_modules,_logstore,_datastore -- server.js",
-    "serve.pm2": "npx cross-env NODE_ENV=production npx pm2 start server.js --name ext.server.torm --log=./_logstore/serve.log --log-date-format=YYYY-MM-DDThh:mm:ss.SSS[Z]",
-    "pull.datastore": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/db.sqlite ./_datastore/db-$(date +%Y%m%d-%H%M%S).sqlite",
-    "push.datastore": "rsync --rsync-path='sudo rsync' ./_datastore/db.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext.server.torm/_datastore/db-$(date +%Y%m%d-%H%M%S).sqlite",
+    "serve.pm2": "npx cross-env NODE_ENV=production npx pm2 start server.js --name ext-server-torm --log=./_logstore/serve.log --log-date-format=YYYY-MM-DDThh:mm:ss.SSS[Z]",
+    "pull.datastore": "scp adot@ext-server.bittic.org:/faronear/tuc-ext/ext-server-torm/_datastore/db.sqlite ./_datastore/db-$(date +%Y%m%d-%H%M%S).sqlite",
+    "push.datastore": "rsync --rsync-path='sudo rsync' ./_datastore/db.sqlite adot@ext-server.bittic.org:/faronear/tuc-ext/ext-server-torm/_datastore/db-$(date +%Y%m%d-%H%M%S).sqlite",
     "ssl": "certbot certonly -d ext-server.bittic.org --standalone"
   },
   "dependencies": {

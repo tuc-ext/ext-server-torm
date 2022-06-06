@@ -1,10 +1,10 @@
-# ext.server.torm ｜ 永存.服务端.torm
+# ext-server-torm ｜ 永存.服务端.torm
 
 导航路径 [Organizations](https://git.faronear.org/explore/organizations)
 
 - 应用链 [tuc/_tuc](https://git.faronear.org/tuc/_tuc)
   - 永存 [tuc-ext/ext](https://git.faronear.org/tuc-ext/ext)
-    - **<font size=5>服务端.torm [tuc-ext/ext.server.torm](https://git.faronear.org/tuc-ext/ext.server.torm)</font>**
+    - **<font size=5>服务端.torm [tuc-ext/ext-server-torm](https://git.faronear.org/tuc-ext/ext-server-torm)</font>**
 
 ---
 ## 备注
