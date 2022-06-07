@@ -244,16 +244,11 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prod
   const passcode = ticrypto.randomNumber({ length: 6 })
   const passcodePhone = phoneNew || _passtokenSource.phone
   const passcodeHash = ticrypto.hash(passcode + passcodePhone + _passtokenSource.uuid)
-  wo.ccinfo({
-    passcodePhone,
-    passcode,
-    passcodeHash,
-    uuid: _passtokenSource.uuid,
-  })
 
   // send SMS
   let sendResult = { _state: 'SMS_SENT_SUCCESS' }
   if (prodev === 'production') {
+    // 如果前端是生产环境，或者不是生产环境但强制要求真实发送短信（应当是开发人员要求测试真实短信），就发送，即使后台是开发环境。
     sendResult = await messenger.sendSms({
       phone: passcodePhone,
       vendor: wo.envar.SMS.vendor,
@@ -267,6 +262,7 @@ DAD.api.sendPasscode = async function ({ _passtokenSource, phone, phoneNew, prod
     let passcodeExpireAt = Date.now() + 5 * 60 * 1000
     return {
       _state: 'PASSCODE_SENT',
+      passcode: prodev === 'development' && wo.envar.prodev === 'development' ? passcode : undefined, // 如果前端、后台都在开发环境，那么把 passcode 明文返回，方便开发测试。
       passcodeHash,
       passcodePhone,
       passcodeSentAt,
