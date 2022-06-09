@@ -35,6 +35,13 @@ async function initWorld () {
   wo.Creation = await require('./ling/Creation.js')
   wo.User = require('./ling/User.js')
 
+  wo.dataSchema = {
+    troken: require('./dataSchema/troken.js'),
+    creation: require('./dataSchema/creation.js'),
+    comment: require('./dataSchema/comment.js'),
+    tranx: require('./dataSchema/tranx.js'),
+  }
+
   wo.IPFS = await ipfs.create() // 不能在每次使用 ipfs 时重复创建，那样会导致 “ipfs LockExistsError: Lock already being held for file ～/.ipfs/repo.lock”
 
   wo.cclog(`Initializing Data Store ${JSON.stringify(wo.envar.dataStore)} ......`)
@@ -42,9 +49,10 @@ async function initWorld () {
     Object.assign(wo.envar.dataStore, {
       entities: [
         new torm.EntitySchema(wo.User.schema),
-        new torm.EntitySchema(wo.Creation.TrokenSchema),
-        new torm.EntitySchema(wo.Creation.CreationSchema),
-        new torm.EntitySchema(wo.Creation.CommentSchema),
+        new torm.EntitySchema(wo.dataSchema.troken),
+        new torm.EntitySchema(wo.dataSchema.creation),
+        new torm.EntitySchema(wo.dataSchema.comment),
+        new torm.EntitySchema(wo.dataSchema.tranx),
       ],
       synchronize: true, // wo.envar.prodev !== 'production' ? true : false,
     })

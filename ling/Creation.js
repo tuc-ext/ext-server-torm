@@ -11,61 +11,7 @@ const ipfs = require('ipfs-core')
  */
 
 /****************** 类和原型 *****************/
-const DAD = (module.exports = class Creation {
-  // 构建类
-  static TrokenSchema = {
-    name: 'Troken',
-    columns: {
-      version: { type: String, default: '1', nullable: false },
-      trokenCcid: { type: String, primary: true, comment: 'troken hash。为了主键存放在数据库中，但不在去中心的IPFS中。' },
-      lastTokenCcid: { type: String, default: null, nullable: true, unique: true, comment: '用于串联起 IPFS 里，同一个 ccid 对应的多个 troken 的修改历史。' },
-      storyCcidHash: { type: String, default: '', nullable: true, comment: '同一个值，可对应存在多个troken，因为主人修改title/price等。' },
-      mintTimeUnix: { type: 'int', default: 0, nullable: true, comment: '铸造成troken的时刻' },
-      changeTimeUnix: { type: 'int', default: 0, nullable: true, comment: '修改troken的时刻' },
-      creatorAddress: { type: String, default: null, nullable: true, comment: '原始创作者，永远不变' },
-      creatorCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '创作者永远可以解密。' },
-      ownerAddress: { type: String, default: null, nullable: true, comment: '当前拥有者，可以转移' },
-      ownerCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前拥有者可以解密' },
-      agentAddress: { type: String, default: null, nullable: true, comment: '当前代理人。无代理时为空' },
-      agentCidSeal: { type: 'simple-json', default: null, nullable: true, comment: '当前代理人可以解密' },
-      howtoTakeover: { type: 'simple-json', default: null, nullable: true, comment: '' },
-      howtoSubscribe: {
-        type: 'simple-json',
-        default: '[]',
-        nullable: true,
-        comment: '计划可容纳多种解锁/支付方案，例如 [{price,currency,channel,amount,targetAddress}, {puzzle/数学题/script}]',
-      },
-    },
-  }
-
-  static CreationSchema = {
-    name: 'Creation',
-    columns: {
-      storyCcidHash: { type: String, primary: true, comment: '一份故事，只能对应一个作品。crid' },
-      cStoryRaw: { type: 'simple-json', default: '[]', nullable: true, comment: '链接到 centralized storage。严格去中心则不该存放于数据库。' },
-      cTitle: { type: String, default: '', nullable: true },
-      cCover: { type: String, default: '', nullable: true },
-      sealType: { type: String, default: 'AGENT', nullable: false },
-      creatorUuid: { type: String, default: null, nullable: true },
-      ownerUuid: { type: String, default: null, nullable: true },
-      trokenCcid: { type: String, default: null, nullable: true, comment: '用来直接访问IPFS中的 troken' },
-      storyCcid: { type: String, default: null, nullable: true, comment: '用来直接访问IPFS中的 content。严格去中心则不该存放于数据库。' },
-      createTimeUnix: { type: 'int', default: 0, nullable: true, comment: '' },
-      //      json: { type: 'simple-json', default: '{}', nullable: true }, // 开发者自定义字段，可以用json格式添加任意数据，而不破坏整体结构
-    },
-  }
-
-  static CommentSchema = {
-    name: 'Comment',
-    columns: {
-      commentHash: { type: String, primary: true },
-      commentStory: { type: 'simple-json', default: '[]', nullable: false },
-      commentTarget: { type: String, nullable: false },
-      commentTimeUnix: { type: 'int', default: 0, nullable: true },
-      authorUuid: { type: String, nullable: false },
-    },
-  }
-})
+const DAD = (module.exports = class Creation {})
 
 /****************** API方法 ******************/
 DAD.api = DAD.api1 = {}
@@ -134,7 +80,7 @@ DAD.api.mint_creation_by_agent = async ({ _passtokenSource, cStoryRaw, cTitle, c
     mintTimeUnix: Date.now(),
   }
   const { path, cid: trokenCid, mode } = await wo.IPFS.add(
-    wo.tool.stringifyOrdered(troken, { schemaColumns: DAD.TrokenSchema.columns, excludeKeys: ['trokenCcid'] }),
+    wo.tool.stringifyOrdered(troken, { schemaColumns: wo.dataSchema.troken.columns, excludeKeys: ['trokenCcid'] }),
     {
       cidVersion: 1,
       hashAlg: 'sha2-256',
@@ -178,7 +124,7 @@ DAD.api.mint_creation_by_creator = async ({ _passtokenSource, creatorAddress, cr
     mintTimeUnix: Date.now(),
   }
   const { path, cid: trokenCid, mode } = await wo.IPFS.add(
-    wo.tool.stringifyOrdered(troken, { schemaColumns: DAD.TrokenSchema.columns, excludeKeys: ['trokenCcid'] }),
+    wo.tool.stringifyOrdered(troken, { schemaColumns: wo.dataSchema.troken.columns, excludeKeys: ['trokenCcid'] }),
     {
       cidVersion: 1,
       hashAlg: 'sha2-256',
@@ -208,7 +154,7 @@ DAD.api.mint_creation_by_joint = async ({ _passtokenSource, creatorAddress, crea
     mintTimeUnix: Date.now(),
   }
   const { path, cid: trokenCid, mode } = await wo.IPFS.add(
-    wo.tool.stringifyOrdered(troken, { schemaColumns: DAD.TrokenSchema.columns, excludeKeys: ['trokenCcid'] }),
+    wo.tool.stringifyOrdered(troken, { schemaColumns: wo.dataSchema.troken.columns, excludeKeys: ['trokenCcid'] }),
     {
       cidVersion: 1,
       hashAlg: 'sha2-256',
@@ -309,7 +255,7 @@ DAD.api.comment_creation = async ({ _passtokenSource, commentStory, commentTarge
     authorUuid: _passtokenSource.uuid,
     commentTimeUnix: Date.now(),
   }
-  comment.commentHash = wo.tool.stringifyOrdered(comment, { schemaColumns: DAD.CommentSchema.columns })
+  comment.commentHash = wo.tool.stringifyOrdered(comment, { schemaColumns: wo.dataSchema.comment.columns })
   await torm.getRepository('Comment').save(comment)
   return { _state: 'SUCCESS', comment }
 }
